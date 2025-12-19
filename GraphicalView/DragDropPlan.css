@@ -1,0 +1,93 @@
+.dragging-target {
+    opacity: 0.5;
+    transform: scale(0.95);
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.drop-target-hover {
+    border-color: #10b981 !important;
+    background-color: rgba(16, 185, 129, 0.05) !important;
+}
+
+.no-select {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Animation pour le drag */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.drag-ready {
+    cursor: move;
+}
+
+.drag-ready:hover {
+    animation: pulse 1s infinite;
+}
+
+.invalid-configuration {
+    border-color: #ef4444 !important;
+    background-color: rgba(239, 68, 68, 0.05) !important;
+}
+
+/* Style pour le conteneur draggable avec l'image */
+.target-draggable-container {
+    transition: all 0.2s ease;
+}
+
+.target-draggable-container:hover {
+    transform: translateY(-2px);
+}
+
+/* Style pour les positions bloquées */
+.blocked-position {
+    cursor: not-allowed !important;
+    opacity: 0.7;
+}
+
+/* Style pour la barre de miniatures */
+.target-thumbnail {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.target-thumbnail:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.target-thumbnail.active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+/* Style pour le scroll horizontal */
+.targets-overview {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.targets-overview::-webkit-scrollbar {
+    height: 8px;
+}
+
+.targets-overview::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.targets-overview::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.targets-overview::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
