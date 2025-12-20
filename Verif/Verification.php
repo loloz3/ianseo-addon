@@ -10,7 +10,8 @@
  * - Auteur Original
  * - Laurent Petroff - Les Archers de Perols - (modif: 2025-12-11)
  * 
- * Dernière modification: 2025-12-15 par Laurent Petroff
+ * Dernière modification: 2025-12-20 par Laurent Petroff
+ * rajout du bouton "Tout corriger"
  *
  *
  * Vérification de la cohérence du champ "Finale Ind." (EnIndFEvent)
@@ -173,6 +174,23 @@ include('Common/Templates/head.php');
 .fix-button:hover {
     background-color: #218838;
 }
+.fix-button-large {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+.fix-button-large:hover {
+    background-color: #c82333;
+}
+.fix-button-large:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
 .archer-group {
     background-color: #e9ecef;
     font-weight: bold;
@@ -283,25 +301,132 @@ include('Common/Templates/head.php');
         </tbody>
     </table>
 
-    <script>
-    function corrigerArcher(enId, nouvelleValeur) {
-        if (!confirm('Voulez-vous vraiment corriger cet archer ?\n\nNouvelle valeur "Finale Ind." : ' + (nouvelleValeur == 1 ? 'OUI' : 'NON'))) {
+    <div style="margin: 20px 0; text-align: center;">
+        <button id="corriger-tout-sql" class="fix-button-large">
+            ⚡ Corriger toutes les anomalies (<?php echo $NbAnomalies; ?>)
+        </button>
+        <p style="font-size: 12px; color: #666; margin-top: 5px;">
+            (Cette méthode corrige toutes les anomalies en une seule opération)
+        </p>
+    </div>
+
+<script>
+function corrigerArcher(enId, nouvelleValeur) {
+    if (!confirm('Voulez-vous vraiment corriger cet archer ?\n\nNouvelle valeur "Finale Ind." : ' + (nouvelleValeur == 1 ? 'OUI' : 'NON'))) {
+        return;
+    }
+    
+    $.post('corriger-finale-ind.php', {
+        enId: enId,
+        valeur: nouvelleValeur
+    }, function(response) {
+        if (response.success) {
+            showCustomNotification('✓ Correction effectuée !');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showCustomNotification('Erreur : ' + response.message, 'error');
+        }
+    }, 'json');
+}
+
+// Fonction de notification personnalisée
+function showCustomNotification(message, type = 'success') {
+    // Créer une div de notification
+    const notification = document.createElement('div');
+    notification.id = 'custom-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        z-index: 9999;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        animation: slideIn 0.3s ease-out;
+        min-width: 300px;
+        text-align: center;
+    `;
+    
+    if (type === 'success') {
+        notification.style.backgroundColor = '#28a745';
+    } else {
+        notification.style.backgroundColor = '#dc3545';
+    }
+    
+    notification.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="background: transparent; border: none; color: white; font-size: 18px; cursor: pointer; margin-left: 10px;">
+                ×
+            </button>
+        </div>
+    `;
+    
+    // Ajouter l'animation CSS
+    const style = document.createElement('style');
+    if (!document.querySelector('#notification-styles')) {
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Supprimer toute notification existante
+    const existing = document.getElementById('custom-notification');
+    if (existing) existing.remove();
+    
+    // Ajouter la nouvelle notification
+    document.body.appendChild(notification);
+    
+    // Supprimer automatiquement après 3 secondes
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 3000);
+}
+
+// Fonction pour corriger toutes les anomalies en une seule opération
+$(document).ready(function() {
+    $('#corriger-tout-sql').click(function() {
+        if (!confirm('Êtes-vous sûr de vouloir corriger TOUTES les anomalies en une seule opération ?\n\n' + 
+                     'Cette action va modifier ' + <?php echo $NbAnomalies; ?> + ' inscription(s).\n' +
+                     'Cette méthode est plus rapide mais ne montre pas la progression détaillée.')) {
             return;
         }
         
-        $.post('corriger-finale-ind.php', {
-            enId: enId,
-            valeur: nouvelleValeur
-        }, function(response) {
+        const bouton = $(this);
+        const texteOriginal = bouton.text();
+        bouton.text('Correction en cours...').prop('disabled', true);
+        
+        // Appeler le script de correction en masse
+        $.post('Tout-corriger.php', function(response) {
             if (response.success) {
-                alert('✓ Correction effectuée !');
-                location.reload();
+                showCustomNotification('✓ ' + response.corriges + ' anomalie(s) corrigée(s) avec succès !');
+                setTimeout(() => location.reload(), 1500);
             } else {
-                alert('Erreur : ' + response.message);
+                showCustomNotification('Erreur : ' + response.message, 'error');
+                bouton.text(texteOriginal).prop('disabled', false);
             }
-        }, 'json');
-    }
-    </script>
+        }, 'json').fail(function() {
+            showCustomNotification('Erreur réseau. Veuillez réessayer.', 'error');
+            bouton.text(texteOriginal).prop('disabled', false);
+        });
+    });
+});
+</script>
 <?php endif; ?>
 
 <?php include('Common/Templates/tail.php'); ?>
