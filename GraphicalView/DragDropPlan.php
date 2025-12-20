@@ -891,8 +891,8 @@ include('Common/Templates/head.php');
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <div className="w-5 h-5 text-blue-600"><Icons.Grid /></div>
- 								<div className="flex items-center gap-3">
-                                <h2 className="text-lg font-bold text-gray-800"> Départ :</h2>
+ 								<div className="flex items-center gap-3 ml-2">
+                                <h2 className="text-lg font-bold text-gray-800">Départ :</h2>
                                 <select
                                     value={selectedSession}
                                     onChange={(e) => {
@@ -1011,19 +1011,19 @@ include('Common/Templates/head.php');
                                 {/* Légende pour la barre de miniatures */}
                                 <div className="flex flex-wrap gap-4 text-xs text-gray-600 mt-3 pt-3 border-t">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-green-100 border border-green-300"></div>
+                                        <div className="w-6 h-3 rounded-full bg-green-100 border border-green-300"></div>
                                         <span>Cible avec archers</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-gray-100 border border-gray-300"></div>
+                                        <div className="w-6 h-3 rounded-full bg-gray-100 border border-gray-300"></div>
                                         <span>Cible vide</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-red-100 border border-red-300"></div>
+                                        <div className="w-6 h-3 rounded-full bg-red-100 border border-red-300"></div>
                                         <span>Configuration invalide</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-300"></div>
+                                        <div className="w-6 h-3 rounded-full bg-blue-100 border border-blue-300"></div>
                                         <span>Cible sélectionnée</span>
                                     </div>
                                 </div>
@@ -1037,11 +1037,10 @@ include('Common/Templates/head.php');
                             <div className="bg-white rounded-lg shadow-lg p-4 sticky top-6">
                                 <div className="flex items-center gap-2 mb-4">
                                     <div className="w-5 h-5 text-blue-600"><Icons.Users /></div>
-                                    <h2 className="text-lg font-bold text-gray-800">
+                                    <h2 className="text-lg font-bold text-gray-800 ml-3">
                                         Non assignés ({unassignedArchers.length})
                                     </h2>
                                 </div>
-
                                 <div 
                                     className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto p-1"
                                     onDragOver={handleDragOver}
@@ -1245,7 +1244,7 @@ include('Common/Templates/head.php');
                                                                     <img 
                                                                         src={combinationImage} 
                                                                         alt={combinationLabel}
-                                                                        className="w-20 h-20 mx-auto object-contain"
+                                                                        className="w-60 h-20 mx-auto object-contain"
                                                                         onError={(e) => {
                                                                             e.target.style.display = 'none';
                                                                             console.warn(`Image non trouvée: ${combinationImage}`);
