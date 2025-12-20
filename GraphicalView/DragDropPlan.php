@@ -11,7 +11,7 @@
  * - Auteur Original
  * - Laurent Petroff - Les Archers de Perols - (modif: 2025-12-11)
  * 
- * Dernière modification: 2025-12-19 par Laurent Petroff
+ * Dernière modification: 2025-12-20 par Laurent Petroff
  *
  * Plan de Cibles graphique
  *
@@ -664,6 +664,14 @@ $PAGE_TITLE = get_text('ManualTargetAssignment', 'Tournament');
                         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
+									<a 
+										href="/Main.php"
+										className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors no-underline"
+										title="Retour au menu principal"
+									>
+										←
+										<span className="font-medium">Retour</span>
+									</a>
                                     <h1 className="text-2xl font-bold text-gray-800"><?php echo $PAGE_TITLE; ?></h1>
                                     <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
                                         Départ {selectedSession}
