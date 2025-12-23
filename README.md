@@ -13,6 +13,7 @@ Customizable module for **I@nseo** that extends the competition workflow with gr
 
 **FR 🇫🇷**
 Ces modules, ainsi que ses fonctionnalités et sa documentation, ont été conçus avec l’aide d’outils d’Intelligence Artificielle pour accélérer le développement et la rédaction.
+
 **EN 🇬🇧**
 Those modules and its documentation were created with the assistance of Artificial Intelligence tools to speed up development and writing.
 
