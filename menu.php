@@ -1,6 +1,7 @@
 <?php
 $ret['PART'][] = MENU_DIVIDER;
 $ret['PART'][] = 'Vérification des Participants' . '|' . $CFG->ROOT_DIR . 'Modules/Custom/Verif/' . 'Verification.php';
+$ret['PART'][] = 'Greffe' . '|' . $CFG->ROOT_DIR . 'Modules/Custom/Greffe/' . 'Greffe.php';
 $ret['PART'][] = 'Plan de Cibles - Graphique -' . '|' . $CFG->ROOT_DIR . 'Modules/Custom/GraphicalView/' . 'DragDropPlan.php';
 $ret['PRNT'][] = MENU_DIVIDER;
 $ret['PRNT'][] = 'Impression Autres Tirs' . '|' . $CFG->ROOT_DIR . 'Modules/Custom/AutresTirs/' . 'PrnAutresTirs.php';
