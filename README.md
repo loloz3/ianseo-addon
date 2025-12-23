@@ -44,4 +44,4 @@ Customizable module for **I@nseo** that extends the competition workflow with gr
 4. **Cohabitation** : si `Modules/Custom/menu.php` existe déjà (autre module), **ne le remplacez pas** ; ouvrez‑le et **ajoutez** une ligne d’inclusion pour charger ce module en plus :
    ```php
    // Exemple d’inclusion dans Modules/Custom/menu.php
-   include 'ianseo-addon/menu.php';
+   include 'ianseo-addon-main/menu.php';
