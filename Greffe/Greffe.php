@@ -713,15 +713,30 @@ include('Common/Templates/head.php');
         font-weight: bold;
     }
 	
-/* Ajuster les marges pour compenser l'en-tête existant */
-.container {
-    margin-top: -20px; /* Ajustez selon besoin */
-}
+		/* Styles existants pour tr */
+	tr:hover {
+		background-color: #f5f5f5;
+	}
 
-/* Ou donner plus d'espace à l'en-tête existant */
-body > table:first-child {
-    margin-bottom: 20px;
-}
+	/* AJOUT: Zebra striping */
+	tr:nth-child(even) {
+		background-color: #f8f9fa;
+	}
+
+	/* Survol modifié pour être visible sur toutes les lignes */
+	tr:hover {
+		background-color: #e8f5e9 !important;
+	}
+
+	/* Ajuster les marges pour compenser l'en-tête existant */
+	.container {
+		margin-top: -20px; /* Ajustez selon besoin */
+	}
+
+	/* Ou donner plus d'espace à l'en-tête existant */
+	body > table:first-child {
+		margin-bottom: 20px;
+	}
 
 </style>
 
@@ -1005,13 +1020,13 @@ ORDER BY e.EnName, e.EnFirstName";
             echo '<thead>';
             echo '<tr>';
             echo '<th data-sort="counter">#</th>';
+            echo '<th>Action</th>';
             echo '<th data-sort="prenom" class="sort-asc">Nom ▲</th>'; 
             echo '<th data-sort="nom" class="sort-asc">Prénom ▲</th>'; 
             echo '<th data-sort="club">Club</th>';
             echo '<th data-sort="categorie">Catégorie</th>';
             echo '<th data-sort="montant">Montant (€)</th>'; 
             echo '<th data-sort="cible_depart">Départ / Cible</th>';
-            echo '<th>Action</th>';
             echo '<th data-sort="payment_status">Statut Paiement</th>';
             echo '</tr>';
             echo '</thead>';
@@ -1194,24 +1209,24 @@ ORDER BY e.EnName, e.EnFirstName";
                                             </button>
                                           </form>';
                     }
-                    
-                    echo '<tr data-counter="' . $archer['counter'] . '" 
-                               data-prenom="' . htmlspecialchars($archer['prenom']) . '" 
-                               data-nom="' . htmlspecialchars($archer['nom']) . '" 
-                               data-club="' . htmlspecialchars($archer['club']) . '" 
-                               data-categorie="' . htmlspecialchars($archer['categorie']) . '" 
-                               data-nb-inscriptions="' . $nb_inscriptions . '" 
-                               data-montant="' . $montant . '" 
-                               data-payment-status="' . ($is_paid ? 'paid' : 'unpaid') . '"
-                               data-cible-depart="' . htmlspecialchars($cible_display_value) . '">';
+
+                    echo '<tr  data-counter="' . $archer['counter'] . '" 
+ 					           data-prenom="' . htmlspecialchars($archer['prenom']) . '" 
+                                 data-nom="' . htmlspecialchars($archer['nom']) . '" 
+                                 data-club="' . htmlspecialchars($archer['club']) . '" 
+                                 data-categorie="' . htmlspecialchars($archer['categorie']) . '" 
+                                 data-nb-inscriptions="' . $nb_inscriptions . '" 
+                                 data-montant="' . $montant . '" 
+   							   data-cible-depart="' . htmlspecialchars($cible_display_value) . '"
+                                 data-payment-status="' . ($is_paid ? 'paid' : 'unpaid') . '">';
                     echo '<td>' . $archer['counter'] . '</td>';
+					echo '<td>' . $action_button . '</td>';
                     echo '<td>' . htmlspecialchars($archer['prenom']) . '</td>'; 
                     echo '<td>' . htmlspecialchars($archer['nom']) . '</td>'; 
                     echo '<td>' . $club_display . '</td>';
                     echo '<td>' . $categorie_display . '</td>';
                     echo '<td><span class="' . $montant_class . '" title="' . $montant_title . '">' . $montant . ' €</span></td>';
                     echo '<td class="target-cell">' . $cible_display_html . '</td>';
-                    echo '<td>' . $action_button . '</td>';
                     echo '<td><span class="payment-status ' . $status_class . '">' . $status_text . '</span></td>';
                     echo '</tr>';
                 }
