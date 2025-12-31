@@ -1,3 +1,4 @@
+
 <?php
 /**
  * @license Libre - Copyright (c) 2025 Auteur Original
@@ -10,9 +11,9 @@
  * - Auteur Original
  * - Laurent Petroff - Les Archers de Perols - (modif: 2025-12-11)
  * 
- * Dernière modification: 2025-12-20 par Laurent Petroff
+ * Dernière modification: 2025-12-31 par Laurent Petroff
  * rajout du bouton "Tout corriger"
- *
+ * Verif doublon
  *
  * Vérification de la cohérence du champ "Finale Ind." (EnIndFEvent)
  * pour TOUS les archers
@@ -20,6 +21,8 @@
  * Règle : 
  * - 1ère inscription (session la plus basse) : EnIndFEvent doit être à 1 (Oui)
  * - Inscriptions suivantes : EnIndFEvent doit être à 0 (Non)
+ *
+ * - Vérification si archer en Doublon
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
@@ -64,7 +67,7 @@ $Query = "
                 FROM Entries e2
                 INNER JOIN Qualifications q2 ON e2.EnId = q2.QuId
                 WHERE e2.EnCode = e.EnCode 
-                AND e2.EnTournament = e.EnTournament
+            AND e2.EnTournament = e.EnTournament
                 AND e2.EnCode != ''
             ) AND e.EnIndFEvent = 0 THEN 'Premier départ : devrait être OUI'
             WHEN q.QuSession > (
@@ -72,7 +75,7 @@ $Query = "
                 FROM Entries e2
                 INNER JOIN Qualifications q2 ON e2.EnId = q2.QuId
                 WHERE e2.EnCode = e.EnCode 
-                AND e2.EnTournament = e.EnTournament
+            AND e2.EnTournament = e.EnTournament
                 AND e2.EnCode != ''
             ) AND e.EnIndFEvent = 1 THEN 'Départ supplémentaire : devrait être NON'
             ELSE 'Erreur inconnue'
@@ -106,6 +109,26 @@ $Query = "
 
 $Rs = safe_r_sql($Query);
 $NbAnomalies = safe_num_rows($Rs);
+
+// Requête pour détecter les archers en double dans un même départ
+$QueryDoublons = "
+    SELECT 
+        e.EnCode AS Licence,
+        e.EnFirstName AS Prenom,
+        e.EnName AS Nom,
+        q.QuSession AS Depart,
+        COUNT(*) AS NbDoublons
+    FROM Entries e
+    INNER JOIN Qualifications q ON e.EnId = q.QuId
+    WHERE e.EnTournament = $TourId
+    AND e.EnCode != ''
+    GROUP BY e.EnCode, e.EnFirstName, e.EnName, q.QuSession
+    HAVING COUNT(*) > 1
+    ORDER BY NbDoublons DESC, q.QuSession, e.EnCode
+";
+
+$RsDoublons = safe_r_sql($QueryDoublons);
+$NbDoublons = safe_num_rows($RsDoublons);
 
 $PAGE_TITLE = 'Vérification Finale Individuelle';
 $IncludeJquery = true;
@@ -152,6 +175,35 @@ include('Common/Templates/head.php');
 .summary h2 {
     margin-top: 0;
     color: #0c5460;
+}
+.alert-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-left: 5px solid #ffc107;
+    color: #856404;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+}
+.alert-danger {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-left: 5px solid #dc3545;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+}
+.alert-success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-left: 5px solid #28a745;
+    color: #155724;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
 }
 .no-anomaly {
     background-color: #d4edda;
@@ -210,17 +262,82 @@ include('Common/Templates/head.php');
     border-radius: 3px;
     font-size: 0.8em;
 }
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+.doublon-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+.doublon-table th {
+    background-color: #dc3545;
+    color: white;
+    padding: 8px;
+    text-align: left;
+}
+.doublon-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+.doublon-table tr:hover {
+    background-color: #f8d7da;
+}
 </style>
 
 <div class="Title">Vérification : Finale Individuelle - Tous les archers</div>
 
+<?php 
+// Afficher l'alerte pour les doublons dans un même départ
+if ($NbDoublons > 0): 
+?>
+    <div class="alert-danger">
+        <h3>⚠️ ALERTE : <?php echo $NbDoublons; ?> cas d'archer(s) en double dans un même départ</h3>
+        <p>Les archers suivants sont inscrits plusieurs fois dans le MÊME départ. Ceci est anormal et nécessite une correction manuelle :</p>
+        
+        <table class="doublon-table">
+            <thead>
+                <tr>
+                    <th>Licence</th>
+                    <th>Prénom</th>
+                    <th>Nom</th>
+                    <th>Départ</th>
+                    <th>Nombre d'inscriptions</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php while ($Doublon = safe_fetch($RsDoublons)): ?>
+                <tr>
+                    <td><strong><?php echo $Doublon->Licence; ?></strong></td>
+                    <td><?php echo $Doublon->Prenom; ?></td>
+                    <td><?php echo $Doublon->Nom; ?></td>
+                    <td style="text-align: center;"><strong><?php echo $Doublon->Depart; ?></strong></td>
+                    <td style="text-align: center;">
+                        <span class="badge-danger"><?php echo $Doublon->NbDoublons; ?> inscriptions</span>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+            </tbody>
+        </table>
+        
+        <p style="margin-top: 10px; font-style: italic;">
+            <strong>Action requise :</strong> Vous devez supprimer manuellement les doublons dans l'interface de gestion des participants.
+            Un archer ne peut être inscrit qu'une seule fois par départ.
+        </p>
+    </div>
+<?php endif; ?>
+
 <?php if ($NbAnomalies == 0): ?>
-    <div class="no-anomaly">
-        ✓ Aucune anomalie détectée ! Tous les archers ont la bonne configuration "Finale Ind."
+    <div class="alert-success">
+        ✓ Aucune anomalie détectée dans la configuration "Finale Ind." !
     </div>
 <?php else: ?>
     <div class="summary">
-        <h2>⚠️ <?php echo $NbAnomalies; ?> anomalie(s) détectée(s)</h2>
+        <h2>⚠️ <?php echo $NbAnomalies; ?> anomalie(s) détectée(s) dans la configuration "Finale Ind."</h2>
         <p><strong>Rappel de la règle :</strong></p>
         <ul>
             <li><strong>Archer inscrit 1 fois</strong> → "Finale Ind." doit être à <strong>OUI</strong></li>
@@ -251,6 +368,8 @@ include('Common/Templates/head.php');
         </thead>
         <tbody>
         <?php 
+        // Réinitialiser le curseur pour réutiliser les résultats
+        safe_data_seek($Rs, 0);
         $previousCode = '';
         while ($Row = safe_fetch($Rs)): 
             $isPremierDepart = ($Row->Depart == $Row->PremierDepart);
