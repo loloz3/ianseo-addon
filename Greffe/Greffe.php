@@ -493,7 +493,6 @@ GROUP BY e.EnFirstName, e.EnName";
                     text-align: center;
                     font-size: 12px;
                     color: #666;
-                    border-top: 1px solid #ddd;
                     padding-top: 20px;
                 }
                 
