@@ -10,7 +10,8 @@
  * - Auteur Original
  * - Laurent Petroff - Les Archers de Perols - (modif: 2025-12-23)
  * 
- * Dernière modification: 2025-12-23 par Laurent Petroff
+ * Dernière modification: 2025-12-31 par Laurent Petroff
+ * Ajout de la Facture
  *
  * Greffe.php
  * Page simple pour lister les archers inscrits pour faire le greffe.
@@ -29,6 +30,9 @@ require_once('Common/Fun_Various.inc.php');
 // Vérifier la session et les permissions
 CheckTourSession(true);
 checkACL(AclParticipants, AclReadOnly); // AJOUT: Vérification des permissions
+
+// Vérifier si on est en mode génération de facture individuelle
+$is_invoice_mode = isset($_GET['invoice']) && $_GET['invoice'] == '1' && isset($_GET['archer_id']);
 
 // Initialiser les filtres depuis la session ou GET
 $filters = [
@@ -185,7 +189,7 @@ function getAgeCategory($categorie_code) {
     return 'adultes';
 }
 
-// Fonction pour calculer le prix
+// Fonction pour calculer le prix total
 function calculerPrix($club_name, $categorie_code, $nb_departs, $tarifs) {
     // Déterminer si c'est Pérols
     $is_perols = (stripos($club_name, 'perols') !== false);
@@ -202,6 +206,64 @@ function calculerPrix($club_name, $categorie_code, $nb_departs, $tarifs) {
     } else {
         return $tarifs['clubs_autres'][$age_category][$tarif_key];
     }
+}
+
+// Fonction pour calculer le prix par départ (CORRIGÉE)
+// Fonction pour calculer le prix par départ (CORRECTION pour tarif 10+8)
+function calculerPrixParDepart($club_name, $categorie_code, $nb_departs, $tarifs) {
+    // Déterminer si c'est Pérols
+    $is_perols = (stripos($club_name, 'perols') !== false);
+    
+    // Déterminer la catégorie d'âge
+    $age_category = getAgeCategory($categorie_code);
+    
+    // Récupérer les tarifs de base
+    if ($is_perols) {
+        $prix_1_depart = $tarifs['perols'][$age_category][1];
+        $prix_2_departs = $tarifs['perols'][$age_category][2];
+    } else {
+        $prix_1_depart = $tarifs['clubs_autres'][$age_category][1];
+        $prix_2_departs = $tarifs['clubs_autres'][$age_category][2];
+    }
+    
+    // Calcul du supplément pour le 2ème départ
+    $supplement_2eme_depart = $prix_2_departs - $prix_1_depart;
+    
+    // Calculer les prix par départ
+    $prix_par_depart = [];
+    $total = 0;
+    
+    if ($nb_departs == 1) {
+        // 1 départ seulement
+        $prix_par_depart[1] = $prix_1_depart;
+        $total = $prix_1_depart;
+    } elseif ($nb_departs == 2) {
+        // 2 départs - CORRECTION: premier à prix normal, deuxième au supplément
+        $prix_par_depart[1] = $prix_1_depart;      // Premier départ: tarif normal
+        $prix_par_depart[2] = $supplement_2eme_depart; // Deuxième départ: supplément seulement
+        $total = $prix_1_depart + $supplement_2eme_depart;
+    } else {
+        // 3 départs ou plus
+        // Premier départ au tarif normal
+        $prix_par_depart[1] = $prix_1_depart;
+        $total = $prix_1_depart;
+        
+        // Départs supplémentaires au tarif supplément
+        for ($i = 2; $i <= $nb_departs; $i++) {
+            $prix_par_depart[$i] = $supplement_2eme_depart;
+            $total += $supplement_2eme_depart;
+        }
+    }
+    
+    return [
+        'total' => $total,
+        'prix_par_depart' => $prix_par_depart,
+        'is_perols' => $is_perols,
+        'age_category' => $age_category,
+        'prix_1_depart' => $prix_1_depart,
+        'prix_2_departs' => $prix_2_departs,
+        'supplement_par_depart' => $supplement_2eme_depart
+    ];
 }
 
 // Fonction pour formater l'affichage des cibles/départs
@@ -260,9 +322,480 @@ try {
     ];
 }
 
-// AJOUT: Inclure l'en-tête du site
-include('Common/Templates/head.php');
+// Si on est en mode facture individuelle
+if ($is_invoice_mode && isset($_GET['archer_id'])) {
+    $archerId = intval($_GET['archer_id']);
+    
+    // Récupérer l'ID du tournoi
+    $TourId = $_SESSION['TourId'];
+    
+    // Récupérer d'abord l'archer depuis la liste principale
+    $archerInfo = null;
+    
+    // Exécuter la même requête que la page principale
+$mainQuery = "SELECT 
+    MIN(e.EnId) as id,  -- Prend le premier ID (pour les actions)
+    e.EnFirstName as prenom,
+    e.EnName as nom,
+    CONCAT(e.EnFirstName, ' ', e.EnName) as nom_complet,
+    -- Prendre la première catégorie (elles devraient être identiques)
+    MIN(CONCAT(e.EnDivision, e.EnClass)) as categorie,
+    c.CoName as club,
+    c.CoCode as country_code,
+    -- Prendre le statut de paiement du premier enregistrement
+    MIN(e.EnCountry3) as payment_status,
+    COUNT(*) as nb_inscriptions,
+    GROUP_CONCAT(DISTINCT CONCAT(e.EnDivision, e.EnClass) ORDER BY e.EnDivision, e.EnClass SEPARATOR ', ') as categories,
+    GROUP_CONCAT(DISTINCT c.CoName ORDER BY c.CoName SEPARATOR ', ') as clubs,
+    -- CORRECTION IMPORTANTE : Récupérer TOUTES les cibles/départs des différentes entrées
+    GROUP_CONCAT(DISTINCT 
+        CONCAT(
+            'D', 
+            SUBSTRING(q.QuTargetNo, 1, 1),
+            ' - ', 
+            SUBSTRING(q.QuTargetNo, 2, 3),
+            SUBSTRING(q.QuTargetNo, 5, 1)
+        ) 
+        ORDER BY q.QuSession, q.QuTargetNo 
+        SEPARATOR '; '
+    ) as cibles_departs,
+    GROUP_CONCAT(DISTINCT q.QuTargetNo ORDER BY q.QuSession, q.QuTargetNo SEPARATOR ', ') as target_numbers,
+    GROUP_CONCAT(DISTINCT q.QuSession ORDER BY q.QuSession SEPARATOR ', ') as sessions,
+    -- AJOUT : Récupérer tous les IDs pour référence
+    GROUP_CONCAT(DISTINCT e.EnId ORDER BY e.EnId SEPARATOR ',') as all_ids
+FROM Entries e
+LEFT JOIN Countries c ON e.EnCountry = c.CoId AND e.EnTournament = c.CoTournament
+LEFT JOIN Qualifications q ON e.EnId = q.QuId
+WHERE e.EnTournament = $TourId 
+AND e.EnAthlete = 1
+-- CHANGEMENT : Ajouter l'ID spécifique OU regrouper par nom
+AND (e.EnId = $archerId OR CONCAT(e.EnFirstName, ' ', e.EnName) = 
+    (SELECT CONCAT(EnFirstName, ' ', EnName) FROM Entries WHERE EnId = $archerId LIMIT 1))
+GROUP BY e.EnFirstName, e.EnName";
+    
+    $Rs = safe_r_sql($mainQuery);
+    
+    if ($archer = safe_fetch($Rs)) {
+        // Extraire les départs
+        $departs_archer = extraireDeparts($archer->target_numbers);
+        
+        // Calculer le montant avec détail par départ
+        $calculPrix = calculerPrixParDepart($archer->club, $archer->categorie, $archer->nb_inscriptions, $tarifs);
+        $montant = $calculPrix['total'];
+        
+        // Parser les affectations de cible/départ
+        $affectations = [];
+        if (!empty($archer->cibles_departs) && $archer->cibles_departs != 'D? - ?') {
+            $affectations_list = explode('; ', $archer->cibles_departs);
+            foreach ($affectations_list as $affectation) {
+                if (!empty(trim($affectation))) {
+                    $affectations[] = $affectation;
+                }
+            }
+        }
+        
+        // Afficher la facture individuelle en HTML
+        ?>
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Facture - <?php echo htmlspecialchars($archer->prenom . ' ' . $archer->nom); ?></title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 40px;
+                    color: #333;
+                    background-color: white;
+                }
+                
+                .invoice-container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    border: 1px solid #ddd;
+                    padding: 30px;
+                    background-color: white;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                }
+                
+                .invoice-header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #2c5f2d;
+                    padding-bottom: 20px;
+                }
+                
+                .invoice-title {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #2c5f2d;
+                    margin-bottom: 10px;
+                }
+                
+                .invoice-subtitle {
+                    font-size: 18px;
+                    color: #666;
+                    margin-bottom: 20px;
+                }
+                
+                .invoice-info {
+                    font-size: 14px;
+                    color: #666;
+                    margin-bottom: 5px;
+                }
+                
+                .invoice-section {
+                    margin: 25px 0;
+                }
+                
+                .invoice-section-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #2c5f2d;
+                    margin-bottom: 10px;
+                    border-bottom: 1px solid #ddd;
+                    padding-bottom: 5px;
+                }
+                
+                .invoice-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                    font-size: 14px;
+                }
+                
+                .invoice-table th {
+                    background-color: #f2f2f2;
+                    color: #333;
+                    padding: 10px;
+                    text-align: left;
+                    border: 1px solid #ddd;
+                    font-weight: bold;
+                }
+                
+                .invoice-table td {
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                }
+                
+                .invoice-total {
+                    margin-top: 30px;
+                    text-align: right;
+                    font-size: 18px;
+                    font-weight: bold;
+                    border-top: 2px solid #2c5f2d;
+                    padding-top: 15px;
+                }
+                
+                .invoice-footer {
+                    margin-top: 50px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #666;
+                    border-top: 1px solid #ddd;
+                    padding-top: 20px;
+                }
+                
+                .print-button {
+                    text-align: center;
+                    margin: 20px 0;
+                }
+                
+                .print-button button {
+                    background-color: #2c5f2d;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    margin: 0 10px;
+                }
+                
+                .print-button button:hover {
+                    background-color: #245325;
+                }
+                
+                .info-row {
+                    display: flex;
+                    margin-bottom: 8px;
+                }
+                
+                .info-label {
+                    width: 150px;
+                    font-weight: bold;
+                    color: #555;
+                }
+                
+                .info-value {
+                    flex: 1;
+                }
+                
+                .payment-status {
+                    display: inline-block;
+                    padding: 3px 10px;
+                    border-radius: 3px;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+                
+                .status-paid {
+                    background-color: #d4edda;
+                    color: #155724;
+                    border: 1px solid #c3e6cb;
+                }
+                
+                .status-unpaid {
+                    background-color: #f8d7da;
+                    color: #721c24;
+                    border: 1px solid #f5c6cb;
+                }
+                
+                @media print {
+                    .print-button {
+                        display: none;
+                    }
+                    
+                    body {
+                        margin: 0;
+                        padding: 10px;
+                    }
+                    
+                    .invoice-container {
+                        border: none;
+                        box-shadow: none;
+                        padding: 0;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-button">
+                <button onclick="window.print()">🖨️ Imprimer la facture</button>
+                <button onclick="window.history.back()">← Retour à la liste</button>
+            </div>
+            
+            <div class="invoice-container">
+                <div class="invoice-header">
+                    <div class="invoice-title">FACTURE INDIVIDUELLE</div>
+                    <div class="invoice-subtitle">Tournoi de Tir à l'Arc - Les Archers de Pérols -</div>
+                    <div class="invoice-info">Date de génération : <?php echo date('d/m/Y H:i'); ?></div>
+                    <div class="invoice-info">Numéro de facture : FAC-<?php echo date('Ymd'); ?>-<?php echo str_pad($archerId, 4, '0', STR_PAD_LEFT); ?></div>
+                </div>
+                
+                <div class="invoice-section">
+                    <div class="invoice-section-title">Informations de l'Archer</div>
+                    <div class="info-row">
+                        <div class="info-label">Nom :</div>
+                        <div class="info-value"><?php echo htmlspecialchars($archer->nom); ?></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Prénom :</div>
+                        <div class="info-value"><?php echo htmlspecialchars($archer->prenom); ?></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Club :</div>
+                        <div class="info-value"><?php echo htmlspecialchars($archer->club); ?></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Catégorie :</div>
+                        <div class="info-value"><?php echo htmlspecialchars($archer->categorie); ?> (<?php echo $calculPrix['age_category']; ?>)</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Nombre de départs :</div>
+                        <div class="info-value"><?php echo $archer->nb_inscriptions; ?></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Départs :</div>
+                        <div class="info-value">
+                            <?php
+                            if (!empty($departs_archer)) {
+                                sort($departs_archer);
+                                echo implode(', ', array_map(function($d) { return "Départ $d"; }, $departs_archer));
+                                echo ' (' . count($departs_archer) . ' départ(s))';
+                            } else {
+                                echo 'Non affecté';
+                            }
+                            ?>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Statut paiement :</div>
+                        <div class="info-value">
+                            <span class="payment-status <?php echo ($archer->payment_status == 1) ? 'status-paid' : 'status-unpaid'; ?>">
+                                <?php echo ($archer->payment_status == 1) ? 'Payé' : 'Non payé'; ?>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+ <div class="invoice-section">
+    <div class="invoice-section-title">Détail des Départs et Prix</div>
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th>Départ</th>
+                <th>Cible</th>
+                <th>Position</th>
+                <th>Prix</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+			
+			            // LIGNES DE DEBUG À AJOUTER ICI :
+            error_log("DEBUG FACTURE - Archer ID: " . $archerId);
+            error_log("DEBUG FACTURE - nb_inscriptions: " . $archer->nb_inscriptions);
+            error_log("DEBUG FACTURE - cibles_departs: " . $archer->cibles_departs);
+            
+            // Afficher aussi dans le HTML (commentaire)
+            echo "<!-- DEBUG: Archer ID: " . $archerId . " -->\n";
+            echo "<!-- DEBUG: nb_inscriptions: " . $archer->nb_inscriptions . " -->\n";
+            echo "<!-- DEBUG: cibles_departs: " . htmlspecialchars($archer->cibles_departs) . " -->\n";
+            echo "<!-- DEBUG: affectations count: " . (isset($affectations) ? count($affectations) : '0') . " -->\n";
+			
+            // CORRECTION: Afficher tous les départs, même sans affectation
+            $total_facture = 0;
+            $nb_departs_total = $archer->nb_inscriptions;
+            
+            // Si l'archer a des affectations de cible/départ
+            if (!empty($affectations)) {
+                $affectation_index = 0;
+                
+                for ($depart_numero = 1; $depart_numero <= $nb_departs_total; $depart_numero++) {
+                    $prix_depart = isset($calculPrix['prix_par_depart'][$depart_numero]) 
+                        ? $calculPrix['prix_par_depart'][$depart_numero] 
+                        : $calculPrix['prix_par_depart'][min($depart_numero, 2)];
+                    
+                    echo '<tr>';
+                    
+                    // Afficher le numéro de départ
+                    echo '<td>Départ ' . $depart_numero . '</td>';
+                    
+                    // Afficher la cible si disponible
+                    if (isset($affectations[$affectation_index])) {
+                        $affectation = trim($affectations[$affectation_index]);
+                        if (!empty($affectation)) {
+                            $parts = explode(' - ', $affectation);
+                            if (count($parts) == 2) {
+                                $cible_position = $parts[1];
+                                $cible = substr($cible_position, 0, 3);
+                                $position = substr($cible_position, 3);
+                                
+                                echo '<td>Cible ' . htmlspecialchars($cible) . '</td>';
+                                echo '<td>Position ' . htmlspecialchars($position) . '</td>';
+                            } else {
+                                echo '<td colspan="2">' . htmlspecialchars($affectation) . '</td>';
+                            }
+                            $affectation_index++;
+                        } else {
+                            echo '<td colspan="2"><em>Non affecté</em></td>';
+                        }
+                    } else {
+                        echo '<td colspan="2"><em>Non affecté</em></td>';
+                    }
+                    
+                    echo '<td>' . number_format($prix_depart, 2) . ' €</td>';
+                    echo '</tr>';
+                    
+                    $total_facture += $prix_depart;
+                }
+            } else {
+                // Si pas d'affectations du tout
+                for ($depart_numero = 1; $depart_numero <= $nb_departs_total; $depart_numero++) {
+                    $prix_depart = isset($calculPrix['prix_par_depart'][$depart_numero]) 
+                        ? $calculPrix['prix_par_depart'][$depart_numero] 
+                        : $calculPrix['prix_par_depart'][min($depart_numero, 2)];
+                    
+                    echo '<tr>';
+                    echo '<td>Départ ' . $depart_numero . '</td>';
+                    echo '<td colspan="2"><em>Non affecté</em></td>';
+                    echo '<td>' . number_format($prix_depart, 2) . ' €</td>';
+                    echo '</tr>';
+                    
+                    $total_facture += $prix_depart;
+                }
+            }
+            
+            // Afficher la ligne de total
+            echo '<tr style="font-weight: bold; background-color: #f8f9fa;">';
+            echo '<td colspan="3" style="text-align: right;">TOTAL :</td>';
+            echo '<td>' . number_format($total_facture, 2) . ' €</td>';
+            echo '</tr>';
+            ?>
+        </tbody>
+    </table>
+</div>               
+                <div class="invoice-total">
+                    <strong>MONTANT TOTAL : <?php echo number_format($montant, 2); ?> €</strong>
+                </div>
+                
+<div class="invoice-footer">
+    <div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px;">
+        <div style="font-size: 11px; line-height: 1.4; color: #666;">
+            <p><strong>Association loi 1901 - TVA non applicable, Article 293 B du Code Général des Impôts</strong></p>
+            <p><strong>SIÈGE SOCIAL :</strong> CLUB HOUSE TERRAIN DE TIR À L'ARC<br>
+               CHEMIN DU MAS ROUGE 34470 PEROLS<br>
+               Site : http://sites.google.com/site/archersdeperols/<br>
+               E-mail : contact.archersdeperols@gmail.com</p>
+            <p style="margin-top: 10px;">
+                <strong>N° Jeunesse et Sport :</strong> 03400ET0024<br>
+                <strong>N° Préfecture :</strong> W343003998<br>
+                <strong>Agrément FFTA N° :</strong> 2034037
+            </p>
+        </div>
+        
+        <div style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; font-size: 10px;">
+            <p>Facture générée le <?php echo date('d/m/Y à H:i'); ?></p>
+            <p>Tournoi ID : <?php echo $TourId; ?> | Système de Gestion de Tournoi</p>
+            <p>Tarif appliqué : 
+                <?php 
+                if ($calculPrix['is_perols']) {
+                    echo 'Tarif Pérols - ';
+                } else {
+                    echo 'Tarif standard - ';
+                }
+                echo $calculPrix['age_category'] . ' | ';
+                echo '1 départ : ' . $calculPrix['prix_1_depart'] . ' € | ';
+                echo '2 départs : ' . $calculPrix['prix_2_departs'] . ' € (forfait)';
+                if ($archer->nb_inscriptions > 2) {
+                    echo ' | Supplément : ' . $calculPrix['supplement_par_depart'] . ' €/départ supplémentaire';
+                }
+                ?>
+            </p>
+        </div>
+    </div>
+</div>
+            </div>
+            
+            <script>
+                // Auto-imprimer si demandé
+                <?php if (isset($_GET['print']) && $_GET['print'] == '1'): ?>
+                window.onload = function() {
+                    window.print();
+                };
+                <?php endif; ?>
+            </script>
+        </body>
+        </html>
+        <?php
+        exit();
+    } else {
+        // Archer non trouvé
+        include('Common/Templates/head.php');
+        echo '<div class="error" style="margin: 50px auto; max-width: 600px;">';
+        echo '<strong>Erreur :</strong> Archer non trouvé.';
+        echo '<br><br>';
+        echo '<a href="' . $_SERVER['PHP_SELF'] . '" class="filter-reset">← Retour à la liste</a>';
+        echo '</div>';
+        include('Common/Templates/tail.php');
+        exit();
+    }
+}
 
+// MODE NORMAL - Affichage de la page principale
+include('Common/Templates/head.php');
 ?>
 
 <style>
@@ -436,6 +969,7 @@ include('Common/Templates/head.php');
         font-weight: bold;
         transition: all 0.2s;
         min-width: 70px;
+        margin: 2px;
     }
     
     .payment-button.validate {
@@ -454,6 +988,25 @@ include('Common/Templates/head.php');
     
     .payment-button.unvalidate:hover {
         background-color: #c82333;
+    }
+    
+    /* AJOUT: Bouton facture individuelle */
+    .invoice-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: bold;
+        transition: all 0.2s;
+        min-width: 70px;
+        margin: 2px;
+    }
+    
+    .invoice-button:hover {
+        background-color: #0056b3;
     }
     
     /* Statut de paiement */
@@ -521,7 +1074,6 @@ include('Common/Templates/head.php');
     .filter-summary strong {
         color: #2c5f2d;
     }
-    
     
     td:first-child {
         font-weight: bold;
@@ -635,9 +1187,10 @@ include('Common/Templates/head.php');
             padding: 6px 8px;
         }
         
-        .payment-button {
+        .payment-button, .invoice-button {
             padding: 4px 8px;
             font-size: 10px;
+            min-width: 60px;
         }
     }
     
@@ -713,30 +1266,36 @@ include('Common/Templates/head.php');
         font-weight: bold;
     }
 	
-		/* Styles existants pour tr */
-	tr:hover {
-		background-color: #f5f5f5;
-	}
+    /* Styles existants pour tr */
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
 
-	/* AJOUT: Zebra striping */
-	tr:nth-child(even) {
-		background-color: #f8f9fa;
-	}
+    /* Survol modifié pour être visible sur toutes les lignes */
+    tr:hover {
+        background-color: #e8f5e9 !important;
+    }
 
-	/* Survol modifié pour être visible sur toutes les lignes */
-	tr:hover {
-		background-color: #e8f5e9 !important;
-	}
+    .container {
+        margin-top: -20px;
+    }
 
-	/* Ajuster les marges pour compenser l'en-tête existant */
-	.container {
-		margin-top: -20px; /* Ajustez selon besoin */
-	}
+    body > table:first-child {
+        margin-bottom: 20px;
+    }
 
-	/* Ou donner plus d'espace à l'en-tête existant */
-	body > table:first-child {
-		margin-bottom: 20px;
-	}
+    /* Style pour les boutons d'action groupés */
+    .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        min-width: 150px;
+    }
+    
+    /* Style pour la cellule d'action */
+    .action-cell {
+        min-width: 160px;
+    }
 
 </style>
 
@@ -1014,13 +1573,14 @@ ORDER BY e.EnName, e.EnFirstName";
                 // Si mêmes noms, comparer par prénom
                 return strcasecmp($a['prenom'], $b['prenom']);
             });
-            
-            // Afficher le tableau avec tri client
+			         
+					 
+			// Afficher le tableau avec tri client
             echo '<table id="archersTable">';
             echo '<thead>';
             echo '<tr>';
             echo '<th data-sort="counter">#</th>';
-            echo '<th>Action</th>';
+            echo '<th class="action-cell">Actions</th>';
             echo '<th data-sort="prenom" class="sort-asc">Nom ▲</th>'; 
             echo '<th data-sort="nom" class="sort-asc">Prénom ▲</th>'; 
             echo '<th data-sort="club">Club</th>';
@@ -1160,6 +1720,17 @@ ORDER BY e.EnName, e.EnFirstName";
                     $payment_status = $archer['payment_status'];
                     $is_paid = ($payment_status == 1);
                     
+                    // Construire l'URL pour la facture individuelle avec les filtres préservés
+                    $invoiceUrl = $_SERVER['PHP_SELF'] . '?invoice=1&archer_id=' . $archer['id'];
+                    foreach ($filters as $key => $value) {
+                        if ($value !== 'all') {
+                            $invoiceUrl .= "&{$key}_filter=" . urlencode($value);
+                        }
+                    }
+                    
+                    // Bouton de facture
+                    $invoice_button = '<a href="' . $invoiceUrl . '" class="invoice-button" title="Générer la facture pour cet archer">📄 Facture</a>';
+                    
                     if ($is_paid) {
                         $countPaye++;
                         $totalPaye += $montant;
@@ -1174,7 +1745,7 @@ ORDER BY e.EnName, e.EnFirstName";
                             }
                         }
                         
-                        $action_button = '<form method="POST" style="display:inline;">
+                        $payment_button = '<form method="POST" style="display:inline;">
                                             <input type="hidden" name="archer_id" value="' . $archer['id'] . '">
                                             <input type="hidden" name="validate_payment" value="unvalidate">'
                                             . $filterParams . '
@@ -1198,7 +1769,7 @@ ORDER BY e.EnName, e.EnFirstName";
                             }
                         }
                         
-                        $action_button = '<form method="POST" style="display:inline;">
+                        $payment_button = '<form method="POST" style="display:inline;">
                                             <input type="hidden" name="archer_id" value="' . $archer['id'] . '">
                                             <input type="hidden" name="validate_payment" value="validate">'
                                             . $filterParams . '
@@ -1220,7 +1791,7 @@ ORDER BY e.EnName, e.EnFirstName";
    							   data-cible-depart="' . htmlspecialchars($cible_display_value) . '"
                                  data-payment-status="' . ($is_paid ? 'paid' : 'unpaid') . '">';
                     echo '<td>' . $archer['counter'] . '</td>';
-					echo '<td>' . $action_button . '</td>';
+                    echo '<td class="action-cell"><div class="action-buttons">' . $payment_button . $invoice_button . '</div></td>';
                     echo '<td>' . htmlspecialchars($archer['prenom']) . '</td>'; 
                     echo '<td>' . htmlspecialchars($archer['nom']) . '</td>'; 
                     echo '<td>' . $club_display . '</td>';
@@ -1235,6 +1806,14 @@ ORDER BY e.EnName, e.EnFirstName";
             echo '</tbody>';
             echo '</table>';
             
+            // Afficher les totaux
+            echo '<div class="filter-summary" style="margin-top: 20px;">';
+            echo '<strong>Résumé :</strong> ';
+            echo $displayCounter . ' archer(s) affiché(s) sur ' . $totalArchers . ' | ';
+            echo 'Total montant : ' . $filteredTotal . ' € | ';
+            echo 'Payés : ' . $countPaye . ' (' . $totalPaye . ' €) | ';
+            echo 'Non payés : ' . $countNonPaye . ' (' . $totalNonPaye . ' €)';
+            echo '</div>';
             
         } else {
             echo '<p style="text-align: center; color: #666; font-style: italic;">';
