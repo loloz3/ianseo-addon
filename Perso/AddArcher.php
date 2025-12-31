@@ -1,4 +1,23 @@
 <?php
+
+/**
+ * @license Libre - Copyright (c) 2025 Auteur Original
+ * Libre d'utilisation, modification et distribution sous conditions:
+ * 1. Garder cette notice et la liste des contributeurs
+ * 2. Partager toute modification
+ * 3. Citer les contributeurs
+ * 
+ * Contributeurs:
+ * - Auteur Original
+ * - IANSEO
+ * 
+ * Dernière modification: 2025-12-31 par Laurent Petroff - Les Archers de Perols - 
+ *
+ * Utilisation de la touche "enter" pour la recherche des archers
+ * Champ Ind. / Team mis par default pour compétition simple
+ *
+ */
+
 	// Activer l'affichage des erreurs
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
