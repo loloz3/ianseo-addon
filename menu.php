@@ -1,5 +1,6 @@
 <?php
 $ret['PART'][] = MENU_DIVIDER;
+$ret['PART'][] = 'Ajouter un Archer' . '|' . $CFG->ROOT_DIR . 'Modules/Custom/Perso/' . 'AddArcher.php?id=0';
 $ret['PART'][] = 'Vérification des Participants' . '|' . $CFG->ROOT_DIR . 'Modules/Custom/Verif/' . 'Verification.php';
 $ret['PART'][] = 'Greffe' . '|' . $CFG->ROOT_DIR . 'Modules/Custom/Greffe/' . 'Greffe.php';
 $ret['PART'][] = 'Plan de Cibles - Graphique -' . '|' . $CFG->ROOT_DIR . 'Modules/Custom/GraphicalView/' . 'DragDropPlan.php';
