@@ -189,8 +189,6 @@ include('Common/Templates/head.php');
 }
 </style>
 
-<!-- Titre avec le même style que Verification.php -->
-<div class="Title"><?php echo $PAGE_TITLE; ?></div>
 
 <div id="root"></div>
 
@@ -199,7 +197,54 @@ include('Common/Templates/head.php');
     body {
         font-family: 'Inter', sans-serif;
     }
+    
+    /* Style CLUTH comme sur l'image */
+    .cluth-header {
+        background-color: #2c5f2d;
+        color: white;
+        padding: 8px 15px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 4px 4px 0 0;
+        margin: 0;
+        font-size: 14px;
+    }
+    
+    .border-action-entry {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        padding: 10px 15px;
+        margin: 0 0 20px 0;
+        border-radius: 0 0 4px 4px;
+    }
+    
+    .border-action-entry p {
+        margin: 0;
+        padding: 2px 0;
+        color: #333;
+    }
+    
+    .border-action-entry strong {
+        color: #2c5f2d;
+    }
+    
+    /* Style pour le format de texte de l'image */
+    .text-format-example {
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        color: #333;
+        background-color: #f5f5f5;
+        padding: 10px;
+        border: 1px solid #ddd;
+        margin: 10px 0;
+        white-space: pre-wrap;
+    }
 </style>
+
+
 
 <!-- React et ReactDOM -->
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -275,7 +320,6 @@ include('Common/Templates/head.php');
 </script>
 
 <script type="text/babel" src="DragDropPlanUtils.js"></script>
-<script type="text/babel" src="DragDropPlanPrint.js"></script>
 <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     
@@ -332,6 +376,7 @@ include('Common/Templates/head.php');
         echo json_encode($sessionsList);
     ?>;
 
+
     const TargetAssignmentUI = () => {
         const [archers, setArchers] = useState(INITIAL_ARCHERS);
         const [selectedSession, setSelectedSession] = useState(SESSIONS[0]?.order || 1);
@@ -340,7 +385,6 @@ include('Common/Templates/head.php');
         const [draggedTargetId, setDraggedTargetId] = useState(null);
         const [autoSaveBlocked, setAutoSaveBlocked] = useState(false);
         const [notification, setNotification] = useState(null);
-        const maxTargets = calculateMaxTargets();
         const [isSaving, setIsSaving] = useState(false);
         const [hoverTargetId, setHoverTargetId] = useState(null);
         const [showTargetsOverview, setShowTargetsOverview] = useState(true);
@@ -348,7 +392,376 @@ include('Common/Templates/head.php');
         const targetsOverviewRef = useRef(null);
         const [scrollPosition, setScrollPosition] = useState(0);
 
+const generateSimplePDF = () => {
+    console.log('=== GÉNÉRATION PDF SIMPLIFIÉE ===');
+    
+    // Récupérer les données
+    const assignedArchers = archers.filter(a => 
+        a.session === selectedSession && a.targetNo && a.targetNo.length >= 4
+    );
+    
+    // Extraire les cibles uniques
+    const targetNumbers = [];
+    assignedArchers.forEach(archer => {
+        const targetNum = archer.targetNo.substring(0, 3);
+        if (!targetNumbers.includes(targetNum)) {
+            targetNumbers.push(targetNum);
+        }
+    });
+    
+    // Trier
+    targetNumbers.sort((a, b) => parseInt(a) - parseInt(b));
+    
+    console.log(`✅ ${targetNumbers.length} cibles:`, targetNumbers);
+    
+    if (targetNumbers.length === 0) {
+        alert('Aucune cible assignée pour ce départ');
+        return;
+    }
+    
+    // Ouvrir une fenêtre pour le PDF
+    const printWindow = window.open('', '_blank', 'width=1800,height=1000');
+    
+    if (!printWindow) {
+        alert('⚠️ Veuillez autoriser les popups pour générer le PDF');
+        return;
+    }
+    
+    // Fonction pour récupérer les infos archer d'une position spécifique
+    const getArcherForPosition = (targetId, letter) => {
+        return assignedArchers.find(a => a.targetNo === `${targetId}${letter}`);
+    };
+    
+    // Créer le HTML avec le CSS cible
+    let html = `<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Cibles - Départ ${selectedSession}</title>
+        <meta charset="UTF-8">
+        <style>
+            @page { 
+                size: landscape; 
+                margin: 5mm; 
+            }
+            body { 
+                margin: 0; 
+                padding: 0; 
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background: white; 
+            }
+            .page-container { 
+                padding: 8mm; 
+            }
+            .print-header { 
+                text-align: center; 
+                margin-bottom: 15mm; 
+            }
+            .print-header h1 { 
+                font-size: 24px; 
+                margin: 0 0 5px 0; 
+                color: #000; 
+            }
+            .print-header .subtitle { 
+                font-size: 14px; 
+                color: #666; 
+            }
+            .targets-layout { 
+                display: flex; 
+                flex-direction: column; 
+                gap: 15px; 
+                margin-bottom: 15mm; 
+            }
+            .targets-row { 
+                display: flex; 
+                justify-content: center; 
+                gap: 10px; 
+            }
+            .target-row-wrapper { 
+                display: flex; 
+                justify-content: space-between; 
+                width: 100%; 
+            }
+            .target-card { 
+                flex: 0 0 7%; 
+                text-align: center; 
+            }
+            .target-number { 
+                font-size: 13px; 
+                font-weight: bold; 
+                color: #000; 
+                margin-bottom: 4px; 
+            }
+            .target-image { 
+                width: 55px; 
+                height: 55px; 
+                object-fit: contain; 
+                margin: 0 auto; 
+            }
+            .target-archers-grid { 
+                display: grid; 
+                grid-template-columns: repeat(4, 1fr); 
+                gap: 3px; 
+                font-size: 8px; 
+            }
+            .archer-column { 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+                min-height: 200px; 
+                border: 1px solid #e0e0e0; 
+                padding: 3px 2px; 
+                background: #fafafa; 
+            }
+            .position-header { 
+                font-weight: bold; 
+                font-size: 9px; 
+                color: #333; 
+                margin-bottom: 2px; 
+                width: 100%; 
+                text-align: center; 
+                background: #f0f0f0; 
+                padding: 1px 0; 
+            }
+            .archer-content { 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+                width: 100%; 
+                height: 200px; 
+                overflow: hidden; 
+                padding: 0 1px; 
+            }
+            .archer-full-line { 
+                font-size: 8px; 
+                writing-mode: vertical-lr; 
+                text-orientation: mixed; 
+                height: 200px; 
+                display: flex; 
+                align-items: center; 
+                text-align: center; 
+                width: 100%; 
+            }
+            .empty-position { 
+                color: #999; 
+                font-size: 7.5px; 
+                font-style: italic; 
+                writing-mode: vertical-lr; 
+                text-align: center; 
+                width: 100%; 
+                display: flex; 
+                align-items: center; 
+                height: 100%; 
+            }
+            .print-footer { 
+                text-align: center; 
+                margin-top: 12mm; 
+                font-size: 11px; 
+                color: #666; 
+                border-top: 1px solid #ddd; 
+                padding-top: 4mm; 
+            }
+            .print-controls { 
+                position: fixed; 
+                top: 20px; 
+                right: 20px; 
+                z-index: 10000; 
+                display: flex; 
+                gap: 10px; 
+            }
+            .print-button { 
+                padding: 10px 20px; 
+                background: #3b82f6; 
+                color: white; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+            }
+            .close-button { 
+                padding: 10px 20px; 
+                background: #6b7280; 
+                color: white; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+            }
+            .page-break { 
+                page-break-before: always; 
+            }
+            @media print { 
+                .print-controls { 
+                    display: none !important; 
+                } 
+                .page-container { 
+                    padding: 0; 
+                } 
+            }
+        </style>
+    </head>
+    <body>
+        <div class="print-controls">
+            <button class="print-button" onclick="window.print()">Imprimer</button>
+            <button class="close-button" onclick="window.close()">Fermer</button>
+        </div>
+        
+        <div class="page-container">`;
+    
+    // Diviser en pages de 20 cibles
+    const targetsPerPage = 20;
+    const totalPages = Math.ceil(targetNumbers.length / targetsPerPage);
+    
+    for (let page = 0; page < totalPages; page++) {
+        const start = page * targetsPerPage;
+        const end = start + targetsPerPage;
+        const pageTargets = targetNumbers.slice(start, end);
+        
+        // Ajouter un saut de page sauf pour la première page
+        if (page > 0) {
+            html += `<div class="page-break"></div>`;
+        }
+        
+        html += `
+            <div class="print-header">
+                <h1>Cibles - Départ ${selectedSession}</h1>
+                <div class="subtitle">Page ${page + 1} sur ${totalPages}</div>
+            </div>
+            
+            <div class="targets-layout">`;
+        
+        // 2 lignes de 10 cibles
+        for (let row = 0; row < 2; row++) {
+            const rowStart = row * 10;
+            const rowEnd = rowStart + 10;
+            const rowTargets = pageTargets.slice(rowStart, rowEnd);
+            
+            if (rowTargets.length > 0) {
+                html += `<div class="targets-row">
+                    <div class="target-row-wrapper">`;
+                
+                for (let i = 0; i < 10; i++) {
+                    if (i < rowTargets.length) {
+                        const targetId = rowTargets[i];
+                        // Créer un objet cible pour getCombinationImage
+                        const targetObj = {
+                            id: targetId,
+                            positions: ['A', 'B', 'C', 'D'].map(letter => ({
+                                id: `${targetId}${letter}`,
+                                letter: letter,
+                                archer: getArcherForPosition(targetId, letter)
+                            }))
+                        };
+                        const combinationImage = getCombinationImage(targetObj);
+                        
+                        html += `<div class="target-card">
+                            <div class="target-number">${targetId}</div>`;
+                        
+                        if (combinationImage && combinationImage !== 'Img/xx.png') {
+                            html += `<img src="${combinationImage}" class="target-image" alt="Cible ${targetId}" onerror="this.style.display='none'">`;
+                        } else {
+                            html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
+                                <div style="font-size: 8px; color: #999;">Pas d'image</div>
+                            </div>`;
+                        }
+                        
+                        html += `<div class="target-archers-grid">`;
+                        
+                        // Afficher les archers dans l'ordre A, C, B, D
+                        ['A', 'C', 'B', 'D'].forEach(letter => {
+                            const archer = getArcherForPosition(targetId, letter);
+                            
+                            html += `<div class="archer-column">
+                                <div class="position-header">${letter}</div>
+                                <div class="archer-content">`;
+                            
+                            if (archer) {
+                                const division = archer.division || '';
+                                const archerClass = archer.class || '';
+                                const name = archer.name || '';
+                                const country = archer.countryName || '';
+                                
+                                let line = '';
+                                if (division) line += `<span style="font-weight: bold;">${division}</span>`;
+                                if (archerClass) line += (line ? ' ' : '') + `<span>${archerClass}</span>`;
+                                if ((division || archerClass) && name) line += ' ';
+                                if (name) line += `<span style="font-weight: bold;">&nbsp;${name}&nbsp;</span>`;
+                                if (name && country) line += ' ';
+                                if (country) line += `<span style="font-weight: bold;">&nbsp;/ ${country}</span>`;
+                                
+                                html += `<div class="archer-full-line">${line}</div>`;
+                            } else {
+                                html += `<div class="empty-position">vide</div>`;
+                            }
+                            
+                            html += `</div></div>`;
+                        });
+                        
+                        html += `</div></div>`;
+                    } else {
+                        // Case vide
+                        html += `<div class="target-card" style="opacity:0.3;">
+                            <div class="target-number"></div>
+                            <div class="target-image" style="background: #f5f5f5;"></div>
+                            <div class="target-archers-grid">
+                                <div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                <div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                <div class="archer-column"><div class="position-header">B</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                <div class="archer-column"><div class="position-header">D</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                            </div>
+                        </div>`;
+                    }
+                }
+                
+                html += `</div></div>`;
+            }
+        }
+        
+        html += `</div>`;
+        
+    }
+    
+    html += `</div></body></html>`;
+    
+    // Afficher
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    
+    console.log('✅ PDF généré avec succès');
+};
+
+        // Fonction de débogage
+        const debugTargets = () => {
+            console.log('=== DÉBUG COMPLET DES CIBLES ===');
+            
+            const assignedArchers = archers.filter(a => 
+                a.session === selectedSession && a.targetNo
+            );
+            
+            const targetNumbers = [...new Set(assignedArchers.map(a => a.targetNo.substring(0, 3)))];
+            targetNumbers.sort((a, b) => parseInt(a) - parseInt(b));
+            
+            console.log(`Cibles assignées: ${targetNumbers.length}`);
+            console.log('Liste:', targetNumbers);
+            
+            // Vérifier spécifiquement 21 et 22
+            console.log('Cible 021:', targetNumbers.includes('021'));
+            console.log('Cible 022:', targetNumbers.includes('022'));
+        };
+
         const generateTargets = () => {
+            // Trouver la cible la plus haute
+            let highestTarget = 0;
+            archers.forEach(archer => {
+                if (archer.targetNo) {
+                    const targetNum = parseInt(archer.targetNo.substring(0, 3));
+                    if (targetNum > highestTarget) {
+                        highestTarget = targetNum;
+                    }
+                }
+            });
+            
+            // Générer au moins 30 cibles
+            const maxTargets = Math.max(highestTarget + 5, 30);
+            
             const targets = [];
             for (let targetNum = 1; targetNum <= maxTargets; targetNum++) {
                 const targetId = String(targetNum).padStart(3, '0');
@@ -413,7 +826,30 @@ include('Common/Templates/head.php');
         };
 
         const lastAssignedTarget = getLastAssignedTarget();
-        const displayTargetsCount = Math.max(lastAssignedTarget + 2, 10); // Afficher au moins 10 cibles
+        
+        // Nouvelle logique pour déterminer le nombre de cibles à afficher dans l'overview
+        const getTargetsToDisplay = () => {
+            const assignedTargetNumbers = [];
+            assignedArchers.forEach(archer => {
+                if (archer.targetNo) {
+                    const targetNum = parseInt(archer.targetNo.substring(0, 3));
+                    if (!assignedTargetNumbers.includes(targetNum)) {
+                        assignedTargetNumbers.push(targetNum);
+                    }
+                }
+            });
+            
+            assignedTargetNumbers.sort((a, b) => a - b);
+            
+            if (assignedTargetNumbers.length === 0) {
+                return 10;
+            }
+            
+            const maxAssigned = Math.max(...assignedTargetNumbers);
+            return Math.max(maxAssigned + 2, 10);
+        };
+
+        const displayTargetsCount = getTargetsToDisplay();
 
         // Fonction pour vérifier si une cible a des archers assignés
         const hasAssignedArchers = (targetId) => {
@@ -885,37 +1321,39 @@ include('Common/Templates/head.php');
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
                 <div className="mx-auto">
 
-
                     {/* Barre de cibles miniatures */}
                     <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <div className="w-5 h-5 text-blue-600"><Icons.Grid /></div>
- 								<div className="flex items-center gap-3 ml-2">
-                                <h2 className="text-lg font-bold text-gray-800">Départ :</h2>
-                                <select
-                                    value={selectedSession}
-                                    onChange={(e) => {
-                                        const newSession = Number(e.target.value);
-                                        setSelectedSession(newSession);
-                                        const updatedTargets = recalculateTargets(archers, newSession);
-                                        setTargets(updatedTargets);
-                                    }}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]"
-                                >
-                                    {SESSIONS.map(session => (
-                                        <option key={session.order} value={session.order}>
-                                            {session.description}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                                <div className="flex items-center gap-3 ml-2">
+                                    <h2 className="text-lg font-bold text-gray-800">Départ :</h2>
+                                    <select
+                                        value={selectedSession}
+                                        onChange={(e) => {
+                                            const newSession = Number(e.target.value);
+                                            setSelectedSession(newSession);
+                                            const updatedTargets = recalculateTargets(archers, newSession);
+                                            setTargets(updatedTargets);
+                                        }}
+                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]"
+                                    >
+                                        {SESSIONS.map(session => (
+                                            <option key={session.order} value={session.order}>
+                                                {session.description}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                             
                             <div className="flex items-center gap-2">
-                                {/* BOUTON IMPRIMER */}
+                                {/* BOUTON IMPRIMER PDF SIMPLIFIÉ */}
                                 <button
-                                    onClick={() => generatePDFReport(archers, selectedSession, targets, SESSIONS)}
+                                    onClick={() => {
+                                        debugTargets();
+                                        generateSimplePDF();
+                                    }}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                                     title="Générer un PDF de toutes les cibles"
                                 >
@@ -952,6 +1390,10 @@ include('Common/Templates/head.php');
                                     {Array.from({ length: displayTargetsCount }, (_, index) => {
                                         const targetNum = index + 1;
                                         const targetId = targetNum.toString().padStart(3, '0');
+                                        
+                                        // Vérifier que la cible existe dans targets
+                                        if (!targets.find(t => t.id === targetId)) return null;
+                                        
                                         const combinationImage = getTargetCombinationImage(targetId);
                                         const isValid = isTargetValid(targetId);
                                         const hasArchers = hasAssignedArchers(targetId);
@@ -1005,7 +1447,7 @@ include('Common/Templates/head.php');
                                                 </div>
                                             </div>
                                         );
-                                    })}
+                                    }).filter(Boolean)}
                                 </div>
                                 
                                 {/* Légende pour la barre de miniatures */}
