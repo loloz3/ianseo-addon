@@ -16,13 +16,14 @@
  * Vérification des champs obligatoires (Division, Age Cl., Cl.)
  * Vérification de la cohérence du champ "Finale Ind." (EnIndFEvent)
  * pour TOUS les archers
+ * Virification assignation des cibles
  * 
  * Règle : 
  * - 1ère inscription (session la plus basse) : EnIndFEvent doit être à 1 (Oui)
  * - Inscriptions suivantes : EnIndFEvent doit être à 0 (Non)
  * - Vérification si archer en Doublon
  * - Vérification que tous les archers ont une arme (Div.), une catégorie (Age Cl.) et une classe (Cl.)
- *
+ * - Vérification si des archers ne sont pas assignés à une cible.
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
@@ -169,6 +170,33 @@ $QueryObligatoires = "
 
 $RsObligatoires = safe_r_sql($QueryObligatoires);
 $NbObligatoires = safe_num_rows($RsObligatoires);
+
+
+// Requête pour vérifier les archers sans cible assignée
+$QueryCibles = "
+    SELECT 
+        e.EnId,
+        e.EnCode AS Licence,
+        e.EnFirstName AS Prenom,
+        e.EnName AS Nom,
+        c.CoCode AS Pays,
+        e.EnDivision AS Division,
+        e.EnClass AS Classe,
+        q.QuSession AS Depart,
+        IFNULL(q.QuTargetNo, 'NON ASSIGNÉ') AS Cible
+    FROM Entries e
+    INNER JOIN Qualifications q ON e.EnId = q.QuId
+    LEFT JOIN Countries c ON e.EnCountry = c.CoId AND e.EnTournament = c.CoTournament
+    WHERE e.EnTournament = $TourId
+    AND e.EnCode != ''
+    AND (q.QuTargetNo IS NULL OR q.QuTargetNo = 0 OR q.QuTargetNo = '')
+    ORDER BY e.EnCode, q.QuSession
+";
+
+$RsCibles = safe_r_sql($QueryCibles);
+$NbSansCible = safe_num_rows($RsCibles);
+
+
 
 $PAGE_TITLE = 'Vérification Finale Individuelle';
 $IncludeJquery = true;
@@ -400,6 +428,50 @@ include('Common/Templates/head.php');
     font-size: 20px;
     font-weight: bold;
 }
+.cible-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.cible-table th {
+    background-color: #17a2b8;
+    color: white;
+    padding: 10px;
+    text-align: left;
+    font-weight: bold;
+}
+.cible-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+.cible-table tr:hover {
+    background-color: #e3f2fd;
+}
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+.section-title-info {
+    background-color: #17a2b8;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 30px 0 15px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+.alert-info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-left: 5px solid #17a2b8;
+    color: #0c5460;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+}
 </style>
 
 <div class="Title">Vérification complète des inscriptions</div>
@@ -615,6 +687,64 @@ if ($NbAnomalies == 0):
             (Cette méthode corrige toutes les anomalies "Finale Ind." en une seule opération)
         </p>
     </div>
+<?php endif; ?>
+
+<?php
+// SECTION 4: Vérification des assignations de cibles
+if ($NbSansCible == 0): 
+?>
+    <div class="section-title-success">
+        ✓ Tous les archers sont assignés à une cible
+    </div>
+<?php else: ?>
+    <div class="section-title-info">
+        ⚠️ <?php echo $NbSansCible; ?> archer(s) non assigné(s) à une cible
+    </div>
+    
+    <div class="alert-info">
+        <h3>Archers sans cible assignée</h3>
+        <p>Les archers suivants ne sont pas encore assignés à une cible. Ils doivent l'être pour pouvoir participer au tournoi :</p>
+    </div>
+
+    <table class="cible-table">
+        <thead>
+            <tr>
+                <th>Licence</th>
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Pays</th>
+                <th>Division</th>
+                <th>Classe</th>
+                <th>Départ</th>
+                <th>Cible actuelle</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php 
+        safe_data_seek($RsCibles, 0);
+        while ($Row = safe_fetch($RsCibles)): 
+            $cible = ($Row->Cible == 'NON ASSIGNÉ' || $Row->Cible == 0 || $Row->Cible == '') 
+                ? '<span style="color: #dc3545; font-weight: bold;">NON ASSIGNÉ</span>' 
+                : $Row->Cible;
+            $statut = ($Row->Cible == 'NON ASSIGNÉ' || $Row->Cible == 0 || $Row->Cible == '') 
+                ? '<span class="badge-danger">SANS CIBLE</span>' 
+                : '<span class="badge-info">OK</span>';
+        ?>
+            <tr>
+                <td><strong><?php echo $Row->Licence; ?></strong></td>
+                <td><?php echo $Row->Prenom; ?></td>
+                <td><?php echo $Row->Nom; ?></td>
+                <td><?php echo $Row->Pays; ?></td>
+                <td style="text-align: center;"><?php echo $Row->Division; ?></td>
+                <td style="text-align: center;"><?php echo $Row->Classe; ?></td>
+                <td style="text-align: center;"><?php echo $Row->Depart; ?></td>
+                <td style="text-align: center; font-weight: bold;"><?php echo $cible; ?></td>
+                <td style="text-align: center;"><?php echo $statut; ?></td>
+            </tr>
+        <?php endwhile; ?>
+        </tbody>
+    </table>
 <?php endif; ?>
 
 <script>
