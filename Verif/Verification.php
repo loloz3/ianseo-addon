@@ -1,4 +1,3 @@
-
 <?php
 /**
  * @license Libre - Copyright (c) 2025 Auteur Original
@@ -11,18 +10,19 @@
  * - Auteur Original
  * - Laurent Petroff - Les Archers de Perols - (modif: 2025-12-11)
  * 
- * Dernière modification: 2025-12-31 par Laurent Petroff
+ * Dernière modification: 2026-01-01 par Laurent Petroff
  * rajout du bouton "Tout corriger"
  * Verif doublon
- *
+ * Vérification des champs obligatoires (Division, Age Cl., Cl.)
  * Vérification de la cohérence du champ "Finale Ind." (EnIndFEvent)
  * pour TOUS les archers
  * 
  * Règle : 
  * - 1ère inscription (session la plus basse) : EnIndFEvent doit être à 1 (Oui)
  * - Inscriptions suivantes : EnIndFEvent doit être à 0 (Non)
- *
  * - Vérification si archer en Doublon
+ * - Vérification que tous les archers ont une arme (Div.), une catégorie (Age Cl.) et une classe (Cl.)
+ *
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
@@ -130,6 +130,46 @@ $QueryDoublons = "
 $RsDoublons = safe_r_sql($QueryDoublons);
 $NbDoublons = safe_num_rows($RsDoublons);
 
+// Requête pour vérifier les champs obligatoires
+$QueryObligatoires = "
+    SELECT 
+        e.EnId,
+        e.EnCode AS Licence,
+        e.EnFirstName AS Prenom,
+        e.EnName AS Nom,
+        c.CoCode AS Pays,
+        e.EnDivision AS Division,
+        e.EnClass AS Classe,
+        e.EnAgeClass AS AgeClasse,
+        q.QuSession AS Depart,
+        CASE 
+            WHEN e.EnDivision = '' OR e.EnDivision IS NULL THEN 'Division manquante'
+            WHEN e.EnAgeClass = '' OR e.EnAgeClass IS NULL THEN 'Age Cl. manquant'
+            WHEN e.EnClass = '' OR e.EnClass IS NULL THEN 'Classe manquante'
+            ELSE 'OK'
+        END AS Probleme,
+        CASE 
+            WHEN e.EnDivision = '' OR e.EnDivision IS NULL THEN 'division'
+            WHEN e.EnAgeClass = '' OR e.EnAgeClass IS NULL THEN 'age_classe'
+            WHEN e.EnClass = '' OR e.EnClass IS NULL THEN 'classe'
+            ELSE 'ok'
+        END AS ChampManquant
+    FROM Entries e
+    INNER JOIN Qualifications q ON e.EnId = q.QuId
+    LEFT JOIN Countries c ON e.EnCountry = c.CoId AND e.EnTournament = c.CoTournament
+    WHERE e.EnTournament = $TourId
+    AND e.EnCode != ''
+    AND (
+        e.EnDivision = '' OR e.EnDivision IS NULL
+        OR e.EnAgeClass = '' OR e.EnAgeClass IS NULL
+        OR e.EnClass = '' OR e.EnClass IS NULL
+    )
+    ORDER BY e.EnCode, q.QuSession
+";
+
+$RsObligatoires = safe_r_sql($QueryObligatoires);
+$NbObligatoires = safe_num_rows($RsObligatoires);
+
 $PAGE_TITLE = 'Vérification Finale Individuelle';
 $IncludeJquery = true;
 
@@ -164,6 +204,25 @@ include('Common/Templates/head.php');
 }
 .anomaly-table tr.inscription-unique {
     background-color: #ffe4b5;
+}
+.obligatoire-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.obligatoire-table th {
+    background-color: #ffc107;
+    color: #856404;
+    padding: 10px;
+    text-align: left;
+    font-weight: bold;
+}
+.obligatoire-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+.obligatoire-table tr:hover {
+    background-color: #fff3cd;
 }
 .summary {
     background-color: #d1ecf1;
@@ -204,6 +263,15 @@ include('Common/Templates/head.php');
     text-align: center;
     font-size: 18px;
     font-weight: bold;
+}
+.alert-info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-left: 5px solid #17a2b8;
+    color: #0c5460;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
 }
 .no-anomaly {
     background-color: #d4edda;
@@ -269,6 +337,14 @@ include('Common/Templates/head.php');
     border-radius: 3px;
     font-size: 0.8em;
 }
+.badge-warning {
+    background-color: #ffc107;
+    color: #856404;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
 .doublon-table {
     width: 100%;
     border-collapse: collapse;
@@ -277,8 +353,9 @@ include('Common/Templates/head.php');
 .doublon-table th {
     background-color: #dc3545;
     color: white;
-    padding: 8px;
+    padding: 10px;
     text-align: left;
+    font-weight: bold;
 }
 .doublon-table td {
     padding: 8px;
@@ -287,16 +364,55 @@ include('Common/Templates/head.php');
 .doublon-table tr:hover {
     background-color: #f8d7da;
 }
+.section-title {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 30px 0 15px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+.section-title-success {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 30px 0 15px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+.section-title-warning {
+    background-color: #ffc107;
+    color: #856404;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 30px 0 15px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+.section-title-danger {
+    background-color: #dc3545;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 30px 0 15px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
 </style>
 
-<div class="Title">Vérification : Finale Individuelle - Tous les archers</div>
+<div class="Title">Vérification complète des inscriptions</div>
 
 <?php 
-// Afficher l'alerte pour les doublons dans un même départ
+// SECTION 1: Doublons dans un même départ
 if ($NbDoublons > 0): 
 ?>
+    <div class="section-title-danger">
+        ⚠️ ALERTE : <?php echo $NbDoublons; ?> cas d'archer(s) en double dans un même départ
+    </div>
+    
     <div class="alert-danger">
-        <h3>⚠️ ALERTE : <?php echo $NbDoublons; ?> cas d'archer(s) en double dans un même départ</h3>
         <p>Les archers suivants sont inscrits plusieurs fois dans le MÊME départ. Ceci est anormal et nécessite une correction manuelle :</p>
         
         <table class="doublon-table">
@@ -329,16 +445,88 @@ if ($NbDoublons > 0):
             Un archer ne peut être inscrit qu'une seule fois par départ.
         </p>
     </div>
+<?php else: ?>
+    <div class="section-title-success">
+        ✓ Aucun doublon détecté dans les départs
+    </div>
 <?php endif; ?>
 
-<?php if ($NbAnomalies == 0): ?>
-    <div class="alert-success">
-        ✓ Aucune anomalie détectée dans la configuration "Finale Ind." !
+<?php 
+// SECTION 2: Vérification des champs obligatoires
+if ($NbObligatoires == 0): 
+?>
+    <div class="section-title-success">
+        ✓ Tous les archers ont bien une arme (Division), une catégorie d'âge (Age Cl.) et une classe (Cl.)
     </div>
 <?php else: ?>
+    <div class="section-title-warning">
+        ⚠️ <?php echo $NbObligatoires; ?> archer(s) avec des champs obligatoires manquants
+    </div>
+    
+    <div class="alert-warning">
+        <h3>Champs obligatoires manquants</h3>
+        <p>Les champs suivants sont obligatoires pour chaque inscription :</p>
+        <ul>
+            <li><strong>Division (Arme)</strong> : Arc classique, arc à poulies, arc nu, arc traditionnel, etc.</li>
+            <li><strong>Age Cl. (Catégorie d'âge)</strong> : Benjamins, Cadets, Juniors, Séniors, Masters, etc.</li>
+            <li><strong>Classe</strong> : Classe de l'archer dans sa division et catégorie d'âge</li>
+        </ul>
+    </div>
+
+    <table class="obligatoire-table">
+        <thead>
+            <tr>
+                <th>Licence</th>
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Pays</th>
+                <th>Départ</th>
+                <th>Division actuelle</th>
+                <th>Age Cl. actuelle</th>
+                <th>Classe actuelle</th>
+                <th>Problème</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php 
+        safe_data_seek($RsObligatoires, 0);
+        while ($Row = safe_fetch($RsObligatoires)): 
+            $division = !empty($Row->Division) ? $Row->Division : '<span style="color: #dc3545; font-weight: bold;">MANQUANT</span>';
+            $ageClasse = !empty($Row->AgeClasse) ? $Row->AgeClasse : '<span style="color: #dc3545; font-weight: bold;">MANQUANT</span>';
+            $classe = !empty($Row->Classe) ? $Row->Classe : '<span style="color: #dc3545; font-weight: bold;">MANQUANT</span>';
+        ?>
+            <tr>
+                <td><strong><?php echo $Row->Licence; ?></strong></td>
+                <td><?php echo $Row->Prenom; ?></td>
+                <td><?php echo $Row->Nom; ?></td>
+                <td><?php echo $Row->Pays; ?></td>
+                <td style="text-align: center;"><?php echo $Row->Depart; ?></td>
+                <td style="text-align: center;"><?php echo $division; ?></td>
+                <td style="text-align: center;"><?php echo $ageClasse; ?></td>
+                <td style="text-align: center;"><?php echo $classe; ?></td>
+                <td style="font-weight: bold; color: #856404;">
+                    <span class="badge-warning"><?php echo $Row->Probleme; ?></span>
+                </td>
+            </tr>
+        <?php endwhile; ?>
+        </tbody>
+    </table>
+<?php endif; ?>
+
+<?php 
+// SECTION 3: Vérification Finale Individuelle
+if ($NbAnomalies == 0): 
+?>
+    <div class="section-title-success">
+        ✓ Aucune anomalie détectée dans la configuration "Finale Ind."
+    </div>
+<?php else: ?>
+    <div class="section-title">
+        ⚠️ <?php echo $NbAnomalies; ?> anomalie(s) détectée(s) dans la configuration "Finale Ind."
+    </div>
+    
     <div class="summary">
-        <h2>⚠️ <?php echo $NbAnomalies; ?> anomalie(s) détectée(s) dans la configuration "Finale Ind."</h2>
-        <p><strong>Rappel de la règle :</strong></p>
+        <h2>Rappel de la règle pour "Finale Ind." :</h2>
         <ul>
             <li><strong>Archer inscrit 1 fois</strong> → "Finale Ind." doit être à <strong>OUI</strong></li>
             <li><strong>Archer inscrit plusieurs fois :</strong>
@@ -368,7 +556,6 @@ if ($NbDoublons > 0):
         </thead>
         <tbody>
         <?php 
-        // Réinitialiser le curseur pour réutiliser les résultats
         safe_data_seek($Rs, 0);
         $previousCode = '';
         while ($Row = safe_fetch($Rs)): 
@@ -422,12 +609,13 @@ if ($NbDoublons > 0):
 
     <div style="margin: 20px 0; text-align: center;">
         <button id="corriger-tout-sql" class="fix-button-large">
-            ⚡ Corriger toutes les anomalies (<?php echo $NbAnomalies; ?>)
+            ⚡ Corriger toutes les anomalies Finale Ind. (<?php echo $NbAnomalies; ?>)
         </button>
         <p style="font-size: 12px; color: #666; margin-top: 5px;">
-            (Cette méthode corrige toutes les anomalies en une seule opération)
+            (Cette méthode corrige toutes les anomalies "Finale Ind." en une seule opération)
         </p>
     </div>
+<?php endif; ?>
 
 <script>
 function corrigerArcher(enId, nouvelleValeur) {
@@ -520,7 +708,7 @@ function showCustomNotification(message, type = 'success') {
 // Fonction pour corriger toutes les anomalies en une seule opération
 $(document).ready(function() {
     $('#corriger-tout-sql').click(function() {
-        if (!confirm('Êtes-vous sûr de vouloir corriger TOUTES les anomalies en une seule opération ?\n\n' + 
+        if (!confirm('Êtes-vous sûr de vouloir corriger TOUTES les anomalies "Finale Ind." en une seule opération ?\n\n' + 
                      'Cette action va modifier ' + <?php echo $NbAnomalies; ?> + ' inscription(s).\n' +
                      'Cette méthode est plus rapide mais ne montre pas la progression détaillée.')) {
             return;
@@ -546,6 +734,5 @@ $(document).ready(function() {
     });
 });
 </script>
-<?php endif; ?>
 
 <?php include('Common/Templates/tail.php'); ?>
