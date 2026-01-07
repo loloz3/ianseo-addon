@@ -2,7 +2,7 @@
 # ianseo-addon
 
 **FR 🇫🇷**  
-Module personnalisable pour **I@nseo** afin d’étendre l’expérience d’organisation : vues graphiques, vérifications des inscriptions (1 départ/2 départ...) et impression des « autres tirs ». Le module s’installe dans **Modules/Custom** pour rester intact lors des mises à jour de I@nseo. [3](https://www.ianseo.net/Release/)
+Module personnalisable pour **I@nseo** afin d’étendre l’expérience d’organisation : vues graphiques, vérifications des inscriptions (1 départ/2 départ...), impression des « autres tirs », greffe, aide concours. Le module s’installe dans **Modules/Custom** pour rester intact lors des mises à jour de I@nseo. [3](https://www.ianseo.net/Release/)
 
 **EN 🇬🇧**  
 Customizable module for **I@nseo** that extends the competition workflow with graphical views, consistency checks, and print for archers shooting outside the tournament. Installs under **Modules/Custom** to survive I@nseo updates. [3](https://www.ianseo.net/Release/)
