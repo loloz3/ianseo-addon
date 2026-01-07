@@ -512,20 +512,14 @@ include('Common/Templates/head.php');
                 <a href="/Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
             </li>
             
-            <li class="task-item-afaire">
+            <li class="task-item">
                 <span class="task-icon">📱</span>
-                <a href="Mobile/ViewScores.php" class="task-link" target="_blank">Vision remontée mobile (téléphones)</a>
-                <div class="task-actions">
-                    <a href="Mobile/ViewScores.php" class="btn-small btn-info" target="_blank">à faire</a>
-                </div>
+                <a href="/Qualification/CheckTargetUpdate.php" class="task-link" target="_blank">Contrôles des données</a>
             </li>
             
-            <li class="task-item-afaire">
+            <li class="task-item">
                 <span class="task-icon">🔄</span>
-                <a href="Export/IanseoExport.php" class="task-link" target="_blank">Envoi à IANSEO des résultats</a>
-				<div class="task-actions">
-                    <a href="Mobile/ViewScores.php" class="btn-small btn-info" target="_blank">à faire</a>
-                </div>
+                <a href="/Tournament/SetCredentials.php?return=Tournament/UploadResults.php" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
             </li>
             
         </ul>
@@ -550,12 +544,9 @@ include('Common/Templates/head.php');
                 <a href="/Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
             </li>
             
-            <li class="task-item-afaire">
+            <li class="task-item">
                 <span class="task-icon">📤</span>
-                <a href="Export/FFTAExport.php" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
-                <div class="task-actions">
-                    <a href="Mobile/ViewScores.php" class="btn-small btn-info" target="_blank">à faire</a>
-                </div>
+                <a href="/Modules/Sets/FR/exports/" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
             </li>
             
   
