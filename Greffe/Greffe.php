@@ -10,8 +10,9 @@
  * - Auteur Original
  * - Laurent Petroff - Les Archers de Perols - (modif: 2025-12-23)
  * 
- * Dernière modification: 2025-12-31 par Laurent Petroff
+ * Dernière modification: 2026-01-07 par Laurent Petroff
  * Ajout de la Facture
+ * Impression et sauvegarde
  *
  * Greffe.php
  * Page simple pour lister les archers inscrits pour faire le greffe.
