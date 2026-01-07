@@ -597,6 +597,7 @@ GROUP BY e.EnFirstName, e.EnName";
         <body>
             <div class="print-button">
                 <button onclick="window.print()">🖨️ Imprimer la facture</button>
+                <button onclick="saveIndividualInvoice()">💾 Sauvegarder la facture</button>
                 <button onclick="window.history.back()">← Retour à la liste</button>
             </div>
             
@@ -802,14 +803,191 @@ GROUP BY e.EnFirstName, e.EnName";
 </div>
             </div>
             
-            <script>
-                // Auto-imprimer si demandé
-                <?php if (isset($_GET['print']) && $_GET['print'] == '1'): ?>
-                window.onload = function() {
-                    window.print();
-                };
-                <?php endif; ?>
-            </script>
+<script>
+    // Fonction pour sauvegarder la facture individuelle (version simple - serveur seulement)
+    window.saveIndividualInvoice = function() {
+        console.log('Fonction saveIndividualInvoice appelée');
+        
+        // Afficher une indication de chargement
+        const saveBtn = document.querySelector('button[onclick="saveIndividualInvoice()"]');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '⏳ Sauvegarde...';
+        saveBtn.disabled = true;
+        
+        try {
+            // Créer un clone de la facture
+            const invoiceContent = document.querySelector('.invoice-container').cloneNode(true);
+            
+            // Supprimer les boutons
+            const printButton = invoiceContent.querySelector('.print-button');
+            if (printButton) printButton.remove();
+            
+            // Récupérer les informations de l'archer depuis la page
+            const infoRows = document.querySelectorAll('.info-row');
+            let nom = '', prenom = '';
+            
+            infoRows.forEach(row => {
+                const label = row.querySelector('.info-label');
+                const value = row.querySelector('.info-value');
+                
+                if (!label || !value) return;
+                
+                const labelText = label.textContent.trim();
+                const valueText = value.textContent.trim();
+                
+                if (labelText.includes('Nom')) {
+                    const span = value.querySelector('span');
+                    nom = span ? span.textContent.trim() : valueText;
+                } else if (labelText.includes('Prénom')) {
+                    const span = value.querySelector('span');
+                    prenom = span ? span.textContent.trim() : valueText;
+                }
+            });
+            
+            // Si on n'a pas réussi à récupérer via les sélecteurs
+            if (!nom || !prenom) {
+                const title = document.title;
+                if (title.includes('-')) {
+                    const namePart = title.split('-')[1].trim();
+                    const names = namePart.split(' ');
+                    if (names.length >= 2) {
+                        prenom = names[0];
+                        nom = names.slice(1).join(' ');
+                    }
+                }
+            }
+            
+            // Créer un nom de fichier sécurisé
+            const now = new Date();
+            const dateStr = now.getFullYear() + 
+                           String(now.getMonth() + 1).padStart(2, '0') + 
+                           String(now.getDate()).padStart(2, '0') + '_' +
+                           String(now.getHours()).padStart(2, '0') + 
+                           String(now.getMinutes()).padStart(2, '0') + 
+                           String(now.getSeconds()).padStart(2, '0');
+            
+            // Nettoyer les noms pour le fichier
+            const safePrenom = (prenom || 'prenom').replace(/[^\w\s]/gi, '').replace(/\s+/g, '_');
+            const safeNom = (nom || 'nom').replace(/[^\w\s]/gi, '').replace(/\s+/g, '_');
+            const filename = `facture_${safePrenom}_${safeNom}_${dateStr}.html`;
+            
+            // Récupérer tous les styles de la page
+            const styles = Array.from(document.querySelectorAll('style'))
+                .map(style => style.innerHTML)
+                .join('\n');
+            
+            // Créer le HTML complet
+            const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture - ${prenom} ${nom}</title>
+    <style>
+        ${styles}
+    </style>
+</head>
+<body>
+    ${invoiceContent.innerHTML}
+</body>
+</html>`;
+            
+            // Envoyer au serveur via fetch (AJAX)
+            fetch('save_invoice.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'html_content=' + encodeURIComponent(html) + '&filename=' + encodeURIComponent(filename)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(`✅ Facture sauvegardée :<br>${data.filename}`, 'success');
+                } else {
+                    throw new Error(data.message || 'Erreur inconnue');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showNotification('❌ Erreur lors de la sauvegarde : ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Restaurer le bouton
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            });
+            
+        } catch (error) {
+            console.error('Erreur:', error);
+            showNotification('❌ Erreur : ' + error.message, 'error');
+            
+            // Restaurer le bouton en cas d'erreur
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    };
+    
+    // Fonction utilitaire pour afficher des notifications
+    window.showNotification = function(message, type = 'success') {
+        // Supprimer toute notification existante
+        const existingNotifications = document.querySelectorAll('.custom-notification');
+        existingNotifications.forEach(notif => {
+            if (notif.parentNode) {
+                notif.parentNode.removeChild(notif);
+            }
+        });
+        
+        // Créer l'élément de notification
+        const notification = document.createElement('div');
+        notification.className = `custom-notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">${message}</div>
+        `;
+        
+        // Style pour la notification
+        notification.style.position = 'fixed';
+        notification.style.bottom = '20px';
+        notification.style.right = '20px';
+        notification.style.padding = '12px 20px';
+        notification.style.borderRadius = '5px';
+        notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        notification.style.zIndex = '9999';
+        notification.style.maxWidth = '400px';
+        notification.style.fontSize = '14px';
+        notification.style.animation = 'slideIn 0.3s ease-out, fadeOut 0.3s ease-out 3.7s forwards';
+        notification.style.backgroundColor = type === 'success' ? '#d4edda' : 
+                                           type === 'error' ? '#f8d7da' : 
+                                           type === 'info' ? '#d1ecf1' : '#fefefe';
+        notification.style.color = type === 'success' ? '#155724' : 
+                                  type === 'error' ? '#721c24' : 
+                                  type === 'info' ? '#0c5460' : '#333';
+        notification.style.border = type === 'success' ? '1px solid #c3e6cb' : 
+                                   type === 'error' ? '1px solid #f5c6cb' : 
+                                   type === 'info' ? '1px solid #bee5eb' : '1px solid #ddd';
+        notification.style.borderLeft = type === 'success' ? '4px solid #28a745' : 
+                                       type === 'error' ? '4px solid #dc3545' : 
+                                       type === 'info' ? '4px solid #17a2b8' : '4px solid #6c757d';
+        
+        // Ajouter au body
+        document.body.appendChild(notification);
+        
+        // Supprimer la notification après l'animation
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 4000);
+    };
+    
+    // Auto-imprimer si demandé
+    <?php if (isset($_GET['print']) && $_GET['print'] == '1'): ?>
+    window.onload = function() {
+        window.print();
+    };
+    <?php endif; ?>
+</script>
+
         </body>
         </html>
         <?php
