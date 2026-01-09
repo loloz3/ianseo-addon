@@ -516,6 +516,11 @@ include('Common/Templates/head.php');
                 <span class="task-icon">📱</span>
                 <a href="/Qualification/CheckTargetUpdate.php" class="task-link" target="_blank">Contrôles des données</a>
             </li>
+			
+			<li class="task-item">
+                <span class="task-icon">📱</span>
+                <a href="/Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" target="_blank">Contrôles des données (perso à tester)</a>
+            </li>
             
             <li class="task-item">
                 <span class="task-icon">🔄</span>
