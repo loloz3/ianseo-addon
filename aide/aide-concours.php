@@ -1,4 +1,3 @@
-
 <?php
 /**
  * @license Libre - Copyright (c) 2025 Auteur Original
@@ -75,6 +74,10 @@ sort($existingSessions);
 if (empty($existingSessions)) {
     $existingSessions = array(1, 2); // Sessions par défaut
 }
+
+// Déterminer la racine relative en fonction de l'emplacement du fichier
+// Si le fichier est dans Modules/Custom/aide/, on remonte de 3 niveaux pour atteindre la racine
+$basePath = '../../../';
 
 include('Common/Templates/head.php');
 ?>
@@ -402,37 +405,37 @@ include('Common/Templates/head.php');
         <ul class="task-list">
             <li class="task-item">
                 <span class="task-icon">🏁</span>
-                <a href="/Tournament/index.php?New=" class="task-link" target="_blank">Créer une nouvelle compétition</a>
+                <a href="<?php echo $basePath; ?>Tournament/index.php?New=" class="task-link" target="_blank">Créer une nouvelle compétition</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">👥</span>
-                <a href="/Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" target="_blank">Ajouter des archers / participants</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" target="_blank">Ajouter des archers / participants</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">📝</span>
-                <a href="/Partecipants/index.php" class="task-link" >List des participants</a>
+                <a href="<?php echo $basePath; ?>Partecipants/index.php" class="task-link" >List des participants</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">✅</span>
-                <a href="/Modules/Custom/Verif/Verification.php" class="task-link" >Vérification complète des inscriptions</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/Verif/Verification.php" class="task-link" >Vérification complète des inscriptions</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🎯</span>
-                <a href="/Modules/Custom/GraphicalView/DragDropPlan.php" class="task-link" >Assignation graphique des cibles</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/GraphicalView/DragDropPlan.php" class="task-link" >Assignation graphique des cibles</a>
             </li>
             
            
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="/Partecipants/PrnAlphabetical.php?tf=1" class="task-link" target="_blank">Pour affichage / Liste des Participants par Ordre Alphabétique
+                <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" target="_blank">Pour affichage / Liste des Participants par Ordre Alphabétique
 + Type de Cible</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="/Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
+                    <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
                        class="btn-small btn-primary" 
                        target="_blank">Départ <?php echo $session; ?></a>
                     <?php endforeach; ?>
@@ -462,7 +465,7 @@ include('Common/Templates/head.php');
         <ul class="task-list">
             <li class="task-item">
                 <span class="task-icon">💶</span>
-                <a href="/Modules/Custom/Greffe/Greffe.php" class="task-link" >Greffe - Gestion des tirs</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/Greffe/Greffe.php" class="task-link" >Greffe - Gestion des tirs</a>
             </li>
 
             <li class="task-item">
@@ -470,7 +473,7 @@ include('Common/Templates/head.php');
                 <a href="" class="task-link" >Impression des feuilles pour controle du matériel</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="/Partecipants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
+                    <a href="<?php echo $basePath; ?>Partecipants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
                        class="btn-small btn-primary" 
                        target="_blank">Départ <?php echo $session; ?></a>
                     <?php endforeach; ?>
@@ -479,13 +482,13 @@ include('Common/Templates/head.php');
 			
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="/Qualification/PrintScore.php" class="task-link" >Impression des feuilles de marque</a>
+                <a href="<?php echo $basePath; ?>Qualification/PrintScore.php" class="task-link" >Impression des feuilles de marque</a>
                 <div class="task-actions">                    
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="/Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=1" 
+                    <a href="<?php echo $basePath; ?>Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=1" 
                        class="btn-small btn-primary" 
                        target="_blank">D<?php echo $session; ?>-1</a>
-                    <a href="/Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=2" 
+                    <a href="<?php echo $basePath; ?>Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=2" 
                        class="btn-small btn-primary" 
                        target="_blank">D<?php echo $session; ?>-2</a>
                     <?php endforeach; ?>
@@ -494,37 +497,37 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">⌨️</span>
-                <a href="/Modules/Barcodes/GetScoreBarCode.php" class="task-link" target="_blank">Saisie des résultats</a>
+                <a href="<?php echo $basePath; ?>Modules/Barcodes/GetScoreBarCode.php" class="task-link" target="_blank">Saisie des résultats</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🧮</span>
-                <a href="/Qualification/index.php" class="task-link" target="_blank">Mise à jour du classement (à faire pour tout les Départs/Distances)</a>
+                <a href="<?php echo $basePath; ?>Qualification/index.php" class="task-link" target="_blank">Mise à jour du classement (à faire pour tout les Départs/Distances)</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="/Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
+                <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="/Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">📱</span>
-                <a href="/Qualification/CheckTargetUpdate.php" class="task-link" target="_blank">Contrôles des données</a>
+                <a href="<?php echo $basePath; ?>Qualification/CheckTargetUpdate.php" class="task-link" target="_blank">Contrôles des données</a>
             </li>
 			
 			<li class="task-item">
                 <span class="task-icon">📱</span>
-                <a href="/Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" target="_blank">Contrôles des données (perso à tester)</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" target="_blank">Contrôles des données (perso à tester)</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🔄</span>
-                <a href="/Tournament/SetCredentials.php?return=Tournament/UploadResults.php" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
+                <a href="<?php echo $basePath; ?>Tournament/SetCredentials.php?return=Tournament/UploadResults.php" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
             </li>
             
         </ul>
@@ -541,22 +544,22 @@ include('Common/Templates/head.php');
 		
             <li class="task-item">
                 <span class="task-icon">🏆️</span>
-                <a href="/Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
+                <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="/Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">📤</span>
-                <a href="/Modules/Sets/FR/exports/" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
+                <a href="<?php echo $basePath; ?>Modules/Sets/FR/exports/" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
             </li>
             
 			<li class="task-item">
                 <span class="task-icon">🩺</span>
-                <a href="/Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
             </li>
   
 
@@ -568,7 +571,7 @@ include('Common/Templates/head.php');
 
 <script>
 function sauvegarder() {
-    showNotification('Sauvegarde des résultats en cours...', 'info');
+    //showNotification('Sauvegarde des résultats en cours...', 'info');
     
     // Appeler le script d'export via AJAX
     sauvegarderTournamentExport();
@@ -577,7 +580,7 @@ function sauvegarder() {
 function sauvegarderTournamentExport() {
     // Créer une requête AJAX vers TournamentExport.php
     const xhr = new XMLHttpRequest();
-    xhr.open('GET', '/Tournament/TournamentExport.php', true);
+    xhr.open('GET', '<?php echo $basePath; ?>Tournament/TournamentExport.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     
     xhr.onreadystatechange = function() {
@@ -588,7 +591,7 @@ function sauvegarderTournamentExport() {
                 console.log('Réponse du serveur:', xhr.responseText);
                 
                 // Optionnel: télécharger le fichier généré si le script le permet
-                window.location.href = '/Tournament/TournamentExport.php?download=true';
+                window.location.href = '<?php echo $basePath; ?>Tournament/TournamentExport.php?download=true';
             } else {
                 // Erreur
                 showNotification('❌ Erreur lors de l\'export Tournament', 'error');
