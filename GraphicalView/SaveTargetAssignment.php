@@ -40,13 +40,26 @@ if ($EnId <= 0) {
     exit;
 }
 
-// Validation du format de QuTargetNo si non vide
-if ($QuTargetNo !== '' && !preg_match('/^[1-9]\d{3}[A-D]$/', $QuTargetNo)) {
-    echo json_encode([
-        'success' => false,
-        'error' => 'Format de cible invalide (attendu: 1001A, 1002B, etc.)'
-    ]);
-    exit;
+// DÉCOMPOSER QuTargetNo EN QuTarget ET QuLetter
+$QuTarget = 0;
+$QuLetter = '';
+
+if ($QuTargetNo !== '') {
+    // Validation du format de QuTargetNo si non vide
+    if (!preg_match('/^[1-9]\d{3}[A-D]$/', $QuTargetNo)) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Format de cible invalide (attendu: 1001A, 1002B, etc.)'
+        ]);
+        exit;
+    }
+    
+    // Extraire la partie numérique (les 3 derniers chiffres après le premier)
+    // Exemple: "1013B" -> cible "013" = 13
+    $QuTarget = intval(substr($QuTargetNo, 1, 3));
+    
+    // Extraire la lettre (dernier caractère)
+    $QuLetter = substr($QuTargetNo, -1);
 }
 
 try {
@@ -65,9 +78,10 @@ try {
         exit;
     }
 
-    // Mettre à jour la qualification
+    // Mettre à jour la qualification AVEC QuTarget ET QuLetter SÉPARÉS
     $UpdateQuery = "UPDATE Qualifications SET 
-                    QuTargetNo=" . StrSafe_DB($QuTargetNo) . ",
+                    QuTarget=" . StrSafe_DB($QuTarget) . ",
+                    QuLetter=" . StrSafe_DB($QuLetter) . ",
                     QuSession=" . StrSafe_DB($QuSession) . "
                     WHERE QuId=" . StrSafe_DB($EnId);
     
@@ -79,7 +93,8 @@ try {
             'message' => 'Assignment sauvegardé avec succès',
             'data' => [
                 'EnId' => $EnId,
-                'QuTargetNo' => $QuTargetNo,
+                'QuTarget' => $QuTarget,
+                'QuLetter' => $QuLetter,
                 'QuSession' => $QuSession
             ]
         ]);
