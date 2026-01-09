@@ -554,6 +554,10 @@ include('Common/Templates/head.php');
                 <a href="/Modules/Sets/FR/exports/" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
             </li>
             
+			<li class="task-item">
+                <span class="task-icon">🩺</span>
+                <a href="/Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
+            </li>
   
 
         </ul>
