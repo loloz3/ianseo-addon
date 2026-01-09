@@ -655,10 +655,10 @@ function displayTargets(targets) {
         // Session
         $('<div>').addClass('target-session').text('Départ ' + target.session).appendTo(targetCard);
         
-        // Nombre moyen de flèches
+        // Nombre de flèches
         if (target.averageArrows > 0) {
             $('<div>').addClass('target-arrows')
-                .html(`<i class="fas fa-bullseye"></i> ${target.averageArrows} flèches moy.`)
+                .html(`<i class="fas fa-bullseye"></i> ${target.averageArrows} flèches`)
                 .appendTo(targetCard);
         }
         
@@ -726,10 +726,10 @@ function showTargetDetails(target) {
             
             if (totalArrows % 3 !== 0) {
                 arrowClass = 'error';
-                statusText = 'Pas multiple de 3';
+                statusText = 'A vérifier';
             } else if (target.hasDifferentArrowCounts && archer.arrowsTotal !== target.averageArrows) {
                 arrowClass = 'warning';
-                statusText = 'Différent des autres';
+                statusText = 'Scores en cours';
             }
             
             const row = $('<tr>');
