@@ -11,7 +11,6 @@ checkACL(AclParticipants, AclReadOnly);
 
 $TourId = $_SESSION['TourId'];
 
-$PAGE_TITLE = 'Vérification Flèches par Session';
 $IncludeJquery = true;
 
 include('Common/Templates/head.php');
@@ -381,14 +380,11 @@ include('Common/Templates/head.php');
 </style>
 
 <div class="verification-container">
-    <div class="title-section">
-        🔍 Vérification des Flèches par Session
-    </div>
     
     <div class="controls">
         <div class="refresh-info">
             <span id="status-indicator" class="status-indicator status-active"></span>
-            <span id="status-text">Vérification active - Actualisation toutes les 5 secondes</span>
+            <span id="status-text">Actualisation toutes les 5 secondes</span>
             <span id="last-check" style="float: right;"></span>
         </div>
         
@@ -404,7 +400,7 @@ include('Common/Templates/head.php');
             </button>
         </div>
         
-        <h3 style="margin-top: 20px; margin-bottom: 10px;">Sélectionnez une session :</h3>
+        <h3 style="margin-top: 20px; margin-bottom: 10px;">Sélectionnez un départ :</h3>
         <div class="session-selector" id="session-selector">
             <!-- Les boutons de session seront générés dynamiquement -->
         </div>
@@ -438,12 +434,12 @@ include('Common/Templates/head.php');
     </div>
     
     <div id="details-panel" class="details-panel">
-        <h3>Détails de la cible <span id="detail-target-number"></span> (Session <span id="detail-session"></span>)</h3>
+        <h3>Détails de la cible <span id="detail-target-number"></span> (Départ <span id="detail-session"></span>)</h3>
         <div id="detail-status"></div>
         <table class="details-table" id="detail-table">
             <thead>
                 <tr>
-                    <th>Session</th>
+                    <th>Départ</th>
                     <th>Cible</th>
                     <th>Lettre</th>
                     <th>Archer</th>
@@ -465,7 +461,7 @@ include('Common/Templates/head.php');
 let checkInterval;
 let isChecking = true;
 let lastCheckTime = null;
-let currentSession = '1'; // Session 1 par défaut
+let currentSession = '1'; // Départ 1 par défaut
 let availableSessions = [];
 
 // Fonction pour formater la date/heure
@@ -521,7 +517,7 @@ function updateSessionSelector(sessionsData) {
     Object.keys(sessionsData).sort((a, b) => a - b).forEach(session => {
         const sessionBtn = $('<button>')
             .addClass('session-btn' + (currentSession === session ? ' active' : ''))
-            .text('Session ' + session)
+            .text('Départ ' + session)
             .click(function() {
                 selectSession(session);
             });
@@ -534,7 +530,7 @@ function updateSessionSelector(sessionsData) {
     if (currentSession === '1' && availableSessions.includes('1')) {
         selector.append(
             $('<span>').addClass('default-session-info')
-                .text('Session 1 active par défaut')
+                .text('Départ 1 active par défaut')
         );
     }
 }
@@ -570,8 +566,8 @@ function updateSessionStats(stats) {
     const sessionStats = stats.sessionStats?.[currentSession] || {};
     
     $('<div>').addClass('stat-item').html(`
-        <div class="stat-value">Session ${currentSession}</div>
-        <div class="stat-label">Session active</div>
+        <div class="stat-value">Départ ${currentSession}</div>
+        <div class="stat-label">Départ active</div>
     `).appendTo(statsContainer);
     
     $('<div>').addClass('stat-item').html(`
@@ -644,7 +640,7 @@ function displayTargets(targets) {
             <div class="no-targets-message">
                 <i class="fas fa-info-circle" style="font-size: 48px; margin-bottom: 15px;"></i>
                 <h3>Aucune cible trouvée</h3>
-                <p>Aucune donnée de flèches n'est disponible pour la session ${currentSession}.</p>
+                <p>Aucune donnée de flèches n'est disponible pour le départ ${currentSession}.</p>
             </div>
         `);
         return;
@@ -657,7 +653,7 @@ function displayTargets(targets) {
         $('<div>').addClass('target-number').text(target.targetNumber).appendTo(targetCard);
         
         // Session
-        $('<div>').addClass('target-session').text('Session ' + target.session).appendTo(targetCard);
+        $('<div>').addClass('target-session').text('Départ ' + target.session).appendTo(targetCard);
         
         // Nombre moyen de flèches
         if (target.averageArrows > 0) {
