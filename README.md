@@ -70,7 +70,7 @@ These modules and their documentation were created with the assistance of Artifi
 📁 Destination sur votre serveur :
 C:\ianseo\htdocs\Modules\Custom\ (Windows)
 /var/www/html/ianseo/Modules/Custom/ (Linux)
-```bash
+```
 
 4. **Permissions (Linux)** : si nécessaire, donnez les droits d'écriture :
 ```bash
