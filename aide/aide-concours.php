@@ -254,8 +254,16 @@ include('Common/Templates/head.php');
     text-align: center;
 }
 
-.save-button {
-    background-color: #28a745;
+.github-section {
+    background-color: #f6f8fa;
+    border: 2px dashed #d1d5da;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.save-button, .github-button {
     color: white;
     border: none;
     padding: 10px 20px;
@@ -266,51 +274,39 @@ include('Common/Templates/head.php');
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    margin: 5px;
+}
+
+.save-button {
+    background-color: #28a745;
 }
 
 .save-button:hover {
     background-color: #218838;
 }
 
-.quick-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
+.github-button {
+    background-color: #333333;
 }
 
-.stat-card {
-    background-color: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+.github-button:hover {
+    background-color: #24292e;
 }
 
-.stat-value {
-    font-size: 24px;
-    font-weight: bold;
-    color: #2c5f2d;
+.github-button-success {
+    background-color: #28a745;
 }
 
-.stat-label {
-    font-size: 14px;
-    color: #6c757d;
-    margin-top: 5px;
+.github-button-success:hover {
+    background-color: #218838;
 }
 
-.info-box {
-    background-color: #e7f3ff;
-    border: 1px solid #b3d7ff;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 20px 0;
+.github-button-info {
+    background-color: #0366d6;
 }
 
-.info-box h4 {
-    color: #0056b3;
-    margin-top: 0;
+.github-button-info:hover {
+    background-color: #0056b3;
 }
 
 /* Styles pour les boutons avec aide */
@@ -320,67 +316,9 @@ include('Common/Templates/head.php');
     gap: 5px;
 }
 
-.help-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    background-color: #6c757d;
-    color: white;
-    border-radius: 50%;
-    font-size: 12px;
-    font-weight: bold;
-    text-decoration: none;
-    margin-left: 5px;
-    transition: all 0.2s ease;
-}
-
-.help-link:hover {
-    background-color: #545b62;
-    transform: scale(1.1);
-}
-
-.help-link-primary {
-    background-color: #0056b3;
-}
-
-.help-link-primary:hover {
-    background-color: #003d7a;
-}
-
-.help-link-success {
-    background-color: #218838;
-}
-
-.help-link-success:hover {
-    background-color: #1c7430;
-}
-
-.help-link-warning {
-    background-color: #e0a800;
-    color: #856404;
-}
-
-.help-link-warning:hover {
-    background-color: #c69500;
-}
-
-.help-link-info {
-    background-color: #117a8b;
-}
-
-.help-link-info:hover {
-    background-color: #0e5a6b;
-}
-
 @media (max-width: 768px) {
     .help-section {
         min-width: 100%;
-    }
-    
-    .quick-stats {
-        grid-template-columns: 1fr;
     }
     
     .quick-link-container {
@@ -392,8 +330,19 @@ include('Common/Templates/head.php');
         width: 100%;
     }
 }
-</style>
 
+/* Styles pour la fenêtre de mise à jour */
+.update-status {
+    background-color: #e7f3ff;
+    border: 1px solid #b3d7ff;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: monospace;
+    max-height: 200px;
+    overflow-y: auto;
+}
+</style>
 
 <div class="help-container">
     <!-- SECTION AVANT -->
@@ -428,11 +377,9 @@ include('Common/Templates/head.php');
                 <a href="<?php echo $basePath; ?>Modules/Custom/GraphicalView/DragDropPlan.php" class="task-link" >Assignation graphique des cibles</a>
             </li>
             
-           
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" target="_blank">Pour affichage / Liste des Participants par Ordre Alphabétique
-+ Type de Cible</a>
+                <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" target="_blank">Pour affichage / Liste des Participants par Ordre Alphabétique + Type de Cible</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
                     <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
@@ -441,8 +388,6 @@ include('Common/Templates/head.php');
                     <?php endforeach; ?>
                 </div>
             </li>
-            
-
         </ul>
         
         <div class="save-section">
@@ -452,6 +397,32 @@ include('Common/Templates/head.php');
             </button>
             <p style="font-size: 12px; color: #666; margin-top: 8px;">
                 Sauvegarde la base de données actuelle
+            </p>
+        </div>
+        
+        <!-- SECTION GITHUB SIMPLE -->
+        <div class="github-section">
+            <p><strong>🔄 MISE À JOUR DU ADDON IANSEO</strong></p>
+            
+            <div style="margin: 15px 0;">
+                <button class="github-button github-button-success" onclick="updateAddonSimple()">
+                    🔄 Mettre à jour le Addon
+                </button>
+                
+                <a href="https://github.com/loloz3/ianseo-addon" 
+                   target="_blank" 
+                   class="github-button github-button-info"
+                   style="text-decoration: none;">
+                    📁 Voir sur GitHub
+                </a>
+            </div>
+            
+            <div id="updateStatus" class="update-status" style="display: none;">
+                <!-- Le statut de mise à jour apparaîtra ici -->
+            </div>
+            
+            <p style="font-size: 12px; color: #666; margin-top: 8px;">
+                Télécharge et installe la dernière version depuis GitHub
             </p>
         </div>
     </div>
@@ -529,9 +500,7 @@ include('Common/Templates/head.php');
                 <span class="task-icon">🔄</span>
                 <a href="<?php echo $basePath; ?>Tournament/SetCredentials.php?return=Tournament/UploadResults.php" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
             </li>
-            
         </ul>
-        
     </div>
     
     <!-- SECTION APRES -->
@@ -541,7 +510,6 @@ include('Common/Templates/head.php');
         </div>
         
         <ul class="task-list">
-		
             <li class="task-item">
                 <span class="task-icon">🏆️</span>
                 <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
@@ -561,24 +529,17 @@ include('Common/Templates/head.php');
                 <span class="task-icon">🩺</span>
                 <a href="<?php echo $basePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
             </li>
-  
-
         </ul>
-        
     </div>
 </div>
 
-
 <script>
 function sauvegarder() {
-    //showNotification('Sauvegarde des résultats en cours...', 'info');
-    
     // Appeler le script d'export via AJAX
     sauvegarderTournamentExport();
 }
 
 function sauvegarderTournamentExport() {
-    // Créer une requête AJAX vers TournamentExport.php
     const xhr = new XMLHttpRequest();
     xhr.open('GET', '<?php echo $basePath; ?>Tournament/TournamentExport.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -586,38 +547,62 @@ function sauvegarderTournamentExport() {
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
-                // Succès
                 showNotification('✅ Export Tournament terminé avec succès !', 'success');
-                console.log('Réponse du serveur:', xhr.responseText);
-                
-                // Optionnel: télécharger le fichier généré si le script le permet
                 window.location.href = '<?php echo $basePath; ?>Tournament/TournamentExport.php?download=true';
             } else {
-                // Erreur
                 showNotification('❌ Erreur lors de l\'export Tournament', 'error');
-                console.error('Erreur AJAX:', xhr.status, xhr.statusText);
             }
         }
-    };
-    
-    xhr.onerror = function() {
-        showNotification('❌ Erreur réseau lors de l\'export', 'error');
     };
     
     xhr.send();
 }
 
-function showNotification(message, type = 'info') {
-    // Utiliser la même fonction de notification que dans Verification.php
-    if (typeof showCustomNotification === 'function') {
-        showCustomNotification(message, type === 'success' ? 'success' : 'error');
-    } else {
-        alert(message);
+// FONCTION SIMPLIFIÉE POUR GITHUB
+function updateAddonSimple() {
+    if (!confirm('Voulez-vous mettre à jour le addon depuis GitHub ?\n\nTous les fichiers seront téléchargés depuis https://github.com/loloz3/ianseo-addon')) {
+        return;
     }
+    
+    // Montrer le statut
+    const statusDiv = document.getElementById('updateStatus');
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = '<p>⏳ Début de la mise à jour...</p>';
+    
+    // Appeler le script PHP
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'github_update.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            statusDiv.innerHTML += '<p>✅ Requête terminée...</p>';
+            
+            if (xhr.status === 200) {
+                // Afficher la réponse
+                statusDiv.innerHTML += '<hr><strong>Résultat :</strong><br>' + xhr.responseText;
+                
+                // Message final
+                setTimeout(() => {
+                    showNotification('✅ Mise à jour GitHub terminée !', 'success');
+                }, 1000);
+            } else {
+                statusDiv.innerHTML += '<p style="color:red;">❌ Erreur HTTP ' + xhr.status + '</p>';
+                showNotification('❌ Erreur lors de la mise à jour', 'error');
+            }
+        } else if (xhr.readyState === 3) {
+            // Mise à jour en temps réel si supporté
+            if (xhr.responseText) {
+                statusDiv.innerHTML = '<p>🔄 Progression :</p><pre>' + xhr.responseText + '</pre>';
+            }
+        }
+    };
+    
+    xhr.send('action=update');
 }
 
-// Fonction de notification personnalisée (identique à Verification.php)
-function showCustomNotification(message, type = 'success') {
+// Fonction de notification
+function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.id = 'custom-notification';
     notification.style.cssText = `
@@ -647,22 +632,6 @@ function showCustomNotification(message, type = 'success') {
         </div>
     `;
     
-    const style = document.createElement('style');
-    if (!document.querySelector('#notification-styles')) {
-        style.id = 'notification-styles';
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
     const existing = document.getElementById('custom-notification');
     if (existing) existing.remove();
     
@@ -676,13 +645,29 @@ function showCustomNotification(message, type = 'success') {
     }, 3000);
 }
 
+// Ajouter les styles d'animation
+if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 // Ouvrir les liens dans un nouvel onglet par défaut
 document.addEventListener('DOMContentLoaded', function() {
     const links = document.querySelectorAll('.task-link');
     links.forEach(link => {
         link.addEventListener('click', function(e) {
             // Laisser le navigateur gérer l'ouverture dans un nouvel onglet
-            // car target="_blank" est déjà dans le HTML
         });
     });
 });
