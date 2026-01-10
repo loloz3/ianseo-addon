@@ -14,6 +14,80 @@ header('Content-Type: application/json');
 $TourId = isset($_POST['TourId']) ? intval($_POST['TourId']) : $_SESSION['TourId'];
 $selectedSession = isset($_POST['session']) ? $_POST['session'] : '1'; // '1' par défaut
 
+// Fonction pour convertir les lettres en points
+function convertArrowToScore($letter) {
+    $conversion = [
+        'A' => 'M',
+        'B' => '1',
+        'C' => '2',
+        'D' => '3',
+        'E' => '4',
+        'F' => '5',
+        'G' => '6',
+        'H' => '7',
+        'I' => '8',
+        'J' => '9',
+        'K' => '10',
+        'L' => '10', // L est aussi 10 selon votre exemple
+        'X' => '10', // Pour les X (dix)
+        'M' => 'M',  // Pour les M
+    ];
+    
+    return isset($conversion[strtoupper($letter)]) ? $conversion[strtoupper($letter)] : '0';
+}
+
+// Fonction pour obtenir les 3 derniers scores
+function getLastThreeScores($arrowString) {
+    if (empty($arrowString) || strlen($arrowString) < 3) {
+        return '';
+    }
+    
+    $lastThree = substr($arrowString, -3);
+    $scores = [];
+    
+    for ($i = 0; $i < 3; $i++) {
+        $scores[] = convertArrowToScore($lastThree[$i]);
+    }
+    
+    return implode(' - ', $scores);
+}
+
+// Fonction pour obtenir le numéro de volée
+function getVolleyNumber($arrowString) {
+    if (empty($arrowString)) {
+        return 0;
+    }
+    
+    $totalArrows = strlen($arrowString);
+    return ceil($totalArrows / 3);
+}
+
+// Fonction pour calculer le score total d'une chaîne de flèches
+function calculateTotalScore($arrowString) {
+    if (empty($arrowString)) {
+        return 0;
+    }
+    
+    $total = 0;
+    $length = strlen($arrowString);
+    
+    for ($i = 0; $i < $length; $i++) {
+        $letter = $arrowString[$i];
+        $score = convertArrowToScore($letter);
+        
+        // Convertir en numérique pour le calcul
+        if ($score === 'M') {
+            $total += 0; // M vaut 0
+        } elseif (is_numeric($score)) {
+            $total += intval($score);
+        } else {
+            $total += 0;
+        }
+    }
+    
+    return $total;
+}
+
 try {
     // Récupérer les informations sur les sessions disponibles
     $sessionsQuery = "
@@ -52,6 +126,8 @@ try {
             q.QuLetter,
             q.QuD1Arrowstring,
             q.QuD2Arrowstring,
+            q.QuD1Score,
+            q.QuD2Score,
             e.EnFirstName,
             e.EnName,
             e.EnCode
@@ -106,6 +182,19 @@ try {
         $arrowsD2 = !empty($row->QuD2Arrowstring) ? strlen(trim($row->QuD2Arrowstring)) : 0;
         $totalArrows = $arrowsD1 + $arrowsD2;
         
+        // Récupérer les scores totaux depuis la base de données
+        $totalScoreD1 = intval($row->QuD1Score);
+        $totalScoreD2 = intval($row->QuD2Score);
+        $totalScore = $totalScoreD1 + $totalScoreD2;
+        
+        // Calculer les nouvelles informations
+        $lastScoreD1 = getLastThreeScores($row->QuD1Arrowstring);
+        $lastScoreD2 = getLastThreeScores($row->QuD2Arrowstring);
+        
+        // Numéro de volée
+        $volleyNumberD1 = getVolleyNumber($row->QuD1Arrowstring);
+        $volleyNumberD2 = getVolleyNumber($row->QuD2Arrowstring);
+        
         $archerData = [
             'session' => $session,
             'targetNumber' => $targetNumber,
@@ -114,7 +203,14 @@ try {
             'license' => $row->EnCode,
             'arrowsD1' => $arrowsD1,
             'arrowsD2' => $arrowsD2,
-            'arrowsTotal' => $totalArrows
+            'arrowsTotal' => $totalArrows,
+            'lastScoreD1' => $lastScoreD1,
+            'lastScoreD2' => $lastScoreD2,
+            'volleyNumberD1' => $volleyNumberD1,
+            'volleyNumberD2' => $volleyNumberD2,
+            'totalScoreD1' => $totalScoreD1,
+            'totalScoreD2' => $totalScoreD2,
+            'totalScore' => $totalScore
         ];
         
         $targets[$key]['archers'][] = $archerData;

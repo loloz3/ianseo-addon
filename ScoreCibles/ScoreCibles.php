@@ -377,6 +377,77 @@ include('Common/Templates/head.php');
         border-radius: 4px;
         font-size: 14px;
     }
+    
+    .badge-info {
+        background-color: #17a2b8;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+    
+    .badge-secondary {
+        background-color: #6c757d;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+        min-width: 60px;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .badge-ok {
+        background-color: #28a745;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+    
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+    
+    .badge-error {
+        background-color: #dc3545;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+    
+    .score-total {
+        font-weight: bold;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        color: #495057;
+        min-width: 40px;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .score-total.d1 {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .score-total.d2 {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .score-total.combined {
+        background-color: #fff3cd;
+        color: #856404;
+        font-size: 14px;
+        padding: 4px 10px;
+    }
 </style>
 
 <div class="verification-container">
@@ -439,15 +510,7 @@ include('Common/Templates/head.php');
         <table class="details-table" id="detail-table">
             <thead>
                 <tr>
-                    <th>Départ</th>
-                    <th>Cible</th>
-                    <th>Lettre</th>
-                    <th>Archer</th>
-                    <th>Licence</th>
-                    <th>Flèches D1</th>
-                    <th>Flèches D2</th>
-                    <th>Total</th>
-                    <th>Statut</th>
+                    <!-- L'en-tête sera mis à jour dynamiquement -->
                 </tr>
             </thead>
             <tbody id="detail-table-body">
@@ -714,6 +777,23 @@ function showTargetDetails(target) {
     
     $('#detail-status').html(`<div class="alert ${statusClass.replace('text-', 'alert-')}">${statusText}</div>`);
     
+    // Mettre à jour l'en-tête du tableau avec les nouvelles colonnes
+    $('#detail-table thead tr').html(`
+        <th>Départ</th>
+        <th>Cible</th>
+        <th>Lettre</th>
+        <th>Archer</th>
+        <th>Licence</th>
+        <th>N° Volée D1</th>
+        <th>Dernière volée D1</th>
+        <th>Total D1</th>
+        <th>N° Volée D2</th>
+        <th>Dernière volée D2</th>
+        <th>Total D2</th>
+        <th>Total</th>
+        <th>Statut</th>
+    `);
+    
     // Remplir le tableau des détails
     const tbody = $('#detail-table-body');
     tbody.empty();
@@ -732,21 +812,38 @@ function showTargetDetails(target) {
                 statusText = 'Scores en cours';
             }
             
+            // Formater les numéros de volée
+            const volleyD1 = archer.volleyNumberD1 > 0 ? archer.volleyNumberD1 : '-';
+            const volleyD2 = archer.volleyNumberD2 > 0 ? archer.volleyNumberD2 : '-';
+            
+            // Formater les derniers scores
+            const lastScoreD1 = archer.lastScoreD1 || '-';
+            const lastScoreD2 = archer.lastScoreD2 || '-';
+            
+            // Formater les totaux
+            const totalScoreD1 = archer.totalScoreD1 || 0;
+            const totalScoreD2 = archer.totalScoreD2 || 0;
+            const totalScore = archer.totalScore || 0;
+            
             const row = $('<tr>');
             row.append($('<td>').text(archer.session || '-'));
             row.append($('<td>').text(archer.targetNumber || '-'));
             row.append($('<td>').text(archer.targetLetter || '-'));
             row.append($('<td>').text(archer.archerName || 'Non assigné'));
             row.append($('<td>').text(archer.license || '-'));
-            row.append($('<td>').text(archer.arrowsD1));
-            row.append($('<td>').text(archer.arrowsD2));
-            row.append($('<td>').html(`<span class="arrow-count ${arrowClass}">${totalArrows}</span>`));
+            row.append($('<td>').html(`<span class="badge badge-info">${volleyD1}</span>`));
+            row.append($('<td>').html(`<span class="badge badge-secondary">${lastScoreD1}</span>`));
+            row.append($('<td>').html(`<span class="score-total d1">${totalScoreD1}</span>`));
+            row.append($('<td>').html(`<span class="badge badge-info">${volleyD2}</span>`));
+            row.append($('<td>').html(`<span class="badge badge-secondary">${lastScoreD2}</span>`));
+            row.append($('<td>').html(`<span class="score-total d2">${totalScoreD2}</span>`));
+            row.append($('<td>').html(`<span class="score-total combined">${totalScore}</span>`));
             row.append($('<td>').html(`<span class="badge badge-${arrowClass}">${statusText}</span>`));
             
             tbody.append(row);
         });
     } else {
-        tbody.html('<tr><td colspan="9" style="text-align: center; font-style: italic; color: #6c757d;">Aucun archer sur cette cible</td></tr>');
+        tbody.html('<tr><td colspan="13" style="text-align: center; font-style: italic; color: #6c757d;">Aucun archer sur cette cible</td></tr>');
     }
     
     // Faire défiler jusqu'au panneau de détails
