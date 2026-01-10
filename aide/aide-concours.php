@@ -402,7 +402,7 @@ include('Common/Templates/head.php');
         
         <!-- SECTION GITHUB SIMPLE -->
         <div class="github-section">
-            <p><strong>🔄 MISE À JOUR DU ADDON IANSEO</strong></p>
+            <p><strong>🔄 MISE À JOUR DU ADDON IANSEO (Loloz3)</strong></p>
             
             <div style="margin: 15px 0;">
                 <button class="github-button github-button-success" onclick="updateAddonSimple()">
@@ -524,11 +524,18 @@ include('Common/Templates/head.php');
                 <span class="task-icon">📤</span>
                 <a href="<?php echo $basePath; ?>Modules/Sets/FR/exports/" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
             </li>
-            
+			
+        <div class="github-section">
 			<li class="task-item">
                 <span class="task-icon">🩺</span>
                 <a href="<?php echo $basePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
             </li>
+			
+			<li class="task-item">
+                <span class="task-icon">📊</span>
+                <a href="http://localhost/phpmyadmin/" class="task-link" target="_blank">PHPmyadmin (pour debug)</a>
+            </li>
+		</div>
         </ul>
     </div>
 </div>
