@@ -54,6 +54,7 @@ These modules and their documentation were created with the assistance of Artifi
 1. **Téléchargez** ce dépôt (bouton vert **Code** → **Download ZIP**).
 2. **Décompressez** l'archive sur votre ordinateur.
 3. **Copiez TOUS les dossiers et fichiers** dans le dossier **Modules/Custom** de votre installation I@nseo :
+```bash
 📁 Extrait du ZIP :
 ├── AutresTirs/
 ├── GraphicalView/
@@ -69,6 +70,7 @@ These modules and their documentation were created with the assistance of Artifi
 📁 Destination sur votre serveur :
 C:\ianseo\htdocs\Modules\Custom\ (Windows)
 /var/www/html/ianseo/Modules/Custom/ (Linux)
+```bash
 
 4. **Permissions (Linux)** : si nécessaire, donnez les droits d'écriture :
 ```bash
