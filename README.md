@@ -83,9 +83,7 @@ sudo chown -R www-data:www-data /var/www/html/ianseo/Modules/Custom/
 **FR 🇫🇷**
 
 - Installez d'abord manuellement le fichier aide-concours.php et github_update.php dans Modules/Custom/aide/.
-
 - Accédez à l'aide concours dans I@nseo : VotreURL/Modules/Custom/aide/aide-concours.php
-
 - Cliquez sur le bouton "🔄 Mettre à jour le Addon" pour télécharger automatiquement tous les fichiers.
 
 ### Méthode 3 : Installation Git (pour utilisateurs avancés)
