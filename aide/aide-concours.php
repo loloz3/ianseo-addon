@@ -75,9 +75,55 @@ if (empty($existingSessions)) {
     $existingSessions = array(1, 2); // Sessions par défaut
 }
 
-// Déterminer la racine relative en fonction de l'emplacement du fichier
-// Si le fichier est dans Modules/Custom/aide/, on remonte de 3 niveaux pour atteindre la racine
-$basePath = '../../../';
+// Configuration adaptative pour Linux/Windows
+$isWindows = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
+
+// Déterminer le chemin de base de manière adaptative
+// Méthode robuste qui fonctionne sur Linux et Windows
+$currentDir = __DIR__;
+$baseDir = dirname(dirname(dirname($currentDir))); // Remonter de 3 niveaux
+
+// Normaliser les séparateurs de chemin
+function normalizePath($path) {
+    return rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+}
+
+$basePath = normalizePath($baseDir);
+
+// Calculer le chemin relatif pour les liens web (remplace les backslashes par des slashes)
+$webBasePath = str_replace('\\', '/', substr($basePath, strlen($_SERVER['DOCUMENT_ROOT'])));
+$webBasePath = ltrim($webBasePath, '/');
+
+// Si le chemin web est vide ou invalide, utiliser un chemin relatif standard
+if (empty($webBasePath) || strpos($webBasePath, '..') !== false) {
+    $webBasePath = '../../../'; // Fallback classique
+} else {
+    $webBasePath = '/' . $webBasePath;
+}
+
+// Déterminer l'URL de PHPMyAdmin selon l'environnement
+function getPhpMyAdminUrl() {
+    $serverName = $_SERVER['SERVER_NAME'] ?? 'localhost';
+    $serverAddr = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
+    
+    // Si c'est localhost ou IP locale
+    $isLocal = ($serverName === 'localhost' || 
+                $serverName === '127.0.0.1' || 
+                $serverAddr === '127.0.0.1' ||
+                strpos($serverName, '192.168.') === 0);
+    
+    if ($isLocal) {
+        return 'http://localhost/phpmyadmin/';
+    } else {
+        // Sur serveur distant, utiliser le chemin relatif standard
+        return '/phpmyadmin/';
+    }
+}
+
+$phpMyAdminUrl = getPhpMyAdminUrl();
+
+// URL pour le script de mise à jour GitHub (chemin relatif)
+$githubUpdateUrl = 'github_update.php';
 
 include('Common/Templates/head.php');
 ?>
@@ -354,35 +400,35 @@ include('Common/Templates/head.php');
         <ul class="task-list">
             <li class="task-item">
                 <span class="task-icon">🏁</span>
-                <a href="<?php echo $basePath; ?>Tournament/index.php?New=" class="task-link" target="_blank">Créer une nouvelle compétition</a>
+                <a href="<?php echo $webBasePath; ?>Tournament/index.php?New=" class="task-link" target="_blank">Créer une nouvelle compétition</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">👥</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" target="_blank">Ajouter des archers / participants</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" target="_blank">Ajouter des archers / participants</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">📝</span>
-                <a href="<?php echo $basePath; ?>Partecipants/index.php" class="task-link" >List des participants</a>
+                <a href="<?php echo $webBasePath; ?>Partecipants/index.php" class="task-link" >List des participants</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">✅</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/Verif/Verification.php" class="task-link" >Vérification complète des inscriptions</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Custom/Verif/Verification.php" class="task-link" >Vérification complète des inscriptions</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🎯</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/GraphicalView/DragDropPlan.php" class="task-link" >Assignation graphique des cibles</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Custom/GraphicalView/DragDropPlan.php" class="task-link" >Assignation graphique des cibles</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" target="_blank">Pour affichage / Liste des Participants par Ordre Alphabétique + Type de Cible</a>
+                <a href="<?php echo $webBasePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" target="_blank">Pour affichage / Liste des Participants par Ordre Alphabétique + Type de Cible</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
+                    <a href="<?php echo $webBasePath; ?>Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
                        class="btn-small btn-primary" 
                        target="_blank">Départ <?php echo $session; ?></a>
                     <?php endforeach; ?>
@@ -436,7 +482,7 @@ include('Common/Templates/head.php');
         <ul class="task-list">
             <li class="task-item">
                 <span class="task-icon">💶</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/Greffe/Greffe.php" class="task-link" >Greffe - Gestion des tirs</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Custom/Greffe/Greffe.php" class="task-link" >Greffe - Gestion des tirs</a>
             </li>
 
             <li class="task-item">
@@ -444,7 +490,7 @@ include('Common/Templates/head.php');
                 <a href="" class="task-link" >Impression des feuilles pour controle du matériel</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="<?php echo $basePath; ?>Partecipants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
+                    <a href="<?php echo $webBasePath; ?>Partecipants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
                        class="btn-small btn-primary" 
                        target="_blank">Départ <?php echo $session; ?></a>
                     <?php endforeach; ?>
@@ -453,13 +499,13 @@ include('Common/Templates/head.php');
 			
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Qualification/PrintScore.php" class="task-link" >Impression des feuilles de marque</a>
+                <a href="<?php echo $webBasePath; ?>Qualification/PrintScore.php" class="task-link" >Impression des feuilles de marque</a>
                 <div class="task-actions">                    
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="<?php echo $basePath; ?>Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=1" 
+                    <a href="<?php echo $webBasePath; ?>Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=1" 
                        class="btn-small btn-primary" 
                        target="_blank">D<?php echo $session; ?>-1</a>
-                    <a href="<?php echo $basePath; ?>Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=2" 
+                    <a href="<?php echo $webBasePath; ?>Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=2" 
                        class="btn-small btn-primary" 
                        target="_blank">D<?php echo $session; ?>-2</a>
                     <?php endforeach; ?>
@@ -468,37 +514,37 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">⌨️</span>
-                <a href="<?php echo $basePath; ?>Modules/Barcodes/GetScoreBarCode.php" class="task-link" target="_blank">Saisie des résultats</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Barcodes/GetScoreBarCode.php" class="task-link" target="_blank">Saisie des résultats</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🧮</span>
-                <a href="<?php echo $basePath; ?>Qualification/index.php" class="task-link" target="_blank">Mise à jour du classement (à faire pour tout les Départs/Distances)</a>
+                <a href="<?php echo $webBasePath; ?>Qualification/index.php" class="task-link" target="_blank">Mise à jour du classement (à faire pour tout les Départs/Distances)</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
+                <a href="<?php echo $webBasePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">📱</span>
-                <a href="<?php echo $basePath; ?>Qualification/CheckTargetUpdate.php" class="task-link" target="_blank">Contrôles des données</a>
+                <a href="<?php echo $webBasePath; ?>Qualification/CheckTargetUpdate.php" class="task-link" target="_blank">Contrôles des données</a>
             </li>
 			
 			<li class="task-item">
                 <span class="task-icon">📱</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" target="_blank">Contrôles des données (perso à tester)</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" target="_blank">Contrôles des données (perso à tester)</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🔄</span>
-                <a href="<?php echo $basePath; ?>Tournament/SetCredentials.php?return=Tournament/UploadResults.php" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
+                <a href="<?php echo $webBasePath; ?>Tournament/SetCredentials.php?return=Tournament/UploadResults.php" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
             </li>
         </ul>
     </div>
@@ -512,28 +558,28 @@ include('Common/Templates/head.php');
         <ul class="task-list">
             <li class="task-item">
                 <span class="task-icon">🏆️</span>
-                <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
+                <a href="<?php echo $webBasePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">📤</span>
-                <a href="<?php echo $basePath; ?>Modules/Sets/FR/exports/" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Sets/FR/exports/" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
             </li>
 			
         <div class="github-section">
 			<li class="task-item">
                 <span class="task-icon">🩺</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
+                <a href="<?php echo $webBasePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
             </li>
 			
 			<li class="task-item">
                 <span class="task-icon">📊</span>
-                <a href="http://localhost/phpmyadmin/" class="task-link" target="_blank">PHPmyadmin (pour debug)</a>
+                <a href="<?php echo $phpMyAdminUrl; ?>" class="task-link" target="_blank">PHPmyadmin (pour debug)</a>
             </li>
 		</div>
         </ul>
@@ -541,6 +587,12 @@ include('Common/Templates/head.php');
 </div>
 
 <script>
+// Fonction pour obtenir l'URL correcte du script de mise à jour
+function getUpdateUrl() {
+    // Utiliser le chemin relatif calculé par PHP
+    return '<?php echo $githubUpdateUrl; ?>';
+}
+
 function sauvegarder() {
     // Appeler le script d'export via AJAX
     sauvegarderTournamentExport();
@@ -548,14 +600,17 @@ function sauvegarder() {
 
 function sauvegarderTournamentExport() {
     const xhr = new XMLHttpRequest();
-    xhr.open('GET', '<?php echo $basePath; ?>Tournament/TournamentExport.php', true);
+    xhr.open('GET', '<?php echo $webBasePath; ?>Tournament/TournamentExport.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
                 showNotification('✅ Export Tournament terminé avec succès !', 'success');
-                window.location.href = '<?php echo $basePath; ?>Tournament/TournamentExport.php?download=true';
+                // Délai avant le téléchargement pour laisser le temps au serveur de générer le fichier
+                setTimeout(function() {
+                    window.location.href = '<?php echo $webBasePath; ?>Tournament/TournamentExport.php?download=true';
+                }, 500);
             } else {
                 showNotification('❌ Erreur lors de l\'export Tournament', 'error');
             }
@@ -576,9 +631,12 @@ function updateAddonSimple() {
     statusDiv.style.display = 'block';
     statusDiv.innerHTML = '<p>⏳ Début de la mise à jour...</p>';
     
+    // Utiliser l'URL correcte
+    const updateUrl = getUpdateUrl();
+    
     // Appeler le script PHP
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'github_update.php', true);
+    xhr.open('POST', updateUrl, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     
     xhr.onreadystatechange = function() {
@@ -592,6 +650,10 @@ function updateAddonSimple() {
                 // Message final
                 setTimeout(() => {
                     showNotification('✅ Mise à jour GitHub terminée !', 'success');
+                    // Rafraîchir la page après 2 secondes
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
                 }, 1000);
             } else {
                 statusDiv.innerHTML += '<p style="color:red;">❌ Erreur HTTP ' + xhr.status + '</p>';
