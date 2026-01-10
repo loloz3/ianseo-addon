@@ -76,3 +76,21 @@ C:\ianseo\htdocs\Modules\Custom\ (Windows)
 ```bash
 sudo chmod -R 755 /var/www/html/ianseo/Modules/Custom/
 sudo chown -R www-data:www-data /var/www/html/ianseo/Modules/Custom/
+```
+
+### Méthode 2 : Installation via le bouton de mise à jour (après installation initiale)
+
+    Installez d'abord manuellement le fichier aide-concours.php et github_update.php dans Modules/Custom/aide/.
+
+    Accédez à l'aide concours dans I@nseo : VotreURL/Modules/Custom/aide/aide-concours.php
+
+    Cliquez sur le bouton "🔄 Mettre à jour le Addon" pour télécharger automatiquement tous les fichiers.
+
+### Méthode 3 : Installation Git (pour utilisateurs avancés)
+```bash
+
+cd /chemin/vers/ianseo/Modules/Custom/
+git clone https://github.com/loloz3/ianseo-addon .
+# Pour mettre à jour ultérieurement :
+git pull origin main
+```
