@@ -78,10 +78,11 @@ try {
         exit;
     }
 
-    // Mettre à jour la qualification AVEC QuTarget ET QuLetter SÉPARÉS
+    // Mettre à jour la qualification AVEC QuTarget, QuLetter ET QuTargetNo
     $UpdateQuery = "UPDATE Qualifications SET 
                     QuTarget=" . StrSafe_DB($QuTarget) . ",
                     QuLetter=" . StrSafe_DB($QuLetter) . ",
+                    QuTargetNo=" . StrSafe_DB($QuTargetNo) . ",
                     QuSession=" . StrSafe_DB($QuSession) . "
                     WHERE QuId=" . StrSafe_DB($EnId);
     
@@ -95,6 +96,7 @@ try {
                 'EnId' => $EnId,
                 'QuTarget' => $QuTarget,
                 'QuLetter' => $QuLetter,
+                'QuTargetNo' => $QuTargetNo,
                 'QuSession' => $QuSession
             ]
         ]);
