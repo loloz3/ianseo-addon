@@ -484,20 +484,15 @@ include('Common/Templates/head.php');
                 <span class="task-icon">🖨️</span>
                 <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
             </li>
-            
-            <li class="task-item">
-                <span class="task-icon">📱</span>
-                <a href="<?php echo $basePath; ?>Qualification/CheckTargetUpdate.php" class="task-link" target="_blank">Contrôles des données</a>
-            </li>
-			
+            			
 			<li class="task-item">
                 <span class="task-icon">📱</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" target="_blank">Contrôles des données (perso à tester)</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" target="_blank">Contrôles des données (avec ScoreKeeper NG)</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🔄</span>
-                <a href="<?php echo $basePath; ?>Tournament/SetCredentials.php?return=Tournament/UploadResults.php" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
+                <a href="<?php echo $basePath; ?>Tournament/UploadResults.php?QUAL&" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
             </li>
         </ul>
     </div>
