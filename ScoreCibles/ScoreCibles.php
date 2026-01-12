@@ -97,14 +97,14 @@ include('Common/Templates/head.php');
     
     .targets-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
         margin-top: 20px;
     }
     
     .target-card {
-        border-radius: 8px;
-        padding: 15px;
+        border-radius: 6px;
+        padding: 10px;
         text-align: center;
         color: white;
         font-weight: bold;
@@ -112,11 +112,16 @@ include('Common/Templates/head.php');
         position: relative;
         overflow: hidden;
         cursor: pointer;
+		min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
     
     .target-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transform: translateY(-3px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
     }
     
     .target-card.green {
@@ -141,43 +146,43 @@ include('Common/Templates/head.php');
     }
     
     .target-number {
-        font-size: 32px;
+        font-size: 24px;
         font-weight: bold;
-        margin-bottom: 5px;
+        margin-bottom: 3px;
     }
     
     .target-session {
-        font-size: 14px;
+        font-size: 12px;
         opacity: 0.9;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         background-color: rgba(255,255,255,0.2);
-        padding: 2px 8px;
-        border-radius: 10px;
+        padding: 2px 6px;
+        border-radius: 8px;
         display: inline-block;
     }
     
     .target-archers {
-        font-size: 14px;
-        margin-top: 8px;
+        font-size: 12px;
+        margin-top: 5px;
         opacity: 0.9;
         background-color: rgba(255,255,255,0.2);
-        padding: 5px 10px;
-        border-radius: 15px;
+        padding: 3px 8px;
+        border-radius: 12px;
         display: inline-block;
     }
     
     .target-warning {
         position: absolute;
-        top: 5px;
+        top: 3px;
         right: 5px;
         background-color: rgba(255,255,255,0.3);
         border-radius: 50%;
-        width: 25px;
-        height: 25px;
+        width: 20px;
+        height: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: 12px;
     }
     
     .details-panel {
