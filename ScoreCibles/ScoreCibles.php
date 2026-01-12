@@ -141,7 +141,7 @@ include('Common/Templates/head.php');
     }
     
     .target-number {
-        font-size: 28px;
+        font-size: 32px;
         font-weight: bold;
         margin-bottom: 5px;
     }
@@ -149,25 +149,21 @@ include('Common/Templates/head.php');
     .target-session {
         font-size: 14px;
         opacity: 0.9;
-        margin-bottom: 5px;
+        margin-bottom: 10px;
         background-color: rgba(255,255,255,0.2);
         padding: 2px 8px;
         border-radius: 10px;
         display: inline-block;
     }
     
-    .target-arrows {
-        font-size: 18px;
-        margin: 10px 0;
-        background-color: rgba(255,255,255,0.2);
-        padding: 5px;
-        border-radius: 4px;
-    }
-    
     .target-archers {
-        font-size: 12px;
+        font-size: 14px;
         margin-top: 8px;
         opacity: 0.9;
+        background-color: rgba(255,255,255,0.2);
+        padding: 5px 10px;
+        border-radius: 15px;
+        display: inline-block;
     }
     
     .target-warning {
@@ -256,6 +252,7 @@ include('Common/Templates/head.php');
         border-radius: 5px;
         margin-bottom: 15px;
         text-align: center;
+        display: none;
     }
     
     .legend {
@@ -279,43 +276,6 @@ include('Common/Templates/head.php');
         height: 20px;
         border-radius: 4px;
         margin-right: 8px;
-    }
-    
-    .btn-control {
-        padding: 8px 15px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-        margin-right: 10px;
-        transition: all 0.3s;
-    }
-    
-    .btn-start {
-        background-color: #28a745;
-        color: white;
-    }
-    
-    .btn-start:hover {
-        background-color: #218838;
-    }
-    
-    .btn-stop {
-        background-color: #dc3545;
-        color: white;
-    }
-    
-    .btn-stop:hover {
-        background-color: #c82333;
-    }
-    
-    .btn-refresh {
-        background-color: #17a2b8;
-        color: white;
-    }
-    
-    .btn-refresh:hover {
-        background-color: #138496;
     }
     
     .session-stats {
@@ -368,7 +328,7 @@ include('Common/Templates/head.php');
         display: inline-block;
     }
     
-    .default-session-info {
+    .last-check-info {
         color: #2c5f2d;
         font-weight: bold;
         margin-left: 10px;
@@ -376,6 +336,7 @@ include('Common/Templates/head.php');
         background-color: #e8f5e9;
         border-radius: 4px;
         font-size: 14px;
+        border: 1px solid #c3e6cb;
     }
     
     .badge-info {
@@ -448,30 +409,24 @@ include('Common/Templates/head.php');
         font-size: 14px;
         padding: 4px 10px;
     }
+    
+    .volley-number {
+        font-weight: bold;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        color: #495057;
+        min-width: 40px;
+        display: inline-block;
+        text-align: center;
+        font-size: 12px;
+    }
 </style>
 
 <div class="verification-container">
     
     <div class="controls">
-        <div class="refresh-info">
-            <span id="status-indicator" class="status-indicator status-active"></span>
-            <span id="status-text">Actualisation toutes les 5 secondes</span>
-            <span id="last-check" style="float: right;"></span>
-        </div>
-        
-        <div>
-            <button id="btn-start" class="btn-control btn-start" disabled>
-                ▶️ Démarrer
-            </button>
-            <button id="btn-stop" class="btn-control btn-stop">
-                ⏸️ Pause
-            </button>
-            <button id="btn-refresh" class="btn-control btn-refresh">
-                🔄 Rafraîchir maintenant
-            </button>
-        </div>
-        
-        <h3 style="margin-top: 20px; margin-bottom: 10px;">Sélectionnez un départ :</h3>
+        <h3 style="margin-top: 0; margin-bottom: 10px;">Sélectionnez un départ :</h3>
         <div class="session-selector" id="session-selector">
             <!-- Les boutons de session seront générés dynamiquement -->
         </div>
@@ -521,9 +476,8 @@ include('Common/Templates/head.php');
 </div>
 
 <script>
+// Variables globales
 let checkInterval;
-let isChecking = true;
-let lastCheckTime = null;
 let currentSession = '1'; // Départ 1 par défaut
 let availableSessions = [];
 
@@ -539,32 +493,27 @@ function formatDateTime(date) {
 // Fonction pour mettre à jour l'indicateur de dernière vérification
 function updateLastCheck() {
     const now = new Date();
-    lastCheckTime = now;
-    $('#last-check').text('Dernière vérification: ' + formatDateTime(now));
+    // Mettre à jour l'info de dernière vérification dans le sélecteur de session
+    $('.last-check-info').remove();
+    $('#session-selector').append(
+        $('<span>').addClass('last-check-info')
+            .html(`<i class="fas fa-sync-alt"></i> Dernière vérification: ${formatDateTime(now)}`)
+    );
 }
 
 // Fonction pour démarrer la vérification automatique
-function startChecking() {
-    if (!isChecking) {
-        isChecking = true;
-        $('#status-indicator').removeClass('status-paused').addClass('status-active');
-        $('#status-text').text('Vérification active - Actualisation toutes les 5 secondes');
-        $('#btn-start').prop('disabled', true);
-        $('#btn-stop').prop('disabled', false);
-        checkTargets(); // Vérifier immédiatement
-        checkInterval = setInterval(checkTargets, 5000); // 5 secondes
-    }
+function startAutoChecking() {
+    // Démarrer la vérification immédiatement
+    checkTargets();
+    
+    // Configurer l'intervalle de 5 secondes
+    checkInterval = setInterval(checkTargets, 5000);
 }
 
 // Fonction pour arrêter la vérification automatique
-function stopChecking() {
-    if (isChecking) {
-        isChecking = false;
+function stopAutoChecking() {
+    if (checkInterval) {
         clearInterval(checkInterval);
-        $('#status-indicator').removeClass('status-active').addClass('status-paused');
-        $('#status-text').text('Vérification en pause');
-        $('#btn-start').prop('disabled', false);
-        $('#btn-stop').prop('disabled', true);
     }
 }
 
@@ -574,7 +523,7 @@ function updateSessionSelector(sessionsData) {
     selector.empty();
     
     // Supprimer l'info par défaut si elle existe
-    $('.default-session-info').remove();
+    $('.last-check-info').remove();
     
     // Boutons pour chaque session seulement
     Object.keys(sessionsData).sort((a, b) => a - b).forEach(session => {
@@ -589,35 +538,27 @@ function updateSessionSelector(sessionsData) {
     
     availableSessions = Object.keys(sessionsData);
     
-    // Ajouter une info si c'est la session 1 par défaut
-    if (currentSession === '1' && availableSessions.includes('1')) {
-        selector.append(
-            $('<span>').addClass('default-session-info')
-                .text('Départ 1 active par défaut')
-        );
-    }
+    // Mettre à jour l'heure de dernière vérification
+    updateLastCheck();
 }
 
 // Fonction pour sélectionner une session
 function selectSession(session) {
     currentSession = session;
     updateSessionSelectorUI();
-    filterTargets();
+    
+    // Arrêter et redémarrer la vérification pour la nouvelle session
+    clearInterval(checkInterval);
+    startAutoChecking();
 }
 
 // Fonction pour mettre à jour l'UI du sélecteur de session
 function updateSessionSelectorUI() {
     $('#session-selector .session-btn').removeClass('active');
-    $(`#session-selector .session-btn:contains('Session ${currentSession}')`).addClass('active');
+    $(`#session-selector .session-btn:contains('Départ ${currentSession}')`).addClass('active');
     
-    // Mettre à jour l'info par défaut
-    $('.default-session-info').remove();
-    if (currentSession === '1') {
-        $('#session-selector').append(
-            $('<span>').addClass('default-session-info')
-                .text('Session 1 active par défaut')
-        );
-    }
+    // Mettre à jour l'heure de dernière vérification
+    updateLastCheck();
 }
 
 // Fonction pour afficher les statistiques de session
@@ -630,7 +571,7 @@ function updateSessionStats(stats) {
     
     $('<div>').addClass('stat-item').html(`
         <div class="stat-value">Départ ${currentSession}</div>
-        <div class="stat-label">Départ active</div>
+        <div class="stat-label">Départ actif</div>
     `).appendTo(statsContainer);
     
     $('<div>').addClass('stat-item').html(`
@@ -652,11 +593,11 @@ function updateSessionStats(stats) {
         <div class="stat-value" style="color: #dc3545;">${sessionStats.redTargets || 0}</div>
         <div class="stat-label">Rouges</div>
     `).appendTo(statsContainer);
-}
-
-// Fonction pour filtrer les cibles selon la session sélectionnée
-function filterTargets() {
-    checkTargets();
+    
+    $('<div>').addClass('stat-item').html(`
+        <div class="stat-value" style="color: #17a2b8;">${sessionStats.blueTargets || 0}</div>
+        <div class="stat-label">Bleues</div>
+    `).appendTo(statsContainer);
 }
 
 // Fonction principale pour vérifier les cibles
@@ -712,23 +653,20 @@ function displayTargets(targets) {
     targets.forEach(target => {
         const targetCard = $('<div>').addClass('target-card ' + target.status);
         
-        // Numéro de cible
+        // Numéro de cible (plus gros)
         $('<div>').addClass('target-number').text(target.targetNumber).appendTo(targetCard);
         
         // Session
         $('<div>').addClass('target-session').text('Départ ' + target.session).appendTo(targetCard);
         
-        // Nombre de flèches
-        if (target.averageArrows > 0) {
-            $('<div>').addClass('target-arrows')
-                .html(`<i class="fas fa-bullseye"></i> ${target.averageArrows} flèches`)
-                .appendTo(targetCard);
-        }
-        
-        // Nombre d'archers
+        // Nombre d'archers seulement (sans nombre de flèches)
         if (target.archerCount > 0) {
             $('<div>').addClass('target-archers')
-                .html(`<i class="fas fa-users"></i> ${target.archerCount} archer(s)`)
+                .html(`<i class="fas fa-user"></i> ${target.archerCount} archer${target.archerCount > 1 ? 's' : ''}`)
+                .appendTo(targetCard);
+        } else {
+            $('<div>').addClass('target-archers')
+                .html(`<i class="fas fa-user-slash"></i> 0 archer`)
                 .appendTo(targetCard);
         }
         
@@ -812,9 +750,9 @@ function showTargetDetails(target) {
                 statusText = 'Scores en cours';
             }
             
-            // Formater les numéros de volée
-            const volleyD1 = archer.volleyNumberD1 > 0 ? archer.volleyNumberD1 : '-';
-            const volleyD2 = archer.volleyNumberD2 > 0 ? archer.volleyNumberD2 : '-';
+            // Numéros de volée (nombres entiers uniquement)
+            const volleyD1 = archer.volleyNumberD1 || 0;
+            const volleyD2 = archer.volleyNumberD2 || 0;
             
             // Formater les derniers scores
             const lastScoreD1 = archer.lastScoreD1 || '-';
@@ -831,10 +769,10 @@ function showTargetDetails(target) {
             row.append($('<td>').text(archer.targetLetter || '-'));
             row.append($('<td>').text(archer.archerName || 'Non assigné'));
             row.append($('<td>').text(archer.license || '-'));
-            row.append($('<td>').html(`<span class="badge badge-info">${volleyD1}</span>`));
+            row.append($('<td>').html(`<span class="volley-number">${volleyD1}</span>`));
             row.append($('<td>').html(`<span class="badge badge-secondary">${lastScoreD1}</span>`));
             row.append($('<td>').html(`<span class="score-total d1">${totalScoreD1}</span>`));
-            row.append($('<td>').html(`<span class="badge badge-info">${volleyD2}</span>`));
+            row.append($('<td>').html(`<span class="volley-number">${volleyD2}</span>`));
             row.append($('<td>').html(`<span class="badge badge-secondary">${lastScoreD2}</span>`));
             row.append($('<td>').html(`<span class="score-total d2">${totalScoreD2}</span>`));
             row.append($('<td>').html(`<span class="score-total combined">${totalScore}</span>`));
@@ -916,16 +854,11 @@ function showCustomNotification(message, type = 'success') {
 
 // Initialisation lorsque le document est prêt
 $(document).ready(function() {
-    // Démarrer la vérification automatique (avec 5 secondes)
-    startChecking();
+    // Démarrer automatiquement la vérification toutes les 5 secondes
+    startAutoChecking();
     
-    // Gestion des boutons
-    $('#btn-start').click(startChecking);
-    $('#btn-stop').click(stopChecking);
-    $('#btn-refresh').click(function() {
-        checkTargets();
-        showCustomNotification('Vérification manuelle effectuée');
-    });
+    // Mettre à jour l'heure de la dernière vérification
+    updateLastCheck();
     
     // Fermer le panneau de détails en cliquant à l'extérieur
     $(document).click(function(event) {
@@ -935,13 +868,10 @@ $(document).ready(function() {
         }
     });
     
-    // Mettre à jour l'heure de la dernière vérification
-    updateLastCheck();
-    
-    // Faire une première vérification immédiate
-    setTimeout(() => {
-        checkTargets();
-    }, 100);
+    // Arrêter la vérification automatique lorsque l'utilisateur quitte la page
+    $(window).on('beforeunload', function() {
+        stopAutoChecking();
+    });
 });
 </script>
 

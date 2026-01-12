@@ -28,38 +28,50 @@ function convertArrowToScore($letter) {
         'I' => '8',
         'J' => '9',
         'K' => '10',
-        'L' => '10', // L est aussi 10 selon votre exemple
+        'L' => '10', // L est aussi 10
         'X' => '10', // Pour les X (dix)
         'M' => 'M',  // Pour les M
     ];
     
-    return isset($conversion[strtoupper($letter)]) ? $conversion[strtoupper($letter)] : '0';
+    $letter = strtoupper($letter);
+    return isset($conversion[$letter]) ? $conversion[$letter] : '0';
 }
 
-// Fonction pour obtenir les 3 derniers scores
+// Fonction pour obtenir les 3 derniers scores (format: "10 - 9 - 8")
 function getLastThreeScores($arrowString) {
-    if (empty($arrowString) || strlen($arrowString) < 3) {
-        return '';
+    if (empty($arrowString) || strlen(trim($arrowString)) < 3) {
+        return '-';
     }
     
-    $lastThree = substr($arrowString, -3);
+    $trimmedString = trim($arrowString);
+    $lastThree = substr($trimmedString, -3);
     $scores = [];
     
     for ($i = 0; $i < 3; $i++) {
-        $scores[] = convertArrowToScore($lastThree[$i]);
+        if (isset($lastThree[$i])) {
+            $score = convertArrowToScore($lastThree[$i]);
+            $scores[] = $score;
+        } else {
+            $scores[] = '-';
+        }
     }
     
     return implode(' - ', $scores);
 }
 
-// Fonction pour obtenir le numéro de volée
+// Fonction pour obtenir le numéro de volée (nombre de volées complètes)
 function getVolleyNumber($arrowString) {
-    if (empty($arrowString)) {
+    if (empty($arrowString) || strlen(trim($arrowString)) == 0) {
         return 0;
     }
     
-    $totalArrows = strlen($arrowString);
-    return ceil($totalArrows / 3);
+    $trimmedString = trim($arrowString);
+    $totalArrows = strlen($trimmedString);
+    
+    // Calculer le nombre de volées complètes (diviser par 3 et prendre la partie entière)
+    $volleyNumber = floor($totalArrows / 3);
+    
+    return $volleyNumber;
 }
 
 // Fonction pour calculer le score total d'une chaîne de flèches
@@ -187,11 +199,11 @@ try {
         $totalScoreD2 = intval($row->QuD2Score);
         $totalScore = $totalScoreD1 + $totalScoreD2;
         
-        // Calculer les nouvelles informations
+        // Calculer les dernières volées
         $lastScoreD1 = getLastThreeScores($row->QuD1Arrowstring);
         $lastScoreD2 = getLastThreeScores($row->QuD2Arrowstring);
         
-        // Numéro de volée
+        // Numéro de volée (volées complètes seulement)
         $volleyNumberD1 = getVolleyNumber($row->QuD1Arrowstring);
         $volleyNumberD2 = getVolleyNumber($row->QuD2Arrowstring);
         
