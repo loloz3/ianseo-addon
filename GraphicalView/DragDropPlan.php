@@ -173,6 +173,10 @@ include('Common/Templates/head.php');
     border-color: #10b981 !important;
     background-color: rgba(16, 185, 129, 0.05);
 }
+.target-with-archers:hover {
+    background-color: rgba(16, 185, 129, 0.05) !important;
+    transition: background-color 0.2s ease;
+}
 .invalid-configuration {
     border-color: #ef4444 !important;
     background-color: rgba(239, 68, 68, 0.05);
@@ -187,6 +191,346 @@ include('Common/Templates/head.php');
     opacity: 0.6;
     border-color: #3b82f6 !important;
 }
+
+/* Styles pour le drag d'archer - SIMILAIRE À L'ORIGINAL */
+.archer-draggable {
+    transition: all 0.2s ease;
+}
+.archer-drag-preview {
+    position: absolute !important;
+    top: -1000px !important;
+    left: -1000px !important;
+    width: 190px !important;
+    padding: 10px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+    font-family: 'Inter', sans-serif !important;
+    z-index: 10000 !important;
+    opacity: 0.95 !important;
+    pointer-events: none !important;
+    backdrop-filter: blur(2px);
+    border: 2px solid;
+}
+.archer-drag-preview.wheelchair {
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.98), rgba(191, 219, 254, 0.98)) !important;
+    border-color: #3b82f6 !important;
+}
+.archer-drag-preview.regular {
+    background: linear-gradient(135deg, rgba(220, 252, 231, 0.98), rgba(187, 247, 208, 0.98)) !important;
+    border-color: #10b981 !important;
+}
+.dragging-archer {
+    opacity: 0.3 !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Styles pour les positions d'archers */
+.position-container {
+    transition: all 0.2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.position-occupied {
+    cursor: move !important;
+}
+
+.position-occupied:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-2px) !important;
+    z-index: 10 !important;
+}
+
+.position-empty {
+    cursor: default !important;
+}
+
+.position-empty:hover {
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.position-blocked {
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+}
+
+.position-blocked:hover {
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.archer-content {
+    height: calc(100% - 28px); /* 28px = hauteur du header */
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.position-header {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: inherit;
+    z-index: 2;
+    position: relative;
+}
+
+/* Style pour l'image de drag qui ressemble à l'original */
+.archer-original-look {
+    padding: 6px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+}
+
+.archer-original-look .archer-info {
+    padding: 4px 6px !important;
+    border-radius: 4px !important;
+    margin-bottom: 4px !important;
+}
+
+.archer-original-look .archer-details {
+    font-size: 10px !important;
+    padding: 2px 4px !important;
+}
+
+/* NOUVEAUX STYLES POUR LES BORDURES SPÉCIFIQUES */
+/* Styles pour les bordures spécifiques */
+.archer-assigned {
+    border: 2px solid #15803d !important; /* Vert foncé pour les assignés */
+    background-color: #dcfce7 !important; /* Vert clair */
+    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+}
+
+.archer-wheelchair-assigned {
+    border: 2px solid #1d4ed8 !important; /* Bleu foncé pour les fauteuils */
+    background-color: #dbeafe !important; /* Bleu clair */
+    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+}
+
+.position-empty {
+    border: 2px solid #e5e7eb !important; /* Gris clair pour les positions vides */
+    background-color: #f9fafb !important; /* Gris très clair */
+    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+}
+
+.archer-unassigned {
+    border: 2px solid #ea580c !important; /* Orange foncé pour les non-assignés */
+    background-color: #ffedd5 !important; /* Orange clair */
+    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+}
+
+.target-container {
+    border: 2px solid #e5e7eb !important; /* Gris clair pour les cibles */
+    background-color: #f8fafc !important; /* Gris très clair */
+    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+}
+
+/* S'assurer que les bordures soient visibles */
+.p-3.border-2.rounded-lg {
+    border-width: 2px !important;
+    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+}
+
+/* Position container spécifique */
+.position-container {
+    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+    overflow: hidden !important; /* Empêcher le débordement */
+}
+
+/* Ajustements pour la visibilité des bordures */
+.border-2 {
+    border-width: 2px !important;
+}
+
+/* Spécifique pour les archers dans les positions */
+.archer-draggable {
+    border-radius: 0.375rem !important; /* Un peu plus petit pour l'intérieur */
+}
+
+/* Ajuster le header des positions */
+.position-header {
+    border-top-left-radius: 0.5rem !important;
+    border-top-right-radius: 0.5rem !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* S'assurer que le contenu archer s'aligne bien */
+.archer-content {
+    border-bottom-left-radius: 0.375rem !important;
+    border-bottom-right-radius: 0.375rem !important;
+}
+
+/* Styles pour les miniatures de cibles en haut - VERT CLAIR */
+.target-thumbnail.has-archers {
+    border: 3px solid #86efac !important; /* Vert clair plus épais */
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+    box-shadow: 0 2px 8px rgba(134, 239, 172, 0.3) !important;
+}
+
+.target-thumbnail.has-archers:hover {
+    border-color: #4ade80 !important;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(74, 222, 128, 0.4) !important;
+}
+
+.target-thumbnail.has-archers.active {
+    border-color: #22c55e !important;
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4), 
+                0 4px 12px rgba(34, 197, 94, 0.3) !important;
+}
+
+/* Cible sans archers */
+.target-thumbnail:not(.has-archers) {
+    border-color: #e5e7eb !important;
+    background-color: #f9fafb !important;
+}
+
+/* Cible invalide (rouge) */
+.target-thumbnail:not(.is-valid) {
+    border-color: #fca5a5 !important;
+    background-color: #fef2f2 !important;
+}
+
+/* Numéro de cible en gras pour les cibles avec archers */
+.target-thumbnail.has-archers .font-bold {
+    color: #15803d !important; /* Vert foncé pour le numéro */
+    font-weight: 800 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Indicateur visuel supplémentaire pour les cibles avec archers */
+.target-thumbnail.has-archers::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: inherit;
+    background: linear-gradient(45deg, transparent, rgba(134, 239, 172, 0.1), transparent);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.target-thumbnail.has-archers:hover::before {
+    opacity: 1;
+}
+
+/* Style pour le highlight de la cible sélectionnée */
+.highlight-target {
+    border-color: #3b82f6 !important;
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 
+                0 4px 12px rgba(59, 130, 246, 0.2) !important;
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+    z-index: 10;
+    position: relative;
+}
+
+/* Animation de pulsation */
+@keyframes targetPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
+
+.highlight-target::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border-radius: inherit;
+    animation: targetPulse 1.5s infinite;
+    z-index: -1;
+}
+
+/* Assurer que le bouton est visible */
+.flex.items-center.gap-2 button {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Style spécifique pour le bouton d'impression */
+button:has(.w-4.h-4) {
+    display: inline-flex !important;
+}
+
+.bg-blue-600 { 
+    background-color: #2563eb !important; 
+}
+.text-white { 
+    color: #ffffff !important; 
+}
+.hover\:bg-blue-700:hover { 
+    background-color: #1d4ed8 !important; 
+}
+
+/* Styles pour la zone de drop améliorée */
+.drop-zone-active {
+    border-color: #f97316 !important;
+    background-color: rgba(254, 215, 170, 0.3) !important;
+    border-width: 3px !important;
+}
+
+.drop-zone-hint {
+    animation: dropZonePulse 1.5s infinite;
+}
+
+@keyframes dropZonePulse {
+    0%, 100% {
+        border-color: #f97316;
+    }
+    50% {
+        border-color: #fb923c;
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+    }
+}
+
+.cursor-copy {
+    cursor: copy !important;
+}
+
+/* Styles pour les badges de cibles */
+.target-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background-color: #10b981;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    z-index: 10;
+}
+
 </style>
 
 
@@ -242,19 +586,278 @@ include('Common/Templates/head.php');
         margin: 10px 0;
         white-space: pre-wrap;
     }
+	/* AJOUTER CES STYLES POUR CORRIGER L'ALIGNEMENT DES IMAGES */
+.target-thumbnail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.target-thumbnail .relative {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 64px; /* Fixer une hauteur pour l'image */
+}
+
+.target-thumbnail img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.target-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background-color: #10b981;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    z-index: 10;
+}
+
+.target-thumbnail .font-bold {
+    margin-top: 4px;
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+}
+
 </style>
 
 
 
-<!-- React et ReactDOM -->
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-<!-- Babel pour transformer JSX -->
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
+<!-- Références aux bibliothèques locales -->
+<script src="./Lib/react-18.2.0.production.min.js"></script>
+<script src="./Lib/react-dom-18.2.0.production.min.js"></script>
+<script src="./Lib/babel-7.23.2.min.js"></script>
+<!-- Alternative pour Tailwind CSS pour éviter l'avertissement -->
+<script>
+// Configuration Tailwind CSS minimaliste
+(function() {
+    // Créer un objet tailwind global pour éviter les erreurs
+    if (!window.tailwind) {
+        window.tailwind = {
+            config: {},
+            init: function() {
+                console.log('Tailwind CSS initialisé (version locale)');
+            }
+        };
+    }
+    
+    // Initialiser tailwind
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.tailwind && window.tailwind.init) {
+            window.tailwind.init();
+        }
+        
+        // Ajouter quelques classes Tailwind utiles si nécessaire
+        const style = document.createElement('style');
+        style.textContent = `
+            /* Classes utilitaires Tailwind de base */
+            .flex { display: flex; }
+            .grid { display: grid; }
+            .hidden { display: none; }
+            .block { display: block; }
+            .inline-block { display: inline-block; }
+            .inline-flex { display: inline-flex; }
+            .flex-col { flex-direction: column; }
+            .flex-row { flex-direction: row; }
+            .items-center { align-items: center; }
+            .justify-center { justify-content: center; }
+            .justify-between { justify-content: space-between; }
+            .gap-1 { gap: 0.25rem; }
+            .gap-2 { gap: 0.5rem; }
+            .gap-3 { gap: 0.75rem; }
+            .gap-4 { gap: 1rem; }
+            .gap-6 { gap: 1.5rem; }
+            .p-1 { padding: 0.25rem; }
+            .p-2 { padding: 0.5rem; }
+            .p-3 { padding: 0.75rem; }
+            .p-4 { padding: 1rem; }
+            .p-6 { padding: 1.5rem; }
+            .m-0 { margin: 0; }
+            .mb-1 { margin-bottom: 0.25rem; }
+            .mb-2 { margin-bottom: 0.5rem; }
+            .mb-3 { margin-bottom: 0.75rem; }
+            .mb-4 { margin-bottom: 1rem; }
+            .mb-6 { margin-bottom: 1.5rem; }
+            .mt-1 { margin-top: 0.25rem; }
+            .mt-2 { margin-top: 0.5rem; }
+            .mt-3 { margin-top: 0.75rem; }
+            .mt-4 { margin-top: 1rem; }
+            .mt-6 { margin-top: 1.5rem; }
+            .rounded { border-radius: 0.25rem; }
+            .rounded-lg { border-radius: 0.5rem; }
+            .rounded-full { border-radius: 9999px; }
+            .border { border-width: 1px; }
+            .border-2 { border-width: 2px; }
+            .border-3 { border-width: 3px; }
+            .border-t { border-top-width: 1px; }
+            .border-b { border-bottom-width: 1px; }
+            .border-gray-200 { border-color: #e5e7eb; }
+            .border-gray-300 { border-color: #d1d5db; }
+            .border-orange-300 { border-color: #fdba74; }
+            .border-orange-400 { border-color: #fb923c; }
+            .border-orange-500 { border-color: #f97316; }
+            .border-blue-300 { border-color: #93c5fd; }
+            .border-blue-400 { border-color: #60a5fa; }
+            .border-blue-500 { border-color: #3b82f6; }
+            .border-blue-600 { border-color: #2563eb; }
+            .border-green-300 { border-color: #86efac; }
+            .border-green-400 { border-color: #4ade80; }
+            .border-green-500 { border-color: #10b981; }
+            .border-green-600 { border-color: #059669; }
+            .border-red-300 { border-color: #fca5a5; }
+            .border-red-500 { border-color: #ef4444; }
+            .bg-white { background-color: #ffffff; }
+            .bg-gray-50 { background-color: #f9fafb; }
+            .bg-gray-100 { background-color: #f3f4f6; }
+            .bg-orange-50 { background-color: #fff7ed; }
+            .bg-orange-100 { background-color: #ffedd5; }
+            .bg-blue-50 { background-color: #eff6ff; }
+            .bg-blue-100 { background-color: #dbeafe; }
+            .bg-green-50 { background-color: #f0fdf4; }
+            .bg-green-100 { background-color: #dcfce7; }
+            .bg-green-200 { background-color: #bbf7d0; }
+            .bg-red-50 { background-color: #fef2f2; }
+            .bg-red-100 { background-color: #fee2e2; }
+            .bg-yellow-100 { background-color: #fef3c7; }
+            .bg-slate-50 { background-color: #f8fafc; }
+            .bg-slate-100 { background-color: #f1f5f9; }
+            .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
+            .from-slate-50 { --tw-gradient-from: #f8fafc; --tw-gradient-to: rgb(248 250 252 / 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+            .to-slate-100 { --tw-gradient-to: #f1f5f9; }
+            .text-center { text-align: center; }
+            .text-left { text-align: left; }
+            .text-right { text-align: right; }
+            .text-xs { font-size: 0.75rem; line-height: 1rem; }
+            .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+            .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+            .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+            .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+            .font-bold { font-weight: 700; }
+            .font-medium { font-weight: 500; }
+            .font-semibold { font-weight: 600; }
+            .text-gray-400 { color: #9ca3af; }
+            .text-gray-500 { color: #6b7280; }
+            .text-gray-600 { color: #4b5563; }
+            .text-gray-800 { color: #1f2937; }
+            .text-blue-600 { color: #2563eb; }
+            .text-blue-700 { color: #1d4ed8; }
+            .text-green-600 { color: #16a34a; }
+            .text-green-700 { color: #15803d; }
+            .text-green-800 { color: #166534; }
+            .text-red-600 { color: #dc2626; }
+            .text-red-800 { color: #991b1b; }
+            .text-yellow-800 { color: #92400e; }
+            .text-orange-600 { color: #ea580c; }
+            .text-orange-700 { color: #c2410c; }
+            .text-white { color: #ffffff; }
+            .opacity-40 { opacity: 0.4; }
+            .opacity-50 { opacity: 0.5; }
+            .opacity-70 { opacity: 0.7; }
+            .shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+            .shadow-md { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+            .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+            .sticky { position: sticky; }
+            .top-6 { top: 1.5rem; }
+            .fixed { position: fixed; }
+            .bottom-6 { bottom: 1.5rem; }
+            .right-6 { right: 1.5rem; }
+            .left-6 { left: 1.5rem; }
+            .z-10 { z-index: 10; }
+            .z-10000 { z-index: 10000; }
+            .w-4 { width: 1rem; }
+            .w-5 { width: 1.25rem; }
+            .w-6 { width: 1.5rem; }
+            .w-8 { width: 2rem; }
+            .w-11 { width: 2.75rem; }
+            .w-12 { width: 3rem; }
+            .w-16 { width: 4rem; }
+            .w-19 { width: 19rem; }
+            .w-24 { width: 6rem; }
+            .w-60 { width: 15rem; }
+            .h-4 { height: 1rem; }
+            .h-5 { height: 1.25rem; }
+            .h-6 { height: 1.5rem; }
+            .h-8 { height: 2rem; }
+            .h-12 { height: 3rem; }
+            .h-16 { height: 4rem; }
+            .h-20 { height: 5rem; }
+            .h-28 { height: 7rem; }
+            .min-w-0 { min-width: 0; }
+            .min-w-\[200px\] { min-width: 200px; }
+            .min-h-\[300px\] { min-height: 300px; }
+            .min-h-\[350px\] { min-height: 350px; }
+            .max-h-\[600px\] { max-height: 600px; }
+            .max-h-\[calc\(100vh-200px\)\] { max-height: calc(100vh - 200px); }
+            .overflow-x-auto { overflow-x: auto; }
+            .overflow-y-auto { overflow-y: auto; }
+            .flex-shrink-0 { flex-shrink: 0; }
+            .flex-1 { flex: 1 1 0%; }
+            .cursor-pointer { cursor: pointer; }
+            .cursor-move { cursor: move; }
+            .cursor-default { cursor: default; }
+            .cursor-copy { cursor: copy; }
+            .cursor-not-allowed { cursor: not-allowed; }
+            .transition { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+            .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+            .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+            .transition-shadow { transition-property: box-shadow; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+            .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+            .hover\:bg-gray-100:hover { background-color: #f3f4f6; }
+            .hover\:bg-orange-50:hover { background-color: #fff7ed; }
+            .hover\:bg-orange-100:hover { background-color: #ffedd5; }
+            .hover\:shadow-md:hover { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+            .hover\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+            .hover\:text-gray-800:hover { color: #1f2937; }
+            .hover\:border-orange-400:hover { border-color: #fb923c; }
+            .focus\:outline-none:focus { outline: 2px solid transparent; outline-offset: 2px; }
+            .focus\:ring-2:focus { ring-width: 2px; }
+            .focus\:ring-blue-500:focus { --tw-ring-color: #3b82f6; }
+            .focus\:ring-offset-2:focus { --tw-ring-offset-width: 2px; }
+            .focus\:border-blue-500:focus { border-color: #3b82f6; }
+            .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .space-y-3 > * + * { margin-top: 0.75rem; }
+            .space-y-4 > * + * { margin-top: 1rem; }
+            .mx-auto { margin-left: auto; margin-right: auto; }
+            .pt-1 { padding-top: 0.25rem; }
+            .pt-3 { padding-top: 0.75rem; }
+            .pt-4 { padding-top: 1rem; }
+            .pb-1 { padding-bottom: 0.25rem; }
+            .pb-3 { padding-bottom: 0.75rem; }
+            .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+            .px-4 { padding-left: 1rem; padding-right: 1rem; }
+            .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+            .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+            .py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+            .relative { position: relative; }
+            .absolute { position: absolute; }
+            .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+            .inline-flex { display: inline-flex; }
+            .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .object-contain { object-fit: contain; }
+            .no-select { user-select: none; }
+            .pointer-events-none { pointer-events: none; }
+            .border-dashed { border-style: dashed; }
+        `;
+        document.head.appendChild(style);
+    });
+})();
+</script>
 
 <script type="text/babel">
     // Icônes SVG utilisées dans l'interface
@@ -286,11 +889,11 @@ include('Common/Templates/head.php');
                 <circle cx="12" cy="12" r="1" strokeWidth="2" />
             </svg>
         ),
-        Print: () => (
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-            </svg>
-        ),
+		Print: () => (
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+			</svg>
+		),
         Lock: () => (
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -392,341 +995,499 @@ include('Common/Templates/head.php');
         const targetsOverviewRef = useRef(null);
         const [scrollPosition, setScrollPosition] = useState(0);
 
-const generateSimplePDF = () => {
-    console.log('=== GÉNÉRATION PDF SIMPLIFIÉE ===');
-    
-    // Récupérer les données
-    const assignedArchers = archers.filter(a => 
-        a.session === selectedSession && a.targetNo && a.targetNo.length >= 4
-    );
-    
-    // Extraire les cibles uniques
-    const targetNumbers = [];
-    assignedArchers.forEach(archer => {
-        const targetNum = archer.targetNo.substring(0, 3);
-        if (!targetNumbers.includes(targetNum)) {
-            targetNumbers.push(targetNum);
-        }
-    });
-    
-    // Trier
-    targetNumbers.sort((a, b) => parseInt(a) - parseInt(b));
-    
-    console.log(`✅ ${targetNumbers.length} cibles:`, targetNumbers);
-    
-    if (targetNumbers.length === 0) {
-        alert('Aucune cible assignée pour ce départ');
-        return;
-    }
-    
-    // Ouvrir une fenêtre pour le PDF
-    const printWindow = window.open('', '_blank', 'width=1800,height=1000');
-    
-    if (!printWindow) {
-        alert('⚠️ Veuillez autoriser les popups pour générer le PDF');
-        return;
-    }
-    
-    // Fonction pour récupérer les infos archer d'une position spécifique
-    const getArcherForPosition = (targetId, letter) => {
-        return assignedArchers.find(a => a.targetNo === `${targetId}${letter}`);
-    };
-    
-    // Créer le HTML avec le CSS cible
-    let html = `<!DOCTYPE html>
-    <html>
-    <head>
-        <title>Cibles - Départ ${selectedSession}</title>
-        <meta charset="UTF-8">
-        <style>
-            @page { 
-                size: landscape; 
-                margin: 5mm; 
+        // Fonction pour obtenir la couleur de fond selon le type d'archer
+        const getArcherBgColor = (archer, isAssigned = true) => {
+            if (!isAssigned) {
+                return 'archer-unassigned';
             }
-            body { 
-                margin: 0; 
-                padding: 0; 
-                font-family: 'Segoe UI', Arial, sans-serif;
-                background: white; 
+            if (archer.wheelchair) return 'archer-wheelchair-assigned';
+            return 'archer-assigned';
+        };
+
+        // Fonction pour obtenir la couleur de texte selon le type d'archer
+        const getArcherTextColor = (archer, isAssigned = true) => {
+            if (!isAssigned) {
+                return 'text-orange-700';
             }
-            .page-container { 
-                padding: 8mm; 
-            }
-            .print-header { 
-                text-align: center; 
-                margin-bottom: 15mm; 
-            }
-            .print-header h1 { 
-                font-size: 24px; 
-                margin: 0 0 5px 0; 
-                color: #000; 
-            }
-            .print-header .subtitle { 
-                font-size: 14px; 
-                color: #666; 
-            }
-            .targets-layout { 
-                display: flex; 
-                flex-direction: column; 
-                gap: 15px; 
-                margin-bottom: 15mm; 
-            }
-            .targets-row { 
-                display: flex; 
-                justify-content: center; 
-                gap: 10px; 
-            }
-            .target-row-wrapper { 
-                display: flex; 
-                justify-content: space-between; 
-                width: 100%; 
-            }
-            .target-card { 
-                flex: 0 0 7%; 
-                text-align: center; 
-            }
-            .target-number { 
-                font-size: 13px; 
-                font-weight: bold; 
-                color: #000; 
-                margin-bottom: 4px; 
-            }
-            .target-image { 
-                width: 55px; 
-                height: 55px; 
-                object-fit: contain; 
-                margin: 0 auto; 
-            }
-            .target-archers-grid { 
-                display: grid; 
-                grid-template-columns: repeat(4, 1fr); 
-                gap: 3px; 
-                font-size: 8px; 
-            }
-            .archer-column { 
-                display: flex; 
-                flex-direction: column; 
-                align-items: center; 
-                min-height: 200px; 
-                border: 1px solid #e0e0e0; 
-                padding: 3px 2px; 
-                background: #fafafa; 
-            }
-            .position-header { 
-                font-weight: bold; 
-                font-size: 9px; 
-                color: #333; 
-                margin-bottom: 2px; 
-                width: 100%; 
-                text-align: center; 
-                background: #f0f0f0; 
-                padding: 1px 0; 
-            }
-            .archer-content { 
-                display: flex; 
-                flex-direction: column; 
-                align-items: center; 
-                width: 100%; 
-                height: 200px; 
-                overflow: hidden; 
-                padding: 0 1px; 
-            }
-            .archer-full-line { 
-                font-size: 8px; 
-                writing-mode: vertical-lr; 
-                text-orientation: mixed; 
-                height: 200px; 
-                display: flex; 
-                align-items: center; 
-                text-align: center; 
-                width: 100%; 
-            }
-            .empty-position { 
-                color: #999; 
-                font-size: 7.5px; 
-                font-style: italic; 
-                writing-mode: vertical-lr; 
-                text-align: center; 
-                width: 100%; 
-                display: flex; 
-                align-items: center; 
-                height: 100%; 
-            }
-            .print-footer { 
-                text-align: center; 
-                margin-top: 12mm; 
-                font-size: 11px; 
-                color: #666; 
-                border-top: 1px solid #ddd; 
-                padding-top: 4mm; 
-            }
-            .print-controls { 
-                position: fixed; 
-                top: 20px; 
-                right: 20px; 
-                z-index: 10000; 
-                display: flex; 
-                gap: 10px; 
-            }
-            .print-button { 
-                padding: 10px 20px; 
-                background: #3b82f6; 
-                color: white; 
-                border: none; 
-                border-radius: 5px; 
-                cursor: pointer; 
-            }
-            .close-button { 
-                padding: 10px 20px; 
-                background: #6b7280; 
-                color: white; 
-                border: none; 
-                border-radius: 5px; 
-                cursor: pointer; 
-            }
-            .page-break { 
-                page-break-before: always; 
-            }
-            @media print { 
-                .print-controls { 
-                    display: none !important; 
-                } 
-                .page-container { 
-                    padding: 0; 
-                } 
-            }
-        </style>
-    </head>
-    <body>
-        <div class="print-controls">
-            <button class="print-button" onclick="window.print()">Imprimer</button>
-            <button class="close-button" onclick="window.close()">Fermer</button>
-        </div>
-        
-        <div class="page-container">`;
-    
-    // Diviser en pages de 20 cibles
-    const targetsPerPage = 20;
-    const totalPages = Math.ceil(targetNumbers.length / targetsPerPage);
-    
-    for (let page = 0; page < totalPages; page++) {
-        const start = page * targetsPerPage;
-        const end = start + targetsPerPage;
-        const pageTargets = targetNumbers.slice(start, end);
-        
-        // Ajouter un saut de page sauf pour la première page
-        if (page > 0) {
-            html += `<div class="page-break"></div>`;
-        }
-        
-        html += `
-            <div class="print-header">
-                <h1>Cibles - Départ ${selectedSession}</h1>
-                <div class="subtitle">Page ${page + 1} sur ${totalPages}</div>
-            </div>
+            if (archer.wheelchair) return 'text-blue-700';
+            return 'text-green-700';
+        };
+
+        // Gestion du drag & drop des archers avec image SIMILAIRE À L'ORIGINALE
+        const handleArcherDragStart = (e, archer) => {
+            setDraggedArcher(archer);
+            e.dataTransfer.setData('text/plain', `archer:${archer.id}`);
+            e.dataTransfer.effectAllowed = 'move';
+            dragStartPos.current = { x: e.clientX, y: e.clientY };
             
-            <div class="targets-layout">`;
-        
-        // 2 lignes de 10 cibles
-        for (let row = 0; row < 2; row++) {
-            const rowStart = row * 10;
-            const rowEnd = rowStart + 10;
-            const rowTargets = pageTargets.slice(rowStart, rowEnd);
+            // Obtenir les couleurs originales
+            const bgColor = archer.wheelchair ? 
+                'linear-gradient(135deg, rgba(219, 234, 254, 0.98), rgba(191, 219, 254, 0.98))' : 
+                'linear-gradient(135deg, rgba(220, 252, 231, 0.98), rgba(187, 247, 208, 0.98))';
             
-            if (rowTargets.length > 0) {
-                html += `<div class="targets-row">
-                    <div class="target-row-wrapper">`;
+            const borderColor = archer.wheelchair ? '#3b82f6' : '#10b981';
+            const textColor = archer.wheelchair ? '#1e40af' : '#166534';
+            
+            // Créer un élément de drag personnalisé qui ressemble à l'original
+            const dragImage = document.createElement('div');
+            dragImage.className = `archer-drag-preview ${archer.wheelchair ? 'wheelchair' : 'regular'} archer-original-look`;
+            dragImage.setAttribute('data-drag-preview', 'true');
+            
+            // Formater le nom pour un affichage plus compact
+            const nameParts = archer.name.split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            const shortLastName = lastName.length > 10 ? lastName.substring(0, 8) + '...' : lastName;
+            
+            dragImage.innerHTML = `
+                <div style="
+                    display: flex; 
+                    align-items: center; 
+                    gap: 8px; 
+                    margin-bottom: 4px;
+                    padding: 4px 6px;
+                    background: ${archer.wheelchair ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)'};
+                    border-radius: 4px;
+                    border: 1px solid ${archer.wheelchair ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.3)'};
+                ">
+                    ${archer.targetFace ? `
+                        <img src="${getTargetFaceImage(archer.targetFace)}" 
+                             alt="Target face" 
+                             style="width: 30px; height: 30px; object-fit: contain; border-radius: 3px;">
+                    ` : ''}
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: baseline; gap: 4px; margin-bottom: 1px;">
+                            <div style="font-weight: 600; font-size: 11px; color: ${textColor}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${firstName}
+                            </div>
+                            <div style="font-weight: 500; font-size: 10px; color: #374151;">
+                                ${shortLastName}
+                            </div>
+                            ${archer.wheelchair ? 
+                                '<div style="margin-left: 2px; font-size: 11px; color: #3b82f6;" title="Archer en fauteuil">♿</div>' : 
+                                ''
+                            }
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-size: 9px; color: #4b5563;">
+                                ${archer.countryName || archer.country}
+                            </div>
+                            <div style="font-size: 9px; font-weight: 600; color: ${textColor};">
+                                ${archer.division || ''}${archer.class || ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
-                for (let i = 0; i < 10; i++) {
-                    if (i < rowTargets.length) {
-                        const targetId = rowTargets[i];
-                        // Créer un objet cible pour getCombinationImage
-                        const targetObj = {
-                            id: targetId,
-                            positions: ['A', 'B', 'C', 'D'].map(letter => ({
-                                id: `${targetId}${letter}`,
-                                letter: letter,
-                                archer: getArcherForPosition(targetId, letter)
-                            }))
-                        };
-                        const combinationImage = getCombinationImage(targetObj);
+                ${archer.targetNo ? `
+                <div style="
+                    text-align: center; 
+                    font-size: 10px; 
+                    font-weight: 700; 
+                    color: ${textColor};
+                    margin: 4px 0;
+                    padding: 2px 4px;
+                    background: ${archer.wheelchair ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)'};
+                    border-radius: 3px;
+                    border: 1px dashed ${borderColor};
+                ">
+                    ${archer.targetNo}
+                </div>
+                ` : `
+                <div style="
+                    text-align: center; 
+                    font-size: 9px; 
+                    color: #9ca3af;
+                    margin: 4px 0;
+                    padding: 2px 4px;
+                    background: rgba(0,0,0,0.05);
+                    border-radius: 3px;
+                ">
+                    Non assigné
+                </div>
+                `}
+                
+                <div style="
+                    text-align: center; 
+                    font-size: 8px; 
+                    color: #6b7280; 
+                    margin-top: 4px; 
+                    padding-top: 4px; 
+                    border-top: 1px dashed rgba(0,0,0,0.1);
+                ">
+                    Glisser pour déplacer
+                </div>
+            `;
+            
+            document.body.appendChild(dragImage);
+            
+            // Positionner l'image de drag (hors écran)
+            const rect = dragImage.getBoundingClientRect();
+            
+            // Utiliser l'élément personnalisé comme image de drag (centré)
+            e.dataTransfer.setDragImage(dragImage, rect.width / 2, rect.height / 2);
+            
+            // Ajouter une classe à l'élément drag source pour feedback visuel
+            if (e.target.classList) {
+                e.target.classList.add('dragging-archer');
+            }
+            
+            // Nettoyer après le drag
+            setTimeout(() => {
+                const preview = document.querySelector('[data-drag-preview="true"]');
+                if (preview) {
+                    document.body.removeChild(preview);
+                }
+            }, 0);
+        };
+
+        const handleArcherDragEnd = (e) => {
+            // Retirer la classe de feedback visuel
+            const draggingElements = document.querySelectorAll('.dragging-archer');
+            draggingElements.forEach(el => el.classList.remove('dragging-archer'));
+            
+            // Nettoyer les éventuels éléments de preview restants
+            const remainingPreviews = document.querySelectorAll('[data-drag-preview="true"]');
+            remainingPreviews.forEach(preview => preview.remove());
+            
+            setDraggedArcher(null);
+        };
+
+        const generateSimplePDF = () => {
+            console.log('=== GÉNÉRATION PDF SIMPLIFIÉE ===');
+            
+            // Récupérer les données
+            const assignedArchers = archers.filter(a => 
+                a.session === selectedSession && a.targetNo && a.targetNo.length >= 4
+            );
+            
+            // Extraire les cibles uniques
+            const targetNumbers = [];
+            assignedArchers.forEach(archer => {
+                const targetNum = archer.targetNo.substring(0, 3);
+                if (!targetNumbers.includes(targetNum)) {
+                    targetNumbers.push(targetNum);
+                }
+            });
+            
+            // Trier
+            targetNumbers.sort((a, b) => parseInt(a) - parseInt(b));
+            
+            console.log(`✅ ${targetNumbers.length} cibles:`, targetNumbers);
+            
+            if (targetNumbers.length === 0) {
+                alert('Aucune cible assignée pour ce départ');
+                return;
+            }
+            
+            // Ouvrir une fenêtre pour le PDF
+            const printWindow = window.open('', '_blank', 'width=1800,height=1000');
+            
+            if (!printWindow) {
+                alert('⚠️ Veuillez autoriser les popups pour générer le PDF');
+                return;
+            }
+            
+            // Fonction pour récupérer les infos archer d'une position spécifique
+            const getArcherForPosition = (targetId, letter) => {
+                return assignedArchers.find(a => a.targetNo === `${targetId}${letter}`);
+            };
+            
+            // Créer le HTML avec le CSS cible
+            let html = `<!DOCTYPE html>
+            <html>
+            <head>
+                <title>Cibles - Départ ${selectedSession}</title>
+                <meta charset="UTF-8">
+                <style>
+                    @page { 
+                        size: landscape; 
+                        margin: 5mm; 
+                    }
+                    body { 
+                        margin: 0; 
+                        padding: 0; 
+                        font-family: 'Segoe UI', Arial, sans-serif;
+                        background: white; 
+                    }
+                    .page-container { 
+                        padding: 8mm; 
+                    }
+                    .print-header { 
+                        text-align: center; 
+                        margin-bottom: 5mm; 
+                    }
+                    .print-header h1 { 
+                        font-size: 24px; 
+                        margin: 0 0 5px 0; 
+                        color: #000; 
+                    }
+                    .print-header .subtitle { 
+                        font-size: 14px; 
+                        color: #666; 
+                    }
+                    .targets-layout { 
+                        display: flex; 
+                        flex-direction: column; 
+                        gap: 15px; 
+                        margin-bottom: 15mm; 
+                    }
+                    .targets-row { 
+                        display: flex; 
+                        justify-content: center; 
+                        gap: 10px; 
+                    }
+                    .target-row-wrapper { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        width: 100%; 
+                    }
+                    .target-card { 
+                        flex: 0 0 7%; 
+                        text-align: center; 
+                    }
+                    .target-number { 
+                        font-size: 13px; 
+                        font-weight: bold; 
+                        color: #000; 
+                        margin-bottom: 4px; 
+                    }
+                    .target-image { 
+                        width: 55px; 
+                        height: 55px; 
+                        object-fit: contain; 
+                        margin: 0 auto; 
+                    }
+                    .target-archers-grid { 
+                        display: grid; 
+                        grid-template-columns: repeat(4, 1fr); 
+                        gap: 3px; 
+                        font-size: 8px; 
+                    }
+                    .archer-column { 
+                        display: flex; 
+                        flex-direction: column; 
+                        align-items: center; 
+                        min-height: 200px; 
+                        border: 1px solid #e0e0e0; 
+                        padding: 3px 2px; 
+                        background: #fafafa; 
+                    }
+                    .position-header { 
+                        font-weight: bold; 
+                        font-size: 9px; 
+                        color: #333; 
+                        margin-bottom: 2px; 
+                        width: 100%; 
+                        text-align: center; 
+                        background: #f0f0f0; 
+                        padding: 1px 0; 
+                    }
+                    .archer-content { 
+                        display: flex; 
+                        flex-direction: column; 
+                        align-items: center; 
+                        width: 100%; 
+                        height: 200px; 
+                        overflow: hidden; 
+                        padding: 0 1px; 
+                    }
+                    .archer-full-line { 
+                        font-size: 8px; 
+                        writing-mode: vertical-lr; 
+                        text-orientation: mixed; 
+                        height: 200px; 
+                        display: flex; 
+                        align-items: center; 
+                        text-align: center; 
+                        width: 100%; 
+                    }
+                    .empty-position { 
+                        color: #999; 
+                        font-size: 7.5px; 
+                        font-style: italic; 
+                        writing-mode: vertical-lr; 
+                        text-align: center; 
+                        width: 100%; 
+                        display: flex; 
+                        align-items: center; 
+                        height: 100%; 
+                    }
+                    .print-footer { 
+                        text-align: center; 
+                        margin-top: 12mm; 
+                        font-size: 11px; 
+                        color: #666; 
+                        border-top: 1px solid #ddd; 
+                        padding-top: 4mm; 
+                    }
+                    .print-controls { 
+                        position: fixed;
+                        top: 20px; 
+                        right: 20px; 
+                        z-index: 10000; 
+                        display: flex; 
+                        gap: 10px; 
+                    }
+                    .print-button { 
+                        padding: 10px 20px; 
+                        background: #3b82f6; 
+                        color: white; 
+                        border: none; 
+                        border-radius: 5px; 
+                        cursor: pointer; 
+                    }
+                    .close-button { 
+                        padding: 10px 20px; 
+                        background: #6b7280; 
+                        color: white; 
+                        border: none; 
+                        border-radius: 5px; 
+                        cursor: pointer; 
+                    }
+                    .page-break { 
+                        page-break-before: always; 
+                    }
+                    @media print { 
+                        .print-controls { 
+                            display: none !important; 
+                        } 
+                        .page-container { 
+                            padding: 0; 
+                        } 
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-controls">
+                    <button class="print-button" onclick="window.print()">Imprimer</button>
+                    <button class="close-button" onclick="window.close()">Fermer</button>
+                </div>
+                
+                <div class="page-container">`;
+            
+            // Diviser en pages de 20 cibles
+            const targetsPerPage = 20;
+            const totalPages = Math.ceil(targetNumbers.length / targetsPerPage);
+            
+            for (let page = 0; page < totalPages; page++) {
+                const start = page * targetsPerPage;
+                const end = start + targetsPerPage;
+                const pageTargets = targetNumbers.slice(start, end);
+                
+                // Ajouter un saut de page sauf pour la première page
+                if (page > 0) {
+                    html += `<div class="page-break"></div>`;
+                }
+                
+                html += `
+                    <div class="print-header">
+                        <h1>Cibles - Départ ${selectedSession}</h1>
+                        <div class="subtitle">Page ${page + 1} sur ${totalPages}</div>
+                    </div>
+                    
+                    <div class="targets-layout">`;
+                
+                // 2 lignes de 10 cibles
+                for (let row = 0; row < 2; row++) {
+                    const rowStart = row * 10;
+                    const rowEnd = rowStart + 10;
+                    const rowTargets = pageTargets.slice(rowStart, rowEnd);
+                    
+                    if (rowTargets.length > 0) {
+                        html += `<div class="targets-row">
+                            <div class="target-row-wrapper">`;
                         
-                        html += `<div class="target-card">
-                            <div class="target-number">${targetId}</div>`;
-                        
-                        if (combinationImage && combinationImage !== 'Img/xx.png') {
-                            html += `<img src="${combinationImage}" class="target-image" alt="Cible ${targetId}" onerror="this.style.display='none'">`;
-                        } else {
-                            html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
-                                <div style="font-size: 8px; color: #999;">Pas d'image</div>
-                            </div>`;
+                        for (let i = 0; i < 10; i++) {
+                            if (i < rowTargets.length) {
+                                const targetId = rowTargets[i];
+                                // Créer un objet cible pour getCombinationImage
+                                const targetObj = {
+                                    id: targetId,
+                                    positions: ['A', 'B', 'C', 'D'].map(letter => ({
+                                        id: `${targetId}${letter}`,
+                                        letter: letter,
+                                        archer: getArcherForPosition(targetId, letter)
+                                    }))
+                                };
+                                const combinationImage = getCombinationImage(targetObj);
+                                
+                                html += `<div class="target-card">
+                                    <div class="target-number">${targetId}</div>`;
+                                
+                                if (combinationImage && combinationImage !== 'Img/xx.png') {
+                                    html += `<img src="${combinationImage}" class="target-image" alt="Cible ${targetId}" onerror="this.style.display='none'">`;
+                                } else {
+                                    html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
+                                        <div style="font-size: 8px; color: #999;">Pas d'image</div>
+                                    </div>`;
+                                }
+                                
+                                html += `<div class="target-archers-grid">`;
+                                
+                                // Afficher les archers dans l'ordre A, C, B, D
+                                ['A', 'C', 'B', 'D'].forEach(letter => {
+                                    const archer = getArcherForPosition(targetId, letter);
+                                    
+                                    html += `<div class="archer-column">
+                                        <div class="position-header">${letter}</div>
+                                        <div class="archer-content">`;
+                                    
+                                    if (archer) {
+                                        const division = archer.division || '';
+                                        const archerClass = archer.class || '';
+                                        const name = archer.name || '';
+                                        const country = archer.countryName || '';
+                                        
+                                        let line = '';
+                                        if (division) line += `<span style="font-weight: bold;">${division}</span>`;
+                                        if (archerClass) line += (line ? ' ' : '') + `<span>${archerClass}</span>`;
+                                        if ((division || archerClass) && name) line += ' ';
+                                        if (name) line += `<span style="font-weight: bold;">&nbsp;${name}&nbsp;</span>`;
+                                        if (name && country) line += ' ';
+                                        if (country) line += `<span style="font-weight: bold;">&nbsp;/ ${country}</span>`;
+                                        
+                                        html += `<div class="archer-full-line">${line}</div>`;
+                                    } else {
+                                        html += `<div class="empty-position">vide</div>`;
+                                    }
+                                    
+                                    html += `</div></div>`;
+                                });
+                                
+                                html += `</div></div>`;
+                            } else {
+                                // Case vide
+                                html += `<div class="target-card" style="opacity:0.3;">
+                                    <div class="target-number"></div>
+                                    <div class="target-image" style="background: #f5f5f5;"></div>
+                                    <div class="target-archers-grid">
+                                        <div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                        <div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                        <div class="archer-column"><div class="position-header">B</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                        <div class="archer-column"><div class="position-header">D</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                    </div>
+                                </div>`;
+                            }
                         }
                         
-                        html += `<div class="target-archers-grid">`;
-                        
-                        // Afficher les archers dans l'ordre A, C, B, D
-                        ['A', 'C', 'B', 'D'].forEach(letter => {
-                            const archer = getArcherForPosition(targetId, letter);
-                            
-                            html += `<div class="archer-column">
-                                <div class="position-header">${letter}</div>
-                                <div class="archer-content">`;
-                            
-                            if (archer) {
-                                const division = archer.division || '';
-                                const archerClass = archer.class || '';
-                                const name = archer.name || '';
-                                const country = archer.countryName || '';
-                                
-                                let line = '';
-                                if (division) line += `<span style="font-weight: bold;">${division}</span>`;
-                                if (archerClass) line += (line ? ' ' : '') + `<span>${archerClass}</span>`;
-                                if ((division || archerClass) && name) line += ' ';
-                                if (name) line += `<span style="font-weight: bold;">&nbsp;${name}&nbsp;</span>`;
-                                if (name && country) line += ' ';
-                                if (country) line += `<span style="font-weight: bold;">&nbsp;/ ${country}</span>`;
-                                
-                                html += `<div class="archer-full-line">${line}</div>`;
-                            } else {
-                                html += `<div class="empty-position">vide</div>`;
-                            }
-                            
-                            html += `</div></div>`;
-                        });
-                        
                         html += `</div></div>`;
-                    } else {
-                        // Case vide
-                        html += `<div class="target-card" style="opacity:0.3;">
-                            <div class="target-number"></div>
-                            <div class="target-image" style="background: #f5f5f5;"></div>
-                            <div class="target-archers-grid">
-                                <div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-                                <div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-                                <div class="archer-column"><div class="position-header">B</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-                                <div class="archer-column"><div class="position-header">D</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-                            </div>
-                        </div>`;
                     }
                 }
                 
-                html += `</div></div>`;
+                html += `</div>`;
+                
             }
-        }
-        
-        html += `</div>`;
-        
-    }
-    
-    html += `</div></body></html>`;
-    
-    // Afficher
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    
-    console.log('✅ PDF généré avec succès');
-};
+            
+            html += `</div></body></html>`;
+            
+            // Afficher
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            
+            console.log('✅ PDF généré avec succès');
+        };
 
         // Fonction de débogage
         const debugTargets = () => {
@@ -858,6 +1619,13 @@ const generateSimplePDF = () => {
             );
         };
 
+        // Fonction pour compter le nombre d'archers sur une cible
+        const countArchersOnTarget = (targetId) => {
+            return assignedArchers.filter(archer => 
+                archer.targetNo && archer.targetNo.startsWith(targetId)
+            ).length;
+        };
+
         // Gestion du scroll horizontal
         const handleOverviewScroll = () => {
             if (targetsOverviewRef.current) {
@@ -875,24 +1643,6 @@ const generateSimplePDF = () => {
                 };
             }
         }, []);
-
-        // Gestion du drag & drop des archers
-        const handleArcherDragStart = (e, archer) => {
-            setDraggedArcher(archer);
-            e.dataTransfer.setData('text/plain', `archer:${archer.id}`);
-            e.dataTransfer.effectAllowed = 'move';
-            dragStartPos.current = { x: e.clientX, y: e.clientY };
-            
-            // Feedback visuel
-            setTimeout(() => {
-                e.target.classList.add('opacity-50');
-            }, 0);
-        };
-
-        const handleArcherDragEnd = (e) => {
-            e.target.classList.remove('opacity-50');
-            setDraggedArcher(null);
-        };
 
         const handleDragOver = (e) => {
             e.preventDefault();
@@ -1279,26 +2029,29 @@ const generateSimplePDF = () => {
 
         const getPositionColor = (position, isBlocked) => {
             if (isBlocked) return 'bg-gray-100 border-gray-300';
-            if (!position.archer) return 'bg-white border-gray-300';
-            if (position.archer.wheelchair) return 'bg-blue-100 border-blue-400';
-            return 'bg-green-100 border-green-400';
+            if (!position.archer) return 'position-empty';
+            if (position.archer.wheelchair) return 'archer-wheelchair-assigned';
+            return 'archer-assigned';
         };
 
-        // Fonction pour scroller vers une cible spécifique
+        // Fonction pour scroller vers une cible spécifique (CENTRER la cible dans le viewport)
         const scrollToTarget = (targetId) => {
             const element = document.querySelector(`[data-target-id="${targetId}"]`);
             if (element) {
-                element.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center',
-                    inline: 'nearest'
+                // Utiliser l'API native scrollIntoView pour centrer la cible
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',    // Centre verticalement la cible dans le conteneur
+                    inline: 'nearest'   // Pas de décalage horizontal
                 });
                 
-                // Feedback visuel temporaire
-                element.classList.add('border-blue-500', 'bg-blue-50');
+                // Feedback visuel amélioré
+                element.classList.add('highlight-target');
+                
+                // Retirer le highlight après 2 secondes
                 setTimeout(() => {
-                    element.classList.remove('border-blue-500', 'bg-blue-50');
-                }, 1500);
+                    element.classList.remove('highlight-target');
+                }, 2000);
             }
         };
 
@@ -1347,37 +2100,48 @@ const generateSimplePDF = () => {
                                 </div>
                             </div>
                             
-                            <div className="flex items-center gap-2">
-                                {/* BOUTON IMPRIMER PDF SIMPLIFIÉ */}
-                                <button
-                                    onClick={() => {
-                                        debugTargets();
-                                        generateSimplePDF();
-                                    }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                                    title="Générer un PDF de toutes les cibles"
-                                >
-                                    <div className="w-4 h-4"><Icons.Print /></div>
-                                    <span>Imprimer PDF</span>
-                                </button>
-                                
-                                <button
-                                    onClick={() => setShowTargetsOverview(!showTargetsOverview)}
-                                    className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
-                                >
-                                    {showTargetsOverview ? (
-                                        <>
-                                            <span>Masquer</span>
-                                            <div className="w-4 h-4"><Icons.ChevronUp /></div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span>Afficher</span>
-                                            <div className="w-4 h-4"><Icons.ChevronDown /></div>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
+<div className="flex items-center gap-2">
+    {/* BOUTON IMPRIMER PDF SIMPLIFIÉ */}
+<button
+    onClick={() => {
+        debugTargets();
+        generateSimplePDF();
+    }}
+    className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+    style={{
+        backgroundColor: '#2563eb',
+        color: 'white',
+        border: '2px solid #1d4ed8'
+    }}
+    onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = '#1d4ed8';
+    }}
+    onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = '#2563eb';
+    }}
+    title="Générer un PDF de toutes les cibles"
+>
+    <div className="w-4 h-4"><Icons.Print /></div>
+    <span>Imprimer PDF</span>
+</button>
+    
+    <button
+        onClick={() => setShowTargetsOverview(!showTargetsOverview)}
+        className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+    >
+        {showTargetsOverview ? (
+            <>
+                <span>Masquer</span>
+                <div className="w-4 h-4"><Icons.ChevronUp /></div>
+            </>
+        ) : (
+            <>
+                <span>Afficher</span>
+                <div className="w-4 h-4"><Icons.ChevronDown /></div>
+            </>
+        )}
+    </button>
+</div>
                         </div>
                         
                         {showTargetsOverview && (
@@ -1397,108 +2161,111 @@ const generateSimplePDF = () => {
                                         const combinationImage = getTargetCombinationImage(targetId);
                                         const isValid = isTargetValid(targetId);
                                         const hasArchers = hasAssignedArchers(targetId);
+                                        const archersCount = countArchersOnTarget(targetId);
                                         const isActive = hoverTargetId === targetId;
                                         
-                                        return (
-                                            <div
-                                                key={targetId}
-                                                className={`target-thumbnail flex-shrink-0 w-16 p-2 border-2 rounded-lg text-center cursor-pointer transition-all ${
-                                                    isActive ? 'active border-blue-500 bg-blue-50' : 
-                                                    !isValid ? 'border-red-300 bg-red-50' :
-                                                    hasArchers ? 'border-green-300 bg-green-50' : 
-                                                    'border-gray-200 bg-gray-50'
-                                                }`}
-                                                onClick={() => scrollToTarget(targetId)}
-                                                onMouseEnter={() => setHoverTargetId(targetId)}
-                                                onMouseLeave={() => {
-                                                    if (hoverTargetId === targetId) {
-                                                        setHoverTargetId(null);
-                                                    }
-                                                }}
-                                                title={`Cible ${targetId} - Cliquer pour aller à la cible`}
-                                            >
-                                                {/* Image de combinaison */}
-                                                {combinationImage ? (
-                                                    <div className="mb-1">
-                                                        <img 
-                                                            src={combinationImage} 
-                                                            alt={`Cible ${targetId}`}
-                                                            className="w-16 h-16 mx-auto object-contain"
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-11 h-16 mx-auto mb-1 flex items-center justify-center bg-gray-100 rounded">
-                                                        <div className="w-8 h-8 text-gray-400">
-                                                            <Icons.Target />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                
-                                                {/* Numéro de cible */}
-                                                <div className={`font-bold ${
-                                                    !isValid ? 'text-red-600' :
-                                                    hasArchers ? 'text-green-600' : 
-                                                    'text-gray-500'
-                                                }`}>
-                                                    {targetId}
-                                                </div>
-                                            </div>
-                                        );
+										return (
+											<div
+												key={targetId}
+												className={`target-thumbnail flex-shrink-0 w-16 p-2 border-2 rounded-lg text-center cursor-pointer transition-all relative ${
+													isActive ? 'active border-blue-500 bg-blue-50' : 
+													!isValid ? 'border-red-300 bg-red-50' :
+													hasArchers ? 'has-archers' : 
+													'border-gray-200 bg-gray-50'
+												}`}
+												onClick={() => scrollToTarget(targetId)}
+												onMouseEnter={() => setHoverTargetId(targetId)}
+												onMouseLeave={() => {
+													if (hoverTargetId === targetId) {
+														setHoverTargetId(null);
+													}
+												}}
+												title={`Cible ${targetId} - ${archersCount} archer(s) - Cliquer pour aller à la cible`}
+											>
+												{/* Conteneur pour l'image */}
+												<div className="relative w-full h-16 mb-1 flex items-center justify-center">
+													{/* Image de combinaison */}
+													{combinationImage ? (
+														<img 
+															src={combinationImage} 
+															alt={`Cible ${targetId}`}
+															className="max-w-full max-h-full object-contain"
+															onError={(e) => {
+																e.target.style.display = 'none';
+															}}
+														/>
+													) : (
+														<div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+															<div className="w-8 h-8 text-gray-400">
+																<Icons.Target />
+															</div>
+														</div>
+													)}
+													
+													{/* Badge avec nombre d'archers */}
+													{archersCount > 0 && (
+														<div className="target-badge">
+															{archersCount}
+														</div>
+													)}
+												</div>
+												
+												{/* Numéro de cible - TOUJOURS EN BAS */}
+												<div className={`font-bold mt-1 ${
+													!isValid ? 'text-red-600' :
+													hasArchers ? 'text-green-800' : 
+													'text-gray-500'
+												}`}>
+													{targetId}
+												</div>
+											</div>
+										);
                                     }).filter(Boolean)}
                                 </div>
                                 
-                                {/* Légende pour la barre de miniatures */}
-                                <div className="flex flex-wrap gap-4 text-xs text-gray-600 mt-3 pt-3 border-t">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-3 rounded-full bg-green-100 border border-green-300"></div>
-                                        <span>Cible avec archers</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-3 rounded-full bg-gray-100 border border-gray-300"></div>
-                                        <span>Cible vide</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-3 rounded-full bg-red-100 border border-red-300"></div>
-                                        <span>Configuration invalide</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-3 rounded-full bg-blue-100 border border-blue-300"></div>
-                                        <span>Cible sélectionnée</span>
-                                    </div>
-                                </div>
                             </>
                         )}
                     </div>
 
                     <div className="flex gap-6">
-                        {/* Liste des archers non assignés */}
+                        {/* Liste des archers non assignés - AVEC ZONE DE DROP AMÉLIORÉE */}
                         <div className="w-19 flex-shrink-0">
                             <div className="bg-white rounded-lg shadow-lg p-4 sticky top-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-5 h-5 text-blue-600"><Icons.Users /></div>
-                                    <h2 className="text-lg font-bold text-gray-800 ml-3">
-                                        Non assignés ({unassignedArchers.length})
-                                    </h2>
-                                </div>
+
+                                
+                                {/* ZONE DE DROP AMÉLIORÉE - Solution 2 */}
                                 <div 
-                                    className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto p-1"
-                                    onDragOver={handleDragOver}
-                                    onDrop={handleDropToUnassigned}
+                                    className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 transition-colors bg-gray-50 min-h-[300px] cursor-copy"
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.add('border-orange-400', 'bg-orange-50', 'drop-zone-active');
+                                    }}
+                                    onDragLeave={(e) => {
+                                        e.currentTarget.classList.remove('border-orange-400', 'bg-orange-50', 'drop-zone-active');
+                                    }}
+                                    onDrop={(e) => {
+                                        e.currentTarget.classList.remove('border-orange-400', 'bg-orange-50', 'drop-zone-active');
+                                        handleDropToUnassigned(e);
+                                    }}
                                 >
+                                    {/* Titre amélioré */}
+                                    <div className="text-center mb-4 pb-3 border-b border-gray-200">
+                                        <div className="text-lg font-bold text-gray-800 mb-1">
+                                            Non assignés ({unassignedArchers.length})
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            Glissez les archers ici pour les désassigner
+                                        </div>
+                                    </div>
+                                    
                                     {unassignedArchers.map(archer => (
                                         <div
                                             key={archer.id}
                                             draggable
                                             onDragStart={(e) => handleArcherDragStart(e, archer)}
                                             onDragEnd={handleArcherDragEnd}
-                                            className={`p-3 border-2 rounded-lg cursor-move hover:shadow-md transition no-select ${
-                                                archer.wheelchair 
-                                                    ? 'bg-blue-50 border-blue-300' 
-                                                    : 'bg-orange-50 border-orange-300'
-                                            }`}
+                                            className={`p-3 border-2 rounded-lg cursor-move hover:shadow-md transition no-select ${getArcherBgColor(archer, false)}`}
+                                            data-archer-id={archer.id}
                                         >
                                             <div className="flex items-start gap-2">
                                                 {archer.targetFace && (
@@ -1509,14 +2276,14 @@ const generateSimplePDF = () => {
                                                     />
                                                 )}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-bold text-sm text-gray-800 truncate">
+                                                    <div className={`font-bold text-sm truncate ${getArcherTextColor(archer, false)}`}>
                                                         {archer.name}
                                                         {archer.wheelchair && ' ♿'}
                                                     </div>
                                                     <div className="text-xs text-gray-600 mt-1 truncate">
                                                         {archer.countryName}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 mt-1 truncate">
+                                                    <div className={`text-xs font-medium mt-1 truncate ${getArcherTextColor(archer, false)}`}>
                                                         {archer.division}{archer.class}
                                                     </div>
                                                 </div>
@@ -1525,8 +2292,18 @@ const generateSimplePDF = () => {
                                     ))}
 
                                     {unassignedArchers.length === 0 && (
-                                        <div className="text-center text-gray-500 text-sm py-8">
-                                            Tous les archers sont assignés
+                                        <div className="text-center text-gray-500 text-sm py-12 border-2 border-dashed border-gray-300 rounded-lg bg-white">
+                                            <div className="w-12 h-12 text-gray-300 mx-auto mb-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </div>
+                                            <div className="font-medium text-gray-600 mb-1">
+                                                Zone de désassignement vide
+                                            </div>
+                                            <div className="text-gray-500">
+                                                Glissez un archer ici pour le désassigner
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -1545,7 +2322,10 @@ const generateSimplePDF = () => {
                                     </div>
                                 </div>
                                 
-                                <div className="space-y-4 max-h-[600px] overflow-y-auto p-1">
+                                <div 
+                                    id="targets-scroll-container"
+                                    className="space-y-4 max-h-[600px] overflow-y-auto p-1"
+                                >
                                     {targets.map((target) => {
                                         const hasArchers = archers.some(a => 
                                             a.targetNo && 
@@ -1561,11 +2341,21 @@ const generateSimplePDF = () => {
                                             <div 
                                                 key={target.id} 
                                                 data-target-id={target.id}
-                                                className={`border-2 rounded-lg p-4 transition-all ${
-                                                    isHovered ? 'drop-target-hover' : 'border-gray-200'
+                                                className={`target-container border-2 rounded-lg p-4 transition-all target-with-archers ${
+                                                    isHovered ? 'drop-target-hover' : ''
                                                 } ${
                                                     isInvalidConfig ? 'invalid-configuration' : ''
                                                 }`}
+                                                onMouseEnter={(e) => {
+                                                    if (hasArchers) {
+                                                        e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    if (hasArchers) {
+                                                        e.currentTarget.style.backgroundColor = '';
+                                                    }
+                                                }}
                                                 onDragOver={(e) => handleTargetNumberDragOver(e, target.id)}
                                                 onDragLeave={(e) => handleTargetNumberDragLeave(e, target.id)}
                                                 onDrop={(e) => handleTargetNumberDrop(e, target.id)}
@@ -1599,14 +2389,15 @@ const generateSimplePDF = () => {
                                                                             showNotification('Cette position est bloquée par un archer en fauteuil', 'error');
                                                                         }
                                                                     }}
-                                                                    className={`h-28 border-2 rounded-lg transition-all relative ${
+                                                                    className={`position-container h-28 border-2 rounded-lg relative ${
                                                                         getPositionColor(position, isBlockedByWheelchair)
-                                                                    } ${isBlockedByWheelchair ? 'blocked-position opacity-70' : ''} ${
-                                                                        isOccupied ? 'cursor-move' : 'cursor-default'
+                                                                    } ${
+                                                                        isBlockedByWheelchair ? 'position-blocked' :
+                                                                        isOccupied ? 'position-occupied' : 'position-empty'
                                                                     }`}
                                                                     title={isBlockedByWheelchair ? 'Position bloquée par un archer en fauteuil' : ''}
                                                                 >
-                                                                    <div className="text-center font-bold text-xs pt-1 pb-1 border-b border-gray-200">
+                                                                    <div className="position-header">
                                                                         <span className={isBlockedByWheelchair ? 'text-gray-400' : 'text-gray-500'}>
                                                                             {position.letter}
                                                                             {isBlockedByWheelchair && (
@@ -1618,7 +2409,7 @@ const generateSimplePDF = () => {
                                                                     </div>
                                                                     
                                                                     {isBlockedByWheelchair ? (
-                                                                        <div className="h-full flex flex-col items-center justify-center p-2">
+                                                                        <div className="archer-content flex flex-col items-center justify-center p-2">
                                                                             <div className="w-6 h-6 text-gray-400 mb-1">
                                                                                 <Icons.Wheelchair />
                                                                             </div>
@@ -1626,14 +2417,15 @@ const generateSimplePDF = () => {
                                                                                 Bloqué
                                                                             </div>
                                                                         </div>
-                                                                    ) : position.archer ? (
+                                                                    ) : isOccupied ? (
                                                                         <div 
                                                                             draggable
                                                                             onDragStart={(e) => handleArcherDragStart(e, position.archer)}
                                                                             onDragEnd={handleArcherDragEnd}
-                                                                            className="h-full p-2 cursor-move hover:shadow-lg transition-shadow no-select"
+                                                                            className="archer-content p-2 no-select archer-draggable"
+                                                                            data-archer-id={position.archer.id}
                                                                         >
-                                                                            <div className="flex items-center gap-2">
+                                                                            <div className="flex items-center gap-2 h-full">
                                                                                 {position.archer.targetFace && (
                                                                                     <img 
                                                                                         src={getTargetFaceImage(position.archer.targetFace)} 
@@ -1642,27 +2434,31 @@ const generateSimplePDF = () => {
                                                                                     />
                                                                                 )}
                                                                                 <div className="flex-1 min-w-0">
-                                                                                    <div className="font-bold text-xs text-gray-800 truncate">
+                                                                                    <div className={`font-bold text-xs truncate ${
+                                                                                        position.archer.wheelchair ? 'text-blue-700' : 'text-green-700'
+                                                                                    }`}>
                                                                                         {position.archer.name}
                                                                                         {position.archer.wheelchair && ' ♿'}
                                                                                     </div>
                                                                                     <div className="text-xs text-gray-600 mt-1 truncate">
                                                                                         {position.archer.countryName}
-                                                                                    </div>
-                                                                                    <div className="text-xs text-gray-500 mt-1 truncate">
-                                                                                        {position.archer.division}{position.archer.class}
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="h-full flex items-center justify-center">
-                                                                            <div className="w-6 h-6 text-gray-300">
-                                                                                <Icons.Target />
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
+                                                    </div>
+                                                    <div className={`text-xs font-medium mt-1 truncate ${
+                                                        position.archer.wheelchair ? 'text-blue-600' : 'text-green-600'
+                                                    }`}>
+                                                        {position.archer.division}{position.archer.class}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="archer-content flex items-center justify-center">
+                                            <div className="w-6 h-6 text-gray-300">
+                                                <Icons.Target />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                                             );
                                                         })}
                                                     </div>
@@ -1733,19 +2529,23 @@ const generateSimplePDF = () => {
 
                                 <div className="mt-6 pt-4 border-t flex flex-wrap gap-6 text-sm">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-white border-2 border-gray-300 rounded"></div>
-                                        <span>Position libre</span>
+                                        <div className="w-4 h-4 border-2 border-gray-300 bg-white rounded"></div>
+                                        <span>Position libre (gris clair)</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-green-100 border-2 border-green-400 rounded"></div>
-                                        <span>Position occupée</span>
+                                        <div className="w-4 h-4 border-2 border-green-600 bg-green-100 rounded"></div>
+                                        <span>Archer assigné (vert)</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-blue-100 border-2 border-blue-400 rounded"></div>
-                                        <span>Archer en fauteuil</span>
+                                        <div className="w-4 h-4 border-2 border-blue-600 bg-blue-100 rounded"></div>
+                                        <span>Archer en fauteuil (bleu)</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded opacity-70"></div>
+                                        <div className="w-4 h-4 border-2 border-orange-500 bg-orange-100 rounded"></div>
+                                        <span>Archer non-assigné (orange)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-gray-300 bg-gray-100 rounded opacity-70"></div>
                                         <span>Position bloquée (fauteuil)</span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -1759,6 +2559,14 @@ const generateSimplePDF = () => {
                                     <div className="flex items-center gap-2">
                                         <div className="w-4 h-4 border-2 border-red-500 rounded bg-red-50"></div>
                                         <span>Configuration invalide</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-3 border-green-300 bg-green-50 rounded"></div>
+                                        <span>Cible avec archers (en haut)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-orange-400 rounded bg-orange-50 cursor-copy"></div>
+                                        <span>Zone de désassignement</span>
                                     </div>
                                 </div>
                             </div>
