@@ -700,10 +700,6 @@ if ($is_invoice_mode && isset($_GET['archer_id'])) {
                         <div class="info-value"><?php echo $archer->nb_inscriptions; ?></div>
                     </div>
                     <div class="info-row">
-                        <div class="info-label">Tarif :</div>
-                        <div class="info-value"><?php echo $calculPrix['is_organizer'] ? 'Club organisateur' : 'Autre club'; ?></div>
-                    </div>
-                    <div class="info-row">
                         <div class="info-label">Statut paiement :</div>
                         <div class="info-value">
                             <span class="payment-status <?php echo ($archer->payment_status == 1) ? 'status-paid' : 'status-unpaid'; ?>">
