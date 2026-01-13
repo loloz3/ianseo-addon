@@ -578,29 +578,39 @@ function updateAddonSimple() {
     xhr.open('POST', 'github_update.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            statusDiv.innerHTML += '<p>✅ Requête terminée...</p>';
-            
-            if (xhr.status === 200) {
-                // Afficher la réponse
-                statusDiv.innerHTML += '<hr><strong>Résultat :</strong><br>' + xhr.responseText;
-                
-                // Message final
-                setTimeout(() => {
-                    showNotification('✅ Mise à jour GitHub terminée !', 'success');
-                }, 1000);
-            } else {
-                statusDiv.innerHTML += '<p style="color:red;">❌ Erreur HTTP ' + xhr.status + '</p>';
-                showNotification('❌ Erreur lors de la mise à jour', 'error');
-            }
-        } else if (xhr.readyState === 3) {
-            // Mise à jour en temps réel si supporté
-            if (xhr.responseText) {
-                statusDiv.innerHTML = '<p>🔄 Progression :</p><pre>' + xhr.responseText + '</pre>';
-            }
-        }
-    };
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState === 4) {
+			if (xhr.status === 200) {
+				// Extraire uniquement le contenu de la div .log
+				const logMatch = xhr.responseText.match(/<div class=['"]log['"][^>]*>([\s\S]*?)<\/div>/);
+				const resultMatch = xhr.responseText.match(/<h3>Résumé de la mise à jour<\/h3>([\s\S]*?)<script/i);
+				
+				if (logMatch && resultMatch) {
+					statusDiv.innerHTML = '<p>🔄 Progression :</p>' + logMatch[1] + 
+										'<hr><strong>Résultat :</strong><br>' + resultMatch[1];
+				} else {
+					// Fallback: afficher tout
+					statusDiv.innerHTML = '<p>🔄 Progression :</p>' + xhr.responseText;
+				}
+				
+				// Message final
+				setTimeout(() => {
+					showNotification('✅ Mise à jour GitHub terminée !', 'success');
+				}, 1000);
+			} else {
+				statusDiv.innerHTML = '<p style="color:red;">❌ Erreur HTTP ' + xhr.status + '</p>';
+				showNotification('❌ Erreur lors de la mise à jour', 'error');
+			}
+		} else if (xhr.readyState === 3) {
+			// Mise à jour en temps réel
+			if (xhr.responseText) {
+				const logMatch = xhr.responseText.match(/<div class=['"]log['"][^>]*>([\s\S]*?)<\/div>/);
+				if (logMatch) {
+					statusDiv.innerHTML = '<p>🔄 Progression :</p>' + logMatch[1];
+				}
+			}
+		}
+	};
     
     xhr.send('action=update');
 }
