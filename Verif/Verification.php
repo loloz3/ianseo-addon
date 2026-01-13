@@ -172,7 +172,8 @@ $RsObligatoires = safe_r_sql($QueryObligatoires);
 $NbObligatoires = safe_num_rows($RsObligatoires);
 
 
-// Requête pour vérifier les archers sans cible assignée
+// REQUÊTE CORRIGÉE : Vérification des archers sans cible assignée
+// On vérifie maintenant QuTarget (numéro de cible) et QuLetter (lettre de cible)
 $QueryCibles = "
     SELECT 
         e.EnId,
@@ -183,19 +184,59 @@ $QueryCibles = "
         e.EnDivision AS Division,
         e.EnClass AS Classe,
         q.QuSession AS Depart,
-        IFNULL(q.QuTargetNo, 'NON ASSIGNÉ') AS Cible
+        CASE 
+            WHEN (q.QuTarget IS NULL OR q.QuTarget = 0 OR q.QuTarget = '') THEN 'Cible manquante'
+            WHEN (q.QuLetter IS NULL OR q.QuLetter = '') THEN 'Lettre manquante'
+            ELSE CONCAT(q.QuTarget, ' ', q.QuLetter)
+        END AS CibleDetail,
+        CASE 
+            WHEN (q.QuTarget IS NULL OR q.QuTarget = 0 OR q.QuTarget = '') THEN 'NON ASSIGNÉ'
+            WHEN (q.QuLetter IS NULL OR q.QuLetter = '') THEN 'SANS LETTRE'
+            ELSE CONCAT(q.QuTarget, q.QuLetter)
+        END AS Cible,
+        CONCAT(IFNULL(q.QuTarget, ''), IFNULL(q.QuLetter, '')) AS CibleComplete
     FROM Entries e
     INNER JOIN Qualifications q ON e.EnId = q.QuId
     LEFT JOIN Countries c ON e.EnCountry = c.CoId AND e.EnTournament = c.CoTournament
     WHERE e.EnTournament = $TourId
     AND e.EnCode != ''
-    AND (q.QuTargetNo IS NULL OR q.QuTargetNo = 0 OR q.QuTargetNo = '')
+    AND (
+        (q.QuTarget IS NULL OR q.QuTarget = 0 OR q.QuTarget = '')
+        OR (q.QuLetter IS NULL OR q.QuLetter = '')
+    )
     ORDER BY e.EnCode, q.QuSession
 ";
 
 $RsCibles = safe_r_sql($QueryCibles);
 $NbSansCible = safe_num_rows($RsCibles);
 
+// REQUÊTE AJOUTÉE : Vérification des cibles avec plusieurs archers dans un même départ
+$QueryCiblesDupliquees = "
+    SELECT 
+        CONCAT(q.QuTarget, ' ', q.QuLetter) AS Cible,
+        q.QuSession AS Depart,
+        COUNT(*) AS NbArchers,
+        GROUP_CONCAT(
+            CONCAT(e.EnCode, ' - ', e.EnFirstName, ' ', e.EnName) 
+            ORDER BY e.EnCode
+            SEPARATOR '<br>'
+        ) AS Archers
+    FROM Qualifications q
+    INNER JOIN Entries e ON q.QuId = e.EnId
+    WHERE e.EnTournament = $TourId
+    AND e.EnCode != ''
+    AND q.QuTarget IS NOT NULL 
+    AND q.QuTarget != 0
+    AND q.QuTarget != ''
+    AND q.QuLetter IS NOT NULL 
+    AND q.QuLetter != ''
+    GROUP BY q.QuTarget, q.QuLetter, q.QuSession
+    HAVING COUNT(*) > 1
+    ORDER BY q.QuSession, q.QuTarget, q.QuLetter
+";
+
+$RsCiblesDupliquees = safe_r_sql($QueryCiblesDupliquees);
+$NbCiblesDupliquees = safe_num_rows($RsCiblesDupliquees);
 
 
 $PAGE_TITLE = 'Vérification Finale Individuelle';
@@ -454,6 +495,22 @@ include('Common/Templates/head.php');
     border-radius: 3px;
     font-size: 0.8em;
 }
+.badge-cible-manquante {
+    background-color: #dc3545;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+.badge-lettre-manquante {
+    background-color: #ff9800;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
 .section-title-info {
     background-color: #17a2b8;
     color: white;
@@ -463,11 +520,47 @@ include('Common/Templates/head.php');
     font-size: 20px;
     font-weight: bold;
 }
-.alert-info {
-    background-color: #d1ecf1;
-    border: 1px solid #bee5eb;
-    border-left: 5px solid #17a2b8;
-    color: #0c5460;
+.cible-dupliquee-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.cible-dupliquee-table th {
+    background-color: #ff6b35;
+    color: white;
+    padding: 10px;
+    text-align: left;
+    font-weight: bold;
+}
+.cible-dupliquee-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+.cible-dupliquee-table tr:hover {
+    background-color: #fff0eb;
+}
+.section-title-cible-dupliquee {
+    background-color: #ff6b35;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 30px 0 15px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+.badge-cible-dupliquee {
+    background-color: #ff6b35;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+.alert-cible-dupliquee {
+    background-color: #fff0eb;
+    border: 1px solid #ffccbc;
+    border-left: 5px solid #ff6b35;
+    color: #bf360c;
     padding: 15px;
     border-radius: 5px;
     margin: 20px 0;
@@ -690,20 +783,25 @@ if ($NbAnomalies == 0):
 <?php endif; ?>
 
 <?php
-// SECTION 4: Vérification des assignations de cibles
+// SECTION 4: Vérification CORRIGÉE des assignations de cibles
 if ($NbSansCible == 0): 
 ?>
     <div class="section-title-success">
-        ✓ Tous les archers sont assignés à une cible
+        ✓ Tous les archers sont correctement assignés à une cible
     </div>
 <?php else: ?>
     <div class="section-title-info">
-        ⚠️ <?php echo $NbSansCible; ?> archer(s) non assigné(s) à une cible
+        ⚠️ <?php echo $NbSansCible; ?> archer(s) avec problème d'assignation de cible
     </div>
     
     <div class="alert-info">
-        <h3>Archers sans cible assignée</h3>
-        <p>Les archers suivants ne sont pas encore assignés à une cible. Ils doivent l'être pour pouvoir participer au tournoi :</p>
+        <h3>Problèmes d'assignation de cible</h3>
+        <p>Les archers suivants ont des problèmes d'assignation de cible :</p>
+        <ul>
+            <li><strong>Cible manquante</strong> : Le numéro de cible (QuTarget) est vide ou à 0</li>
+            <li><strong>Lettre manquante</strong> : La lettre de cible (QuLetter) est vide</li>
+        </ul>
+        <p>Une cible complète doit avoir un numéro ET une lettre (ex: "18 C", "3 A").</p>
     </div>
 
     <table class="cible-table">
@@ -716,7 +814,8 @@ if ($NbSansCible == 0):
                 <th>Division</th>
                 <th>Classe</th>
                 <th>Départ</th>
-                <th>Cible actuelle</th>
+                <th>Cible assignée</th>
+                <th>Problème</th>
                 <th>Statut</th>
             </tr>
         </thead>
@@ -724,12 +823,33 @@ if ($NbSansCible == 0):
         <?php 
         safe_data_seek($RsCibles, 0);
         while ($Row = safe_fetch($RsCibles)): 
-            $cible = ($Row->Cible == 'NON ASSIGNÉ' || $Row->Cible == 0 || $Row->Cible == '') 
-                ? '<span style="color: #dc3545; font-weight: bold;">NON ASSIGNÉ</span>' 
-                : $Row->Cible;
-            $statut = ($Row->Cible == 'NON ASSIGNÉ' || $Row->Cible == 0 || $Row->Cible == '') 
-                ? '<span class="badge-danger">SANS CIBLE</span>' 
-                : '<span class="badge-info">OK</span>';
+            // Déterminer le type de problème
+            $cibleManquante = empty($Row->CibleComplete) || $Row->Cible == 'NON ASSIGNÉ';
+            $lettreManquante = $Row->Cible == 'SANS LETTRE';
+            
+            // Styliser l'affichage de la cible
+            if ($cibleManquante) {
+                $affichageCible = '<span style="color: #dc3545; font-weight: bold;">NON ASSIGNÉ</span>';
+                $probleme = 'Cible manquante';
+                $badgeClass = 'badge-cible-manquante';
+            } elseif ($lettreManquante) {
+                $affichageCible = '<span style="color: #ff9800; font-weight: bold;">' . $Row->CibleDetail . '</span>';
+                $probleme = 'Lettre manquante';
+                $badgeClass = 'badge-lettre-manquante';
+            } else {
+                $affichageCible = '<span style="font-weight: bold;">' . $Row->CibleDetail . '</span>';
+                $probleme = 'OK';
+                $badgeClass = 'badge-info';
+            }
+            
+            // Déterminer le statut
+            if ($cibleManquante) {
+                $statut = '<span class="badge-cible-manquante">SANS CIBLE</span>';
+            } elseif ($lettreManquante) {
+                $statut = '<span class="badge-lettre-manquante">SANS LETTRE</span>';
+            } else {
+                $statut = '<span class="badge-info">OK</span>';
+            }
         ?>
             <tr>
                 <td><strong><?php echo $Row->Licence; ?></strong></td>
@@ -739,12 +859,68 @@ if ($NbSansCible == 0):
                 <td style="text-align: center;"><?php echo $Row->Division; ?></td>
                 <td style="text-align: center;"><?php echo $Row->Classe; ?></td>
                 <td style="text-align: center;"><?php echo $Row->Depart; ?></td>
-                <td style="text-align: center; font-weight: bold;"><?php echo $cible; ?></td>
+                <td style="text-align: center; font-weight: bold;"><?php echo $affichageCible; ?></td>
+                <td style="text-align: center;">
+                    <span class="<?php echo $badgeClass; ?>"><?php echo $probleme; ?></span>
+                </td>
                 <td style="text-align: center;"><?php echo $statut; ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>
     </table>
+    
+<?php endif; ?>
+
+<?php
+// SECTION 5: NOUVELLE VÉRIFICATION - Cibles avec plusieurs archers dans un même départ
+if ($NbCiblesDupliquees == 0): 
+?>
+    <div class="section-title-success">
+        ✓ Aucune cible n'a plusieurs archers assignés dans un même départ
+    </div>
+<?php else: ?>
+    <div class="section-title-cible-dupliquee">
+        ⚠️ ALERTE : <?php echo $NbCiblesDupliquees; ?> cible(s) avec plusieurs archers dans un même départ
+    </div>
+    
+    <div class="alert-cible-dupliquee">
+        <p>Les cibles suivantes ont plusieurs archers assignés dans le MÊME départ. Une cible ne peut avoir qu'un seul archer par départ :</p>
+        
+        <table class="cible-dupliquee-table">
+            <thead>
+                <tr>
+                    <th>Cible</th>
+                    <th>Départ</th>
+                    <th>Nombre d'archers</th>
+                    <th>Archers assignés</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php while ($CibleDupliquee = safe_fetch($RsCiblesDupliquees)): ?>
+                <tr>
+                    <td style="text-align: center;">
+                        <strong><?php echo $CibleDupliquee->Cible; ?></strong>
+                    </td>
+                    <td style="text-align: center;">
+                        <strong><?php echo $CibleDupliquee->Depart; ?></strong>
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge-cible-dupliquee"><?php echo $CibleDupliquee->NbArchers; ?> archers</span>
+                    </td>
+                    <td style="padding: 10px;">
+                        <?php echo $CibleDupliquee->Archers; ?>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+            </tbody>
+        </table>
+        
+        <p style="margin-top: 10px; font-style: italic;">
+            <strong>Action requise :</strong> Cette anomalie est critique et doit être corrigée avant le tournoi. 
+            Vous devez réassigner manuellement les archers à des cibles différentes dans l'interface de gestion des participants.
+            Une cible ne peut avoir qu'un seul archer par départ.
+        </p>
+    </div>
 <?php endif; ?>
 
 <script>
