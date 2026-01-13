@@ -402,6 +402,9 @@ include('Common/Templates/head.php');
         <!-- SECTION GITHUB SIMPLE -->
         <div class="github-section">
             <p><strong>🔄 MISE À JOUR DU ADDON IANSEO (Loloz3)</strong></p>
+            <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                <strong>Note :</strong> Les fichiers <code>menu.php</code> et <code>Prix.txt</code> existants ne seront pas remplacés.
+            </p>
             
             <div style="margin: 15px 0;">
                 <button class="github-button github-button-success" onclick="updateAddonSimple()">
@@ -561,7 +564,7 @@ function sauvegarderTournamentExport() {
 
 // FONCTION SIMPLIFIÉE POUR GITHUB
 function updateAddonSimple() {
-    if (!confirm('Voulez-vous mettre à jour le addon depuis GitHub ?\n\nTous les fichiers seront téléchargés depuis https://github.com/loloz3/ianseo-addon')) {
+    if (!confirm('Voulez-vous mettre à jour le addon depuis GitHub ?\n\nTous les fichiers seront téléchargés depuis https://github.com/loloz3/ianseo-addon\n\nNote: Les fichiers menu.php et Prix.txt existants ne seront PAS remplacés.')) {
         return;
     }
     

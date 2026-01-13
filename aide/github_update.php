@@ -161,10 +161,14 @@ if (empty($sourceDir)) {
 
 logMsg("Dossier source: " . basename($sourceDir), 'info');
 
-// 4. Copier les fichiers (SANS BACKUP)
-logMsg("Copie des fichiers (sans backup)...");
+// 4. Copier les fichiers (SANS BACKUP) avec exclusion
+logMsg("Copie des fichiers (sans backup - fichiers protégés exclus)...");
 $count = 0;
 $errorCount = 0;
+$skippedCount = 0;
+
+// Fichiers à ne PAS remplacer s'ils existent déjà
+$protectedFiles = ['menu.php', 'Prix.txt'];
 
 $iterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
@@ -175,6 +179,14 @@ foreach ($iterator as $item) {
     if ($item->isFile()) {
         $relativePath = substr($item->getPathname(), strlen($sourceDir));
         $destPath = $customDir . $relativePath;
+        $filename = basename($destPath);
+        
+        // Vérifier si c'est un fichier protégé qui existe déjà
+        if (in_array($filename, $protectedFiles) && file_exists($destPath)) {
+            logMsg("Fichier protégé conservé: $filename", 'info');
+            $skippedCount++;
+            continue;
+        }
         
         $destDir = dirname($destPath);
         if (!is_dir($destDir)) {
@@ -229,9 +241,21 @@ echo "</div>"; // Fermer la div .log
 echo "<hr>";
 echo "<h3>Résumé de la mise à jour</h3>";
 
-if ($count > 0) {
+if ($count > 0 || $skippedCount > 0) {
     echo "<p class='success'>✅ Mise à jour terminée avec succès !</p>";
     echo "<p><strong>Fichiers copiés :</strong> $count</p>";
+    
+    if ($skippedCount > 0) {
+        echo "<p class='info'>Fichiers conservés (existant déjà) : $skippedCount</p>";
+        echo "<ul>";
+        foreach ($protectedFiles as $file) {
+            if (file_exists($customDir . '/' . $file)) {
+                echo "<li class='info'>✅ $file - conservé (existant déjà)</li>";
+            }
+        }
+        echo "</ul>";
+    }
+    
     if ($errorCount > 0) {
         echo "<p class='warning'>Erreurs : $errorCount</p>";
     }
@@ -241,19 +265,26 @@ if ($count > 0) {
     $checkFiles = [
         'aide-concours.php' => $customDir . '/aide/aide-concours.php',
         'github_update.php' => $customDir . '/aide/github_update.php',
+        'menu.php (protégé)' => $customDir . '/menu.php',
+        'Prix.txt (protégé)' => $customDir . '/Greffe/Prix.txt',
     ];
     
     foreach ($checkFiles as $name => $path) {
         if (file_exists($path)) {
-            echo "<p class='success'>✅ $name présent</p>";
+            $status = strpos($name, 'protégé') !== false ? 'conservé' : 'présent';
+            echo "<p class='success'>✅ $name - $status</p>";
         } else {
-            echo "<p class='error'>❌ $name absent</p>";
+            if (strpos($name, 'protégé') === false) {
+                echo "<p class='error'>❌ $name absent</p>";
+            } else {
+                echo "<p class='info'>ℹ️ $name - non présent dans la source</p>";
+            }
         }
     }
     
     echo "<script>
         setTimeout(function() {
-            alert('Mise à jour terminée ! $count fichiers mis à jour.');
+            alert('Mise à jour terminée !\\\\n$count fichiers mis à jour.\\\\n$skippedCount fichiers conservés.');
             window.location.href = 'aide-concours.php';
         }, 1000);
     </script>";
