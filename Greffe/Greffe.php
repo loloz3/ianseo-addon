@@ -718,6 +718,14 @@ if ($is_invoice_mode && isset($_GET['archer_id'])) {
                             </span>
                         </div>
                     </div>
+                    <?php if ($archer->payment_status == 1 && !empty($archer->payment_method)): ?>
+<div class="info-row">
+    <div class="info-label">Moyen de paiement</div>
+    <div class="info-value">
+        <strong><?php echo htmlspecialchars($archer->payment_method); ?></strong>
+    </div>
+</div>
+<?php endif; ?>
                 </div>
                 
                 <div class="invoice-section">
@@ -2121,6 +2129,7 @@ ORDER BY e.EnName, e.EnFirstName";
                                                 <option value="ESPECE">Espèce</option>
                                                 <option value="CHEQUE">Chèque</option>
                                                 <option value="VIREMENT">Virement</option>
+                                                <option value="GRATUIT">Gratuit</option>
                                             </select>
                                             <button type="submit" class="payment-button validate" 
                                                     onclick="return confirmPayment(this, \'' . htmlspecialchars($archer['prenom'], ENT_QUOTES) . '\', \'' . htmlspecialchars($archer['nom'], ENT_QUOTES) . '\', \'' . htmlspecialchars($archer['club'], ENT_QUOTES) . '\', \'' . htmlspecialchars($archer['categorie'], ENT_QUOTES) . '\', \'' . $montant . '\', \'' . htmlspecialchars($cible_display_value, ENT_QUOTES) . '\')"
@@ -2261,28 +2270,43 @@ ORDER BY e.EnName, e.EnFirstName";
         }, 3000);
     }
     
-    // Fonction pour confirmer le paiement avec les détails
-    function confirmPayment(button, prenom, nom, club, categorie, montant, cibleDepart) {
-        // Formater le message de confirmation
-        const message = `Confirmer le paiement pour :\n\n` +
-                       `• Nom : ${nom}\n` +
-                       `• Prénom : ${prenom}\n` +
-                       `• Club : ${club || '-'}\n` +
-                       `• Catégorie : ${categorie}\n` +
-                       `• Montant : ${montant} €\n` +
-                       `• Départ / Cible : ${cibleDepart}\n\n` +
-                       `Êtes-vous sûr de vouloir valider ce paiement ?`;
-        
-        // Afficher la confirmation
-        if (confirm(message)) {
-            // Si confirmé, soumettre le formulaire
-            button.closest('form').submit();
-            return true;
-        } else {
-            // Si annulé, ne rien faire
-            return false;
+function confirmPayment(button, prenom, nom, club, categorie, montant, cibleDepart) {
+    // Récupérer le moyen de paiement
+    let paymentMethod = 'Non spécifié';
+    
+    try {
+        const form = button.form || button.closest('form');
+        if (form) {
+            const select = form.querySelector('select[name="payment_method"]');
+            if (select && select.value) {
+                paymentMethod = select.value;
+            }
         }
+    } catch(e) {
+        console.error('Erreur récupération moyen de paiement:', e);
     }
+    
+    // Formater le message de confirmation
+    const message = 'Confirmer le paiement pour :\n\n' +
+                   '• Nom : ' + nom + '\n' +
+                   '• Prénom : ' + prenom + '\n' +
+                   '• Club : ' + (club || '-') + '\n' +
+                   '• Catégorie : ' + categorie + '\n' +
+                   '• Montant : ' + montant + ' €\n' +
+                   '• Départ / Cible : ' + cibleDepart + '\n' +
+                   '• Moyen de paiement : ' + paymentMethod + '\n\n' +
+                   'Êtes-vous sûr de vouloir valider ce paiement ?';
+    
+    if (confirm(message)) {
+        const form = button.form || button.closest('form');
+        if (form) {
+            form.submit();
+        }
+        return true;
+    }
+    return false;
+}
+
     
     // Tri du tableau par colonne
     document.addEventListener('DOMContentLoaded', function() {
@@ -2438,6 +2462,49 @@ ORDER BY e.EnName, e.EnFirstName";
         }
     });
 </script>
+
+<!-- Bouton Export PDF -->
+<div class="filter-group" style="margin-left: auto;">
+    <button onclick="exportToPDF()" class="export-pdf-button" title="Exporter la liste en PDF">
+        📄 Exporter en PDF
+    </button>
+</div>
+
+<style>
+.export-pdf-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.export-pdf-button:hover {
+    background-color: #c82333;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+</style>
+
+<script>
+function exportToPDF() {
+    // Récupérer les filtres actuels
+    const urlParams = new URLSearchParams(window.location.search);
+    const club = urlParams.get('club_filter') || 'all';
+    const category = urlParams.get('category_filter') || 'all';
+    const payment = urlParams.get('payment_filter') || 'all';
+
+    // Construire l'URL avec les filtres
+    const exportUrl = 'export_pdf.php?club=' + club + '&category=' + category + '&payment=' + payment;
+
+    // Ouvrir dans un nouvel onglet
+    window.open(exportUrl, '_blank');
+}
+</script>
+
 
 <!-- AJOUT: Inclure le pied de page du site -->
 <?php include('Common/Templates/tail.php'); ?>
