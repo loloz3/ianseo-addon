@@ -112,7 +112,7 @@ include('Common/Templates/head.php');
         position: relative;
         overflow: hidden;
         cursor: pointer;
-		min-height: 120px;
+        min-height: 120px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -426,6 +426,167 @@ include('Common/Templates/head.php');
         text-align: center;
         font-size: 12px;
     }
+    
+    /* Styles pour l'indicateur de batterie */
+    .battery-indicator {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        width: 28px;
+        height: 36px;
+        border: 2px solid rgba(255, 255, 255, 0.7);
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: white;
+        z-index: 10;
+        overflow: hidden;
+    }
+    
+    .battery-level {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        border-radius: 2px;
+        transition: height 0.3s;
+    }
+    
+    .battery-level.high {
+        background: linear-gradient(to top, #4CAF50, #8BC34A);
+        height: 80%;
+    }
+    
+    .battery-level.medium {
+        background: linear-gradient(to top, #FFC107, #FF9800);
+        height: 50%;
+    }
+    
+    .battery-level.low {
+        background: linear-gradient(to top, #FF9800, #FF5722);
+        height: 25%;
+    }
+    
+    .battery-level.critical {
+        background: linear-gradient(to top, #F44336, #D32F2F);
+        height: 10%;
+    }
+    
+    .battery-level.charging {
+        background: linear-gradient(to top, #2196F3, #1976D2);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Effet d'animation pour la charge */
+    .battery-level.charging::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.4) 50%,
+            transparent 100%
+        );
+        animation: charging-flow 2s infinite;
+    }
+    
+    @keyframes charging-flow {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .battery-level.none {
+        background: rgba(128, 128, 128, 0.5);
+        height: 20%;
+    }
+    
+    .battery-percent {
+        position: relative;
+        z-index: 2;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+        font-size: 9px;
+        font-weight: bold;
+        color: white;
+        padding: 1px;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 2px;
+    }
+    
+    .battery-warning {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        background-color: #ff4444;
+        color: white;
+        border-radius: 50%;
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        animation: pulse-warning 1.5s infinite;
+        z-index: 11;
+    }
+    
+    .charging-icon {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        color: #FFEB3B;
+        font-size: 10px;
+        z-index: 11;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        animation: charging-pulse 1.5s infinite;
+    }
+    
+    @keyframes charging-pulse {
+        0%, 100% { opacity: 0.7; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    @keyframes pulse-warning {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Effet de scintillement pour batterie faible */
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .battery-level.low {
+        animation: blink 2s infinite;
+    }
+    
+    .battery-level.critical {
+        animation: blink 1s infinite;
+    }
+    
+    /* Pointe de la batterie */
+    .battery-indicator::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 2px 2px 0 0;
+    }
 </style>
 
 <div class="verification-container">
@@ -434,6 +595,15 @@ include('Common/Templates/head.php');
         <h3 style="margin-top: 0; margin-bottom: 10px;">Sélectionnez un départ :</h3>
         <div class="session-selector" id="session-selector">
             <!-- Les boutons de session seront générés dynamiquement -->
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <button id="test-btn" class="btn btn-sm btn-warning">
+                <i class="fas fa-bug"></i> Tester la connexion
+            </button>
+            <button id="debug-btn" class="btn btn-sm btn-info ml-2">
+                <i class="fas fa-terminal"></i> Mode débogage
+            </button>
         </div>
         
         <div class="session-stats" id="session-stats">
@@ -457,6 +627,35 @@ include('Common/Templates/head.php');
         <div class="legend-item">
             <div class="legend-color" style="background-color: #17a2b8;"></div>
             <span>Cible sans données ou vide</span>
+        </div>
+        <div class="legend-item">
+            <div style="display: flex; align-items: center;">
+                <div class="battery-indicator" style="position: relative; top: 0; left: 0; margin-right: 8px;">
+                    <div class="battery-level high" style="height: 80%;"></div>
+                    <div class="battery-percent">80%</div>
+                </div>
+                <span>Batterie haute</span>
+            </div>
+        </div>
+        <div class="legend-item">
+            <div style="display: flex; align-items: center;">
+                <div class="battery-indicator" style="position: relative; top: 0; left: 0; margin-right: 8px;">
+                    <div class="battery-level charging" style="height: 100%;"></div>
+                    <div class="battery-percent">75%</div>
+                    <div class="charging-icon">⚡</div>
+                </div>
+                <span>En charge: 75%</span>
+            </div>
+        </div>
+        <div class="legend-item">
+            <div style="display: flex; align-items: center;">
+                <div class="battery-indicator" style="position: relative; top: 0; left: 0; margin-right: 8px;">
+                    <div class="battery-level critical" style="height: 10%;"></div>
+                    <div class="battery-percent">15%</div>
+                    <div class="battery-warning">!</div>
+                </div>
+                <span>Batterie critique</span>
+            </div>
         </div>
     </div>
     
@@ -605,17 +804,102 @@ function updateSessionStats(stats) {
     `).appendTo(statsContainer);
 }
 
+// Fonction pour créer un indicateur de batterie
+function createBatteryIndicator(batteryInfo) {
+    if (!batteryInfo) {
+        // Pas de données de batterie
+        const batteryIndicator = $('<div>').addClass('battery-indicator');
+        const batteryLevel = $('<div>').addClass('battery-level none');
+        const batteryPercent = $('<div>').addClass('battery-percent').text('NA');
+        
+        batteryIndicator.append(batteryLevel, batteryPercent);
+        batteryIndicator.attr('title', 'Aucune donnée de batterie disponible');
+        return batteryIndicator;
+    }
+    
+    const batteryIndicator = $('<div>').addClass('battery-indicator');
+    let batteryLevelClass = batteryInfo.status;
+    let displayText = batteryInfo.absoluteLevel + '%'; // Toujours afficher le pourcentage
+    
+    // Ajuster la hauteur de la jauge en fonction du niveau
+    let gaugeHeight = '20%'; // Par défaut (pour "none")
+    
+    if (batteryInfo.isCharging) {
+        batteryLevelClass = 'charging';
+        // Pour la charge, on montre la jauge pleine
+        gaugeHeight = '100%';
+        
+        // Ajouter l'icône de charge en plus du pourcentage
+        const chargingIcon = $('<div>').addClass('charging-icon').html('⚡');
+        batteryIndicator.append(chargingIcon);
+    } else {
+        // Ajuster la hauteur de la jauge selon le niveau
+        switch(batteryInfo.status) {
+            case 'high': gaugeHeight = '80%'; break;
+            case 'medium': gaugeHeight = '50%'; break;
+            case 'low': gaugeHeight = '25%'; break;
+            case 'critical': gaugeHeight = '10%'; break;
+        }
+    }
+    
+    const batteryLevel = $('<div>').addClass('battery-level ' + batteryLevelClass)
+        .css('height', gaugeHeight);
+    
+    const batteryPercent = $('<div>').addClass('battery-percent').text(displayText);
+    
+    batteryIndicator.append(batteryLevel, batteryPercent);
+    
+    // Ajouter un avertissement si batterie faible et pas en charge
+    if (!batteryInfo.isCharging && (batteryInfo.status === 'low' || batteryInfo.status === 'critical')) {
+        const batteryWarning = $('<div>').addClass('battery-warning').html('!');
+        batteryIndicator.append(batteryWarning);
+    }
+    
+    // Info-bulle avec date de dernière mise à jour et état
+    let tooltip = '';
+    if (batteryInfo.isCharging) {
+        tooltip = `⚡ En charge: ${batteryInfo.absoluteLevel}%`;
+    } else {
+        let statusText = '';
+        switch(batteryInfo.status) {
+            case 'high': statusText = 'Haute'; break;
+            case 'medium': statusText = 'Moyenne'; break;
+            case 'low': statusText = 'Faible'; break;
+            case 'critical': statusText = 'Critique'; break;
+        }
+        tooltip = `Batterie: ${batteryInfo.level}% (${statusText})`;
+    }
+    
+    if (batteryInfo.lastUpdate) {
+        const lastUpdate = new Date(batteryInfo.lastUpdate);
+        tooltip += `\nDernière mise à jour: ${lastUpdate.toLocaleString('fr-FR')}`;
+    }
+    
+    batteryIndicator.attr('title', tooltip);
+    
+    return batteryIndicator;
+}
+
 // Fonction principale pour vérifier les cibles
 function checkTargets() {
+    console.log("Vérification des cibles pour la session: " + currentSession);
+    
     $.ajax({
         url: 'ajax_check_fleches_session.php',
         type: 'POST',
         dataType: 'json',
         data: {
-            TourId: <?php echo $TourId; ?>,
+            TourId: <?php echo isset($_SESSION['TourId']) ? $_SESSION['TourId'] : '0'; ?>,
             session: currentSession
         },
-        success: function(response) {
+        beforeSend: function() {
+            console.log("Requête AJAX envoyée à ajax_check_fleches_session.php");
+        },
+        success: function(response, status, xhr) {
+            console.log("Réponse AJAX reçue:", response);
+            console.log("Status:", status);
+            console.log("Content-Type:", xhr.getResponseHeader('Content-Type'));
+            
             if (response.success) {
                 // Mettre à jour le sélecteur de session si nécessaire
                 if (response.sessionsData && Object.keys(response.sessionsData).length > 0) {
@@ -630,11 +914,61 @@ function checkTargets() {
                 
                 updateLastCheck();
             } else {
+                console.error("Erreur dans la réponse:", response.message);
                 showCustomNotification('Erreur: ' + response.message, 'error');
+                
+                // Afficher les détails de débogage si disponibles
+                if (response.debug) {
+                    console.error("Détails du débogage:", response.debug);
+                }
             }
         },
-        error: function() {
-            showCustomNotification('Erreur réseau lors de la vérification', 'error');
+        error: function(xhr, status, error) {
+            console.error("Erreur AJAX complète:");
+            console.error("Status:", status);
+            console.error("Error:", error);
+            
+            let errorMessage = 'Erreur réseau lors de la vérification';
+            
+            // Vérifier si c'est une erreur de parsing JSON
+            if (status === 'parsererror') {
+                errorMessage = 'Erreur de parsing JSON. Vérifiez la réponse du serveur.';
+                console.error("Réponse brute:", xhr.responseText);
+                if (xhr.responseText.length < 1000) {
+                    alert("Réponse brute du serveur:\n" + xhr.responseText);
+                }
+            }
+            // Vérifier si c'est une erreur 404
+            else if (xhr.status === 404) {
+                errorMessage = 'Fichier ajax_check_fleches_session.php non trouvé';
+            }
+            // Vérifier si c'est une erreur 500
+            else if (xhr.status === 500) {
+                errorMessage = 'Erreur serveur (500)';
+                console.error("Réponse d'erreur:", xhr.responseText);
+            }
+            
+            showCustomNotification(errorMessage, 'error');
+            
+            // Afficher un message d'erreur dans le conteneur
+            const container = $('#targets-container');
+            container.html(`
+                <div class="no-targets-message">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 15px; color: #dc3545;"></i>
+                    <h3 style="color: #dc3545;">Erreur lors de la vérification</h3>
+                    <p>${errorMessage}</p>
+                    <p><small>Status: ${xhr.status} - ${status}</small></p>
+                    <button id="retry-btn" class="btn btn-primary mt-3">Réessayer</button>
+                </div>
+            `);
+            
+            // Ajouter un gestionnaire pour le bouton réessayer
+            $('#retry-btn').click(function() {
+                checkTargets();
+            });
+        },
+        complete: function() {
+            console.log("Requête AJAX terminée");
         }
     });
 }
@@ -658,13 +992,17 @@ function displayTargets(targets) {
     targets.forEach(target => {
         const targetCard = $('<div>').addClass('target-card ' + target.status);
         
+        // Indicateur de batterie
+        const batteryIndicator = createBatteryIndicator(target.battery);
+        targetCard.append(batteryIndicator);
+        
         // Numéro de cible (plus gros)
         $('<div>').addClass('target-number').text(target.targetNumber).appendTo(targetCard);
         
         // Session
         $('<div>').addClass('target-session').text('Départ ' + target.session).appendTo(targetCard);
         
-        // Nombre d'archers seulement (sans nombre de flèches)
+        // Nombre d'archers
         if (target.archerCount > 0) {
             $('<div>').addClass('target-archers')
                 .html(`<i class="fas fa-user"></i> ${target.archerCount} archer${target.archerCount > 1 ? 's' : ''}`)
@@ -687,6 +1025,33 @@ function displayTargets(targets) {
         
         container.append(targetCard);
     });
+}
+
+// Fonctions utilitaires pour les estimations
+function estimateChargingTime(batteryLevel) {
+    // Estimation simple du temps de charge
+    const remaining = 100 - batteryLevel;
+    if (remaining <= 0) return null;
+    
+    // Estimation: environ 2 minutes par pourcentage
+    const totalMinutes = Math.round(remaining * 2);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours > 0) {
+        return `~${hours}h${minutes}min restantes`;
+    } else {
+        return `~${minutes}min restantes`;
+    }
+}
+
+function estimateBatteryLife(batteryLevel) {
+    // Estimation simple de l'autonomie
+    if (batteryLevel >= 80) return 'Autonomie excellente';
+    if (batteryLevel >= 60) return 'Autonomie bonne';
+    if (batteryLevel >= 40) return 'Autonomie moyenne';
+    if (batteryLevel >= 20) return 'Autonomie faible';
+    return 'Autonomie très faible';
 }
 
 // Fonction pour afficher les détails d'une cible
@@ -719,6 +1084,75 @@ function showTargetDetails(target) {
     }
     
     $('#detail-status').html(`<div class="alert ${statusClass.replace('text-', 'alert-')}">${statusText}</div>`);
+    
+    // Ajouter les informations de batterie si disponibles
+    if (target.battery) {
+        let batteryStatusText = '';
+        let batteryStatusClass = '';
+        let batteryIcon = '';
+        
+        if (target.battery.isCharging) {
+            batteryIcon = '⚡ ';
+            batteryStatusText = `En charge: ${target.battery.absoluteLevel}%`;
+            batteryStatusClass = 'text-info';
+            
+            // Ajouter une estimation du temps de charge si possible
+            if (target.battery.absoluteLevel < 100) {
+                const estimatedTime = estimateChargingTime(target.battery.absoluteLevel);
+                if (estimatedTime) {
+                    batteryStatusText += ` (${estimatedTime})`;
+                }
+            } else {
+                batteryStatusText += ' (Chargement terminé)';
+            }
+        } else {
+            switch(target.battery.status) {
+                case 'high':
+                    batteryStatusText = `Batterie: ${target.battery.level}% - Bon niveau`;
+                    batteryStatusClass = 'text-success';
+                    break;
+                case 'medium':
+                    batteryStatusText = `Batterie: ${target.battery.level}% - Niveau moyen`;
+                    batteryStatusClass = 'text-warning';
+                    break;
+                case 'low':
+                    batteryStatusText = `Batterie: ${target.battery.level}% - Faible niveau`;
+                    batteryStatusClass = 'text-danger';
+                    break;
+                case 'critical':
+                    batteryStatusText = `Batterie: ${target.battery.level}% - Niveau critique !`;
+                    batteryStatusClass = 'text-danger';
+                    break;
+                default:
+                    batteryStatusText = `Batterie: ${target.battery.level}%`;
+                    batteryStatusClass = 'text-info';
+            }
+            
+            // Ajouter une estimation d'autonomie si la batterie est faible
+            if (target.battery.status === 'low' || target.battery.status === 'critical') {
+                const estimatedTime = estimateBatteryLife(target.battery.level);
+                batteryStatusText += ` (${estimatedTime})`;
+            }
+        }
+        
+        if (target.battery.lastUpdate) {
+            const lastUpdate = new Date(target.battery.lastUpdate);
+            const now = new Date();
+            const diffMinutes = Math.floor((now - lastUpdate) / (1000 * 60));
+            
+            batteryStatusText += ` - Dernière mise à jour: ${lastUpdate.toLocaleTimeString('fr-FR')}`;
+            
+            if (diffMinutes > 60) {
+                batteryStatusText += ` <span class="badge badge-warning">(${diffMinutes} min)</span>`;
+            }
+        }
+        
+    //    $('#detail-status').append(
+    //        `<div class="alert ${batteryStatusClass.replace('text-', 'alert-')} mt-2">
+    //            ${batteryIcon}${batteryStatusText}
+    //        </div>`
+    //    );
+    }
     
     // Mettre à jour l'en-tête du tableau avec les nouvelles colonnes
     $('#detail-table thead tr').html(`
@@ -857,8 +1291,46 @@ function showCustomNotification(message, type = 'success') {
     }, 5000);
 }
 
+// Fonction pour tester l'URL directement
+function testAjaxUrl() {
+    const testUrl = 'ajax_check_fleches_session.php';
+    console.log("Test de l'URL: " + testUrl);
+    
+    $.ajax({
+        url: testUrl,
+        type: 'GET',
+        success: function(response) {
+            console.log("Test GET réussi:", response);
+            alert("Test GET réussi! Le fichier est accessible.");
+        },
+        error: function(xhr, status, error) {
+            console.error("Test GET échoué:", status, error);
+            alert("Impossible d'accéder à " + testUrl + "\n" + status + ": " + error);
+        }
+    });
+}
+
 // Initialisation lorsque le document est prêt
 $(document).ready(function() {
+    // Test de connexion
+    $('#test-btn').click(function() {
+        testAjaxUrl();
+    });
+    
+    // Mode débogage
+    $('#debug-btn').click(function() {
+        console.clear();
+        console.log("=== Mode débogage activé ===");
+        console.log("Session actuelle:", currentSession);
+        console.log("TourId PHP:", <?php echo isset($_SESSION['TourId']) ? $_SESSION['TourId'] : '0'; ?>);
+        console.log("URL AJAX: ajax_check_fleches_session.php");
+        
+        // Ouvrir la console
+        if (typeof console !== 'undefined') {
+            alert("Mode débogage activé. Ouvrez la console du navigateur (F12) pour voir les logs.");
+        }
+    });
+    
     // Démarrer automatiquement la vérification toutes les 5 secondes
     startAutoChecking();
     

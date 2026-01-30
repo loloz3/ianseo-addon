@@ -1,0 +1,38 @@
+# TARIFS DU TOURNOI DE TIR À L'ARC
+# ---------------------------------
+# Ce fichier contient les tarifs pour l'inscription au tournoi.
+# Les prix sont en euros (€).
+# Modifier uniquement les Prix, garder la structure du fichier
+
+# POUR LE CLUB ORGANISATEUR (Tarif réduit)
+# ----------------------------------------
+# Jeunes (U11 à U18) - 1 départ : 
+PJA1 = 4;
+# Adultes (U21 à S3) - 1 départ : 
+PAA1 = 5;
+# Jeunes (U11 à U18) - 2 départs ou plus (par départ supplémentaire) :
+PJA2 = 4; 
+# Adultes (U21 à S3) - 2 départs ou plus (par départ supplémentaire) :
+PAA2 = 5;
+
+# POUR TOUS LES AUTRES CLUBS
+# ---------------------------
+# Jeunes (U11 à U18) - 1 départ : 
+OJA1 = 8;
+# Adultes (U21 à S3) - 1 départ : 
+OAA1 = 10;
+# Jeunes (U11 à U18) - 2 départs ou plus (par départ supplémentaire) :
+OJA2 = 6; 
+# Adultes (U21 à S3) - 2 départs ou plus (par départ supplémentaire) :
+OAA2 = 8;
+
+# NOTES
+# -----
+# - U11, U13, U15, U18 = Catégories Jeunes
+# - U21, S1, S2, S3 = Catégories Adultes
+# - Le prix affiché est pour le premier départ
+# - Pour 2 départs ou plus, appliquer le supplément indiqué pour chaque départ supplémentaire
+# - Exemple pour un adulte club externe : 1 départ = 10€, 2 départs = 10+8=18€, 3 départs = 10+8+8=26€
+# - Exemple pour un jeune club organisateur : 1 départ = 4€, 2 départs = 4+4=8€, 3 départs = 4+4+4=12€
+
+# DERNIÈRE MISE À JOUR : 2026-01-13

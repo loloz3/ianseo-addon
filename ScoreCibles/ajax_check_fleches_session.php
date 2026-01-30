@@ -6,13 +6,23 @@
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 require_once('Common/Fun_Various.inc.php');
 
+// Activer l'affichage des erreurs pour le débogage
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 CheckTourSession(true);
 checkACL(AclParticipants, AclReadOnly);
 
 header('Content-Type: application/json');
 
-$TourId = isset($_POST['TourId']) ? intval($_POST['TourId']) : $_SESSION['TourId'];
+// Log pour débogage
+error_log("=== AJAX check_fleches_session.php appelé ===");
+
+$TourId = isset($_POST['TourId']) ? intval($_POST['TourId']) : (isset($_SESSION['TourId']) ? $_SESSION['TourId'] : 0);
 $selectedSession = isset($_POST['session']) ? $_POST['session'] : '1'; // '1' par défaut
+
+error_log("TourId utilisé: $TourId");
+error_log("Session sélectionnée: $selectedSession");
 
 // Fonction pour convertir les lettres en points
 function convertArrowToScore($letter) {
@@ -100,7 +110,24 @@ function calculateTotalScore($arrowString) {
     return $total;
 }
 
+// Fonction pour déterminer le statut de la batterie avec prise en compte de la charge
+function getBatteryStatus($batteryLevel) {
+    if ($batteryLevel < 0) {
+        return 'charging'; // Valeur négative = en charge
+    }
+    
+    if ($batteryLevel >= 80) return 'high';
+    if ($batteryLevel >= 40) return 'medium';
+    if ($batteryLevel >= 20) return 'low';
+    return 'critical';
+}
+
 try {
+    // Vérifier si TourId est valide
+    if ($TourId <= 0) {
+        throw new Exception("TourId invalide: $TourId");
+    }
+    
     // Récupérer les informations sur les sessions disponibles
     $sessionsQuery = "
         SELECT 
@@ -117,7 +144,13 @@ try {
         ORDER BY QuSession
     ";
     
+    error_log("Requête sessions: $sessionsQuery");
     $sessionsResult = safe_r_sql($sessionsQuery);
+    
+    if (!$sessionsResult) {
+        error_log("Erreur dans la requête sessions: " . mysqli_error($GLOBALS['db_link']));
+        throw new Exception("Erreur lors de la récupération des sessions");
+    }
     
     $sessionsData = [];
     $maxTargetOverall = 0;
@@ -128,6 +161,46 @@ try {
             'nbCibles' => $row->NbCiblesSession
         ];
         $maxTargetOverall = max($maxTargetOverall, $row->MaxTargetPerSession);
+    }
+    
+    error_log("Sessions trouvées: " . print_r($sessionsData, true));
+    
+    // Récupérer les informations de batterie
+    // Note: La table IskDevices n'a pas de colonne IskDvSession
+    // Nous ne pouvons donc pas filtrer par session, seulement par cible
+    $batteryLevels = [];
+    
+    // Nous allons récupérer toutes les batteries pour ce tournoi
+    $batteryQuery = "
+        SELECT IskDvTarget, IskDvBattery, IskDvLastSeen
+        FROM IskDevices
+        WHERE IskDvTournament = $TourId
+        AND IskDvBattery IS NOT NULL
+    ";
+    
+    error_log("Requête batterie: $batteryQuery");
+    $batteryResult = safe_r_sql($batteryQuery);
+    
+    if ($batteryResult) {
+        while ($row = safe_fetch($batteryResult)) {
+            $targetNumber = intval($row->IskDvTarget);
+            $batteryValue = intval($row->IskDvBattery);
+            
+            // Note: Nous ne pouvons pas créer une clé avec session car IskDevices n'a pas de session
+            // Nous allons stocker par numéro de cible seulement
+            // Plus tard, nous devrons mapper aux sessions d'une autre manière
+            
+            $batteryLevels[$targetNumber] = [
+                'level' => $batteryValue,
+                'absoluteLevel' => abs($batteryValue),
+                'lastUpdate' => $row->IskDvLastSeen,
+                'status' => getBatteryStatus($batteryValue),
+                'isCharging' => $batteryValue < 0
+            ];
+        }
+        error_log("Batteries trouvées pour " . count($batteryLevels) . " cibles");
+    } else {
+        error_log("Pas de résultat pour la requête batterie ou erreur");
     }
     
     // Construire la requête en fonction de la session sélectionnée
@@ -157,7 +230,13 @@ try {
     
     $query .= " ORDER BY q.QuSession, q.QuTarget, q.QuLetter";
     
+    error_log("Requête principale: $query");
     $result = safe_r_sql($query);
+    
+    if (!$result) {
+        error_log("Erreur dans la requête principale: " . mysqli_error($GLOBALS['db_link']));
+        throw new Exception("Erreur lors de la récupération des données des cibles");
+    }
     
     // Organiser les données par cible ET session
     $targets = [];
@@ -229,6 +308,8 @@ try {
         $targets[$key]['arrowCounts'][] = $totalArrows;
     }
     
+    error_log("Cibles trouvées: " . count($targets) . " entrées");
+    
     // Traiter les cibles
     $allTargets = [];
     $greenTargetsBySession = [];
@@ -256,6 +337,10 @@ try {
         // Traiter toutes les cibles de cette session
         for ($i = 1; $i <= $maxTargetSession; $i++) {
             $key = $session . '_' . $i;
+            
+            // Récupérer les informations de batterie pour cette cible
+            // Note: Comme IskDevices n'a pas de session, nous utilisons seulement le numéro de cible
+            $batteryInfo = isset($batteryLevels[$i]) ? $batteryLevels[$i] : null;
             
             if (isset($targets[$key])) {
                 $target = $targets[$key];
@@ -297,7 +382,8 @@ try {
                     'allSameCount' => $allSameCount,
                     'hasDifferentArrowCounts' => !$allSameCount,
                     'status' => $status,
-                    'archers' => $target['archers']
+                    'archers' => $target['archers'],
+                    'battery' => $batteryInfo  // Informations de batterie
                 ];
                 
                 // Mettre à jour les statistiques
@@ -334,7 +420,8 @@ try {
                     'allSameCount' => true,
                     'hasDifferentArrowCounts' => false,
                     'status' => 'blue',
-                    'archers' => []
+                    'archers' => [],
+                    'battery' => $batteryInfo  // Informations de batterie
                 ];
                 
                 $sessionStats[$session]['totalTargets']++;
@@ -372,7 +459,7 @@ try {
         return $a['session'] - $b['session'];
     });
     
-    echo json_encode([
+    $response = [
         'success' => true,
         'targets' => $allTargets,
         'sessionsData' => $sessionsData,
@@ -380,13 +467,37 @@ try {
             'sessionStats' => $sessionStats
         ],
         'selectedSession' => $selectedSession,
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
+        'timestamp' => date('Y-m-d H:i:s'),
+        'debug' => [
+            'battery_count' => count($batteryLevels),
+            'note' => 'IskDevices n\'a pas de colonne session, batteries mappées par numéro de cible seulement'
+        ]
+    ];
+    
+    error_log("Réponse envoyée avec " . count($allTargets) . " cibles");
+    
+    echo json_encode($response);
     
 } catch (Exception $e) {
-    echo json_encode([
+    error_log("Exception capturée: " . $e->getMessage() . " dans " . $e->getFile() . " ligne " . $e->getLine());
+    
+    $errorResponse = [
         'success' => false,
         'message' => 'Erreur: ' . $e->getMessage(),
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
+        'timestamp' => date('Y-m-d H:i:s'),
+        'debug' => [
+            'tourId' => $TourId,
+            'session' => $selectedSession,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]
+    ];
+    
+    error_log("Erreur JSON: " . json_encode($errorResponse));
+    
+    echo json_encode($errorResponse);
 }
+
+error_log("=== Fin de l'exécution ===");
+?>

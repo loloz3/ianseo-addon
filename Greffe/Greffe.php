@@ -99,11 +99,7 @@ if (isset($_POST['validate_payment']) && isset($_POST['archer_id'])) {
     $filterParams .= "&sort=" . urlencode($sortColumn) . "&dir=" . urlencode($sortDirection);
     
     // Déterminer le statut de paiement pour QuNotes
-    if ($action == 'validate') {
-        $paymentStatus = 'PAYE|' . $paymentMethod;
-    } else {
-        $paymentStatus = 'NON_PAYE';
-    }
+    $paymentStatus = ($action == 'validate') ? 'PAYE' : 'NON_PAYE';
     
     // Mettre à jour QuNotes dans Qualifications pour toutes les qualifications de l'archer
     $updateQuery = "UPDATE Qualifications 
@@ -361,15 +357,9 @@ if ($is_invoice_mode && isset($_GET['archer_id'])) {
         c.CoCode as country_code,
         -- Récupérer le statut de paiement depuis QuNotes
         COALESCE(
-            MAX(CASE WHEN q.QuNotes LIKE 'PAYE%' THEN 1 ELSE 0 END),
+            MAX(CASE WHEN q.QuNotes = 'PAYE' THEN 1 ELSE 0 END),
             0
         ) as payment_status,
-        COALESCE(
-            MAX(CASE WHEN q.QuNotes LIKE 'PAYE%' THEN 
-                SUBSTRING_INDEX(q.QuNotes, '|', -1) 
-            ELSE NULL END),
-            NULL
-        ) as payment_method,
         COUNT(*) as nb_inscriptions,
         GROUP_CONCAT(DISTINCT CONCAT(e.EnDivision, e.EnClass) ORDER BY e.EnDivision, e.EnClass SEPARATOR ', ') as categories,
         GROUP_CONCAT(DISTINCT c.CoName ORDER BY c.CoName SEPARATOR ', ') as clubs,
@@ -1635,15 +1625,9 @@ include('Common/Templates/head.php');
     e.EnWChair as fauteuil,
     -- Récupérer le statut de paiement depuis QuNotes
     COALESCE(
-        MAX(CASE WHEN q.QuNotes LIKE 'PAYE%' THEN 1 ELSE 0 END),
+        MAX(CASE WHEN q.QuNotes = 'PAYE' THEN 1 ELSE 0 END),
         0
     ) as payment_status,
-    COALESCE(
-        MAX(CASE WHEN q.QuNotes LIKE 'PAYE%' THEN 
-            SUBSTRING_INDEX(q.QuNotes, '|', -1) 
-        ELSE NULL END),
-        NULL
-    ) as payment_method,
     COUNT(*) as nb_inscriptions,
     GROUP_CONCAT(DISTINCT e.EnId ORDER BY e.EnId SEPARATOR ',') as entry_ids,
     GROUP_CONCAT(DISTINCT CONCAT(e.EnDivision, e.EnClass) ORDER BY e.EnDivision, e.EnClass SEPARATOR ', ') as categories,
