@@ -224,14 +224,26 @@ function calculerPrix($club_country_code, $categorie_code, $nb_departs, $tarifs,
     // Déterminer la catégorie d'âge
     $age_category = getAgeCategory($categorie_code);
     
-    // Déterminer la clé tarifaire (1 ou 2+ départs)
-    $tarif_key = ($nb_departs == 1) ? 1 : 2;
-    
-    // Récupérer le prix
+    // Récupérer les tarifs de base
     if ($is_organizer) {
-        return $tarifs['organizer'][$age_category][$tarif_key];
+        $prix_1_depart = $tarifs['organizer'][$age_category][1];
+        $prix_2_departs = $tarifs['organizer'][$age_category][2];
     } else {
-        return $tarifs['clubs_autres'][$age_category][$tarif_key];
+        $prix_1_depart = $tarifs['clubs_autres'][$age_category][1];
+        $prix_2_departs = $tarifs['clubs_autres'][$age_category][2];
+    }
+    
+    // Calcul du supplément pour le 2ème départ
+    $supplement_2eme_depart = $prix_2_departs - $prix_1_depart;
+    
+    // Calculer le prix total en fonction du nombre de départs
+    if ($nb_departs == 1) {
+        return $prix_1_depart;
+    } elseif ($nb_departs == 2) {
+        return $prix_2_departs;
+    } else {
+        // 3 départs ou plus : premier départ à prix normal, supplémentaires au tarif supplément
+        return $prix_1_depart + ($supplement_2eme_depart * ($nb_departs - 1));
     }
 }
 
