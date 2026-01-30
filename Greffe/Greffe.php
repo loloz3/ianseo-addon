@@ -81,6 +81,7 @@ if ($tournament = safe_fetch($tournamentRs)) {
 if (isset($_POST['validate_payment']) && isset($_POST['archer_id'])) {
     $archerId = intval($_POST['archer_id']);
     $action = $_POST['validate_payment'];
+    $paymentMethod = isset($_POST['payment_method']) ? $_POST['payment_method'] : 'ESPECE';
     
     // Récupérer les filtres actuels et le tri pour les passer dans la redirection
     $filterParams = '';
@@ -707,6 +708,14 @@ if ($is_invoice_mode && isset($_GET['archer_id'])) {
                             </span>
                         </div>
                     </div>
+                    <?php if ($archer->payment_status == 1 && !empty($archer->payment_method)): ?>
+<div class="info-row">
+    <div class="info-label">Moyen de paiement</div>
+    <div class="info-value">
+        <strong><?php echo htmlspecialchars($archer->payment_method); ?></strong>
+    </div>
+</div>
+<?php endif; ?>
                 </div>
                 
                 <div class="invoice-section">
@@ -1835,6 +1844,7 @@ ORDER BY e.EnName, e.EnFirstName";
                     'clubs' => $row->clubs,
                     'nb_inscriptions' => (int)$row->nb_inscriptions,
                     'payment_status' => $row->payment_status,
+                    'payment_method' => $row->payment_method,
                     'cibles_departs' => $row->cibles_departs,
                     'target_numbers' => $row->target_numbers,
                     'sessions' => $row->sessions,
@@ -1909,6 +1919,7 @@ ORDER BY e.EnName, e.EnFirstName";
             echo '<th data-sort="montant">Montant (€)</th>'; 
             echo '<th data-sort="cible_depart">Départ / Cible</th>';
             echo '<th data-sort="payment_status">Statut Paiement</th>';
+            echo '<th data-sort=\"payment_method\">Moyen de paiement</th>';
             echo '</tr>';
             echo '</thead>';
             echo '<tbody id="archersTableBody">';
@@ -2098,6 +2109,12 @@ ORDER BY e.EnName, e.EnFirstName";
                                             <input type="hidden" name="validate_payment" value="validate">'
                                             . $sortFields
                                             . $filterParams . '
+                                            <select name="payment_method" required style="font-size:12px; padding:4px 6px; margin-right:5px; border:1px solid #ccc; border-radius:3px;">
+                                                <option value="ESPECE">Espèce</option>
+                                                <option value="CHEQUE">Chèque</option>
+                                                <option value="VIREMENT">Virement</option>
+                                                <option value="GRATUIT">Gratuit</option>
+                                            </select>
                                             <button type="submit" class="payment-button validate" 
                                                     onclick="return confirmPayment(this, \'' . htmlspecialchars($archer['prenom'], ENT_QUOTES) . '\', \'' . htmlspecialchars($archer['nom'], ENT_QUOTES) . '\', \'' . htmlspecialchars($archer['club'], ENT_QUOTES) . '\', \'' . htmlspecialchars($archer['categorie'], ENT_QUOTES) . '\', \'' . $montant . '\', \'' . htmlspecialchars($cible_display_value, ENT_QUOTES) . '\')"
                                                     title="Valider le paiement de cet archer">
@@ -2124,6 +2141,14 @@ ORDER BY e.EnName, e.EnFirstName";
                     echo '<td><span class="' . $montant_class . '" title="' . $montant_title . '">' . $montant . ' €</span></td>';
                     echo '<td class="target-cell">' . $cible_display_html . '</td>';
                     echo '<td><span class="payment-status ' . $status_class . '">' . $status_text . '</span></td>';
+
+                    // Afficher le moyen de paiement
+                    $payment_method_display = '-';
+                    if (!empty($archer['payment_method'])) {
+                        $payment_method_display = htmlspecialchars($archer['payment_method']);
+                    }
+                    echo '<td>' . $payment_method_display . '</td>';
+
                     echo '</tr>';
                 }
             }
@@ -2229,28 +2254,43 @@ ORDER BY e.EnName, e.EnFirstName";
         }, 3000);
     }
     
-    // Fonction pour confirmer le paiement avec les détails
-    function confirmPayment(button, prenom, nom, club, categorie, montant, cibleDepart) {
-        // Formater le message de confirmation
-        const message = `Confirmer le paiement pour :\n\n` +
-                       `• Nom : ${nom}\n` +
-                       `• Prénom : ${prenom}\n` +
-                       `• Club : ${club || '-'}\n` +
-                       `• Catégorie : ${categorie}\n` +
-                       `• Montant : ${montant} €\n` +
-                       `• Départ / Cible : ${cibleDepart}\n\n` +
-                       `Êtes-vous sûr de vouloir valider ce paiement ?`;
-        
-        // Afficher la confirmation
-        if (confirm(message)) {
-            // Si confirmé, soumettre le formulaire
-            button.closest('form').submit();
-            return true;
-        } else {
-            // Si annulé, ne rien faire
-            return false;
+function confirmPayment(button, prenom, nom, club, categorie, montant, cibleDepart) {
+    // Récupérer le moyen de paiement
+    let paymentMethod = 'Non spécifié';
+    
+    try {
+        const form = button.form || button.closest('form');
+        if (form) {
+            const select = form.querySelector('select[name="payment_method"]');
+            if (select && select.value) {
+                paymentMethod = select.value;
+            }
         }
+    } catch(e) {
+        console.error('Erreur récupération moyen de paiement:', e);
     }
+    
+    // Formater le message de confirmation
+    const message = 'Confirmer le paiement pour :\n\n' +
+                   '• Nom : ' + nom + '\n' +
+                   '• Prénom : ' + prenom + '\n' +
+                   '• Club : ' + (club || '-') + '\n' +
+                   '• Catégorie : ' + categorie + '\n' +
+                   '• Montant : ' + montant + ' €\n' +
+                   '• Départ / Cible : ' + cibleDepart + '\n' +
+                   '• Moyen de paiement : ' + paymentMethod + '\n\n' +
+                   'Êtes-vous sûr de vouloir valider ce paiement ?';
+    
+    if (confirm(message)) {
+        const form = button.form || button.closest('form');
+        if (form) {
+            form.submit();
+        }
+        return true;
+    }
+    return false;
+}
+
     
     // Tri du tableau par colonne
     document.addEventListener('DOMContentLoaded', function() {
@@ -2406,6 +2446,49 @@ ORDER BY e.EnName, e.EnFirstName";
         }
     });
 </script>
+
+<!-- Bouton Export PDF -->
+<div class="filter-group" style="margin-left: auto;">
+    <button onclick="exportToPDF()" class="export-pdf-button" title="Exporter la liste en PDF">
+        📄 Exporter en PDF
+    </button>
+</div>
+
+<style>
+.export-pdf-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.export-pdf-button:hover {
+    background-color: #c82333;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+</style>
+
+<script>
+function exportToPDF() {
+    // Récupérer les filtres actuels
+    const urlParams = new URLSearchParams(window.location.search);
+    const club = urlParams.get('club_filter') || 'all';
+    const category = urlParams.get('category_filter') || 'all';
+    const payment = urlParams.get('payment_filter') || 'all';
+
+    // Construire l'URL avec les filtres
+    const exportUrl = 'export_pdf.php?club=' + club + '&category=' + category + '&payment=' + payment;
+
+    // Ouvrir dans un nouvel onglet
+    window.open(exportUrl, '_blank');
+}
+</script>
+
 
 <!-- AJOUT: Inclure le pied de page du site -->
 <?php include('Common/Templates/tail.php'); ?>
