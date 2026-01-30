@@ -364,8 +364,14 @@ include('Common/Templates/head.php');
             <li class="task-item">
                 <span class="task-icon">🏁</span>
                 <a href="<?php echo $basePath; ?>Tournament/index.php?New=" class="task-link" target="_blank">Créer une nouvelle compétition</a>
+				<a href="<?php echo $basePath; ?>Modules/Custom/aide/CloneTournament.php" class="btn-small btn-success">Cloner une compétition</a>
             </li>
-            
+			
+            <li class="task-item">
+                <span class="task-icon">🔃</span>
+                <a href="<?php echo $basePath; ?>Partecipants/LookupTableLoad.php" class="task-link" target="_blank">Mise à jour de la datadase Archers</a>
+            </li>
+			
             <li class="task-item">
                 <span class="task-icon">👥</span>
                 <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" target="_blank">Ajouter des archers / participants</a>
