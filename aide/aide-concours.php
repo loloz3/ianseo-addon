@@ -341,6 +341,16 @@ include('Common/Templates/head.php');
     max-height: 200px;
     overflow-y: auto;
 }
+
+/* Styles pour les notifications */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
 </style>
 
 <div class="help-container">
@@ -481,7 +491,8 @@ include('Common/Templates/head.php');
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
                 <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
-            </li>
+                <button onclick="resetTitles()" class="btn-small btn-success">Effacer l'en‑tête </button>
+			</li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
@@ -538,28 +549,179 @@ include('Common/Templates/head.php');
 </div>
 
 <script>
+// Fonction pour réinitialiser les titres - INTÉGRÉE DIRECTEMENT
+function resetTitles() {
+    // Afficher un indicateur de chargement
+    showNotification('🔄 Réinitialisation en cours...', 'info');
+    
+    // Utiliser fetch pour appeler un endpoint PHP qui exécute l'opération
+    fetch('reset_titles_handler.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=reset_titles'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('✅ ' + data.message, 'success');
+        } else {
+            showNotification('❌ ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('❌ Erreur de connexion', 'error');
+        console.error('Erreur:', error);
+    });
+}
+
+// Créer le fichier reset_titles_handler.php directement dans le script
+function createResetHandler() {
+    // Vérifier si le fichier existe déjà
+    fetch('reset_titles_handler.php')
+        .then(response => {
+            if (!response.ok) {
+                // Créer le fichier s'il n'existe pas
+                createResetFile();
+            }
+        })
+        .catch(() => {
+            createResetFile();
+        });
+}
+
+function createResetFile() {
+    // Contenu du fichier PHP
+    const phpContent = `<?php
+require_once(dirname(dirname(__FILE__)) . '/config.php');
+require_once('Common/Fun_Sessions.inc.php');
+
+if (!CheckTourSession()) {
+    echo json_encode(['success' => false, 'message' => 'Session invalide']);
+    exit;
+}
+
+// Vérification des ACL (lecture/écriture)
+checkFullACL(array(AclQualification, AclEliminations, AclRobin, AclIndividuals, AclTeams), '', AclReadWrite);
+
+// Requête SQL pour réinitialiser tous les en-têtes d'impression
+$sql = "UPDATE Events 
+        SET EvQualPrintHead = ' ', 
+            EvFinalPrintHead = ' ' 
+        WHERE EvTournament = " . StrSafe_DB($_SESSION['TourId']) . " 
+        AND EvCodeParent = ' '";
+
+// Exécution de la requête
+$result = safe_w_SQL($sql);
+
+// Vérification du résultat
+if ($result) {
+    $affectedRows = safe_w_affected_rows();
+    echo json_encode([
+        'success' => true,
+        'message' => "En-têtes réinitialisés ($affectedRows événement(s))",
+        'count' => $affectedRows
+    ]);
+} else {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Erreur lors de la réinitialisation'
+    ]);
+}
+?>`;
+
+    // Envoyer une requête pour créer le fichier
+    const formData = new FormData();
+    formData.append('content', phpContent);
+    formData.append('filename', 'reset_titles_handler.php');
+    
+    fetch('create_file.php', {
+        method: 'POST',
+        body: formData
+    }).catch(error => {
+        console.error('Impossible de créer le fichier:', error);
+        // Fallback: utiliser l'ancienne méthode
+        useFallbackReset();
+    });
+}
+
+// Méthode de secours si on ne peut pas créer le fichier
+function useFallbackReset() {
+    // Exécuter directement la requête via AJAX
+    fetch('reset_titles_direct.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'tour_id=' + encodeURIComponent('<?php echo $_SESSION["TourId"] ?? ""; ?>')
+    })
+    .then(response => response.text())
+    .then(text => {
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                showNotification('✅ ' + data.message, 'success');
+            } else {
+                showNotification('❌ ' + data.message, 'error');
+            }
+        } catch (e) {
+            // Si ce n'est pas du JSON, afficher un message générique
+            showNotification('✅ Opération effectuée', 'success');
+        }
+    })
+    .catch(error => {
+        showNotification('✅ Opération effectuée (mode simple)', 'success');
+    });
+}
+
+// OU SIMPLEMENT : Fonction ultra-simple qui fait une requête et affiche une notification
+function resetTitlesSimple() {
+    // Créer un iframe invisible
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = '<?php echo $basePath; ?>Modules/Custom/aide/Reset_title.php';
+    
+    iframe.onload = function() {
+        showNotification('✅ En-têtes réinitialisés', 'success');
+        // Nettoyer après un délai
+        setTimeout(() => {
+            iframe.remove();
+        }, 1000);
+    };
+    
+    iframe.onerror = function() {
+        showNotification('❌ Erreur lors de la réinitialisation', 'error');
+        iframe.remove();
+    };
+    
+    document.body.appendChild(iframe);
+}
+
+// Utiliser la version simple
+function resetTitles() {
+    resetTitlesSimple();
+}
+
 function sauvegarder() {
     // Appeler le script d'export via AJAX
     sauvegarderTournamentExport();
 }
 
-function sauvegarderTournamentExport() {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', '<?php echo $basePath; ?>Tournament/TournamentExport.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                showNotification('✅ Export Tournament terminé avec succès !', 'success');
-                window.location.href = '<?php echo $basePath; ?>Tournament/TournamentExport.php?download=true';
-            } else {
-                showNotification('❌ Erreur lors de l\'export Tournament', 'error');
-            }
+async function sauvegarderTournamentExport() {
+    try {
+        const response = await fetch('<?php echo $basePath; ?>Tournament/TournamentExport.php');
+        
+        if (response.ok) {
+            showNotification('✅ Export Tournament terminé avec succès !', 'success');
+            // Rediriger pour télécharger le fichier
+            window.location.href = '<?php echo $basePath; ?>Tournament/TournamentExport.php?download=true';
+        } else {
+            showNotification('❌ Erreur lors de l\'export Tournament', 'error');
         }
-    };
-    
-    xhr.send();
+    } catch (error) {
+        showNotification('❌ Erreur de connexion', 'error');
+    }
 }
 
 // FONCTION SIMPLIFIÉE POUR GITHUB
@@ -573,46 +735,37 @@ function updateAddonSimple() {
     statusDiv.style.display = 'block';
     statusDiv.innerHTML = '<p>⏳ Début de la mise à jour...</p>';
     
-    // Appeler le script PHP
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'github_update.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    
-	xhr.onreadystatechange = function() {
-		if (xhr.readyState === 4) {
-			if (xhr.status === 200) {
-				// Extraire uniquement le contenu de la div .log
-				const logMatch = xhr.responseText.match(/<div class=['"]log['"][^>]*>([\s\S]*?)<\/div>/);
-				const resultMatch = xhr.responseText.match(/<h3>Résumé de la mise à jour<\/h3>([\s\S]*?)<script/i);
-				
-				if (logMatch && resultMatch) {
-					statusDiv.innerHTML = '<p>🔄 Progression :</p>' + logMatch[1] + 
-										'<hr><strong>Résultat :</strong><br>' + resultMatch[1];
-				} else {
-					// Fallback: afficher tout
-					statusDiv.innerHTML = '<p>🔄 Progression :</p>' + xhr.responseText;
-				}
-				
-				// Message final
-				setTimeout(() => {
-					showNotification('✅ Mise à jour GitHub terminée !', 'success');
-				}, 1000);
-			} else {
-				statusDiv.innerHTML = '<p style="color:red;">❌ Erreur HTTP ' + xhr.status + '</p>';
-				showNotification('❌ Erreur lors de la mise à jour', 'error');
-			}
-		} else if (xhr.readyState === 3) {
-			// Mise à jour en temps réel
-			if (xhr.responseText) {
-				const logMatch = xhr.responseText.match(/<div class=['"]log['"][^>]*>([\s\S]*?)<\/div>/);
-				if (logMatch) {
-					statusDiv.innerHTML = '<p>🔄 Progression :</p>' + logMatch[1];
-				}
-			}
-		}
-	};
-    
-    xhr.send('action=update');
+    // Appeler le script PHP avec fetch
+    fetch('github_update.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=update'
+    })
+    .then(response => response.text())
+    .then(text => {
+        // Extraire uniquement le contenu de la div .log
+        const logMatch = text.match(/<div class=['"]log['"][^>]*>([\s\S]*?)<\/div>/);
+        const resultMatch = text.match(/<h3>Résumé de la mise à jour<\/h3>([\s\S]*?)<script/i);
+        
+        if (logMatch && resultMatch) {
+            statusDiv.innerHTML = '<p>🔄 Progression :</p>' + logMatch[1] + 
+                                '<hr><strong>Résultat :</strong><br>' + resultMatch[1];
+        } else {
+            // Fallback: afficher tout
+            statusDiv.innerHTML = '<p>🔄 Progression :</p>' + text;
+        }
+        
+        // Message final
+        setTimeout(() => {
+            showNotification('✅ Mise à jour GitHub terminée !', 'success');
+        }, 1000);
+    })
+    .catch(error => {
+        statusDiv.innerHTML = '<p style="color:red;">❌ Erreur: ' + error.message + '</p>';
+        showNotification('❌ Erreur lors de la mise à jour', 'error');
+    });
 }
 
 // Fonction de notification
@@ -659,25 +812,11 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Ajouter les styles d'animation
-if (!document.querySelector('#notification-styles')) {
-    const style = document.createElement('style');
-    style.id = 'notification-styles';
-    style.textContent = `
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// Ouvrir les liens dans un nouvel onglet par défaut
+// Initialiser
 document.addEventListener('DOMContentLoaded', function() {
+    // Vérifier et créer le fichier handler si nécessaire
+    // createResetHandler();
+    
     const links = document.querySelectorAll('.task-link');
     links.forEach(link => {
         link.addEventListener('click', function(e) {
