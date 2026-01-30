@@ -1,6 +1,7 @@
 <?php
 /**
  * Correction de toutes les anomalies en une seule opération
+ * MODIFICATION : La vérification se fait maintenant par division
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
@@ -21,7 +22,7 @@ if (IsBlocked(BIT_BLOCK_PARTICIPANT)) {
 
 $TourId = $_SESSION['TourId'];
 
-// D'abord, compter le nombre d'anomalies avant correction
+// D'abord, compter le nombre d'anomalies avant correction (PAR DIVISION)
 $QueryCountBefore = "
     SELECT COUNT(*) as nb_anomalies
     FROM Entries e
@@ -36,6 +37,7 @@ $QueryCountBefore = "
             WHERE e2.EnCode = e.EnCode 
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
+            AND e2.EnDivision = e.EnDivision  -- AJOUT: Filtrer par même division
         ) AND e.EnIndFEvent = 0)
         OR
         (q.QuSession > (
@@ -45,6 +47,7 @@ $QueryCountBefore = "
             WHERE e2.EnCode = e.EnCode 
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
+            AND e2.EnDivision = e.EnDivision  -- AJOUT: Filtrer par même division
         ) AND e.EnIndFEvent = 1)
     )
 ";
@@ -61,7 +64,7 @@ if ($nbAnomalies == 0) {
     exit;
 }
 
-// Ensuite, effectuer la correction
+// Ensuite, effectuer la correction (PAR DIVISION)
 $QueryCorrection = "
     UPDATE Entries e
     INNER JOIN Qualifications q ON e.EnId = q.QuId
@@ -74,6 +77,7 @@ $QueryCorrection = "
                 WHERE e2.EnCode = e.EnCode 
                 AND e2.EnTournament = e.EnTournament
                 AND e2.EnCode != ''
+                AND e2.EnDivision = e.EnDivision  -- AJOUT: Filtrer par même division
             ) THEN 1
             ELSE 0
         END
@@ -87,6 +91,7 @@ $QueryCorrection = "
             WHERE e2.EnCode = e.EnCode 
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
+            AND e2.EnDivision = e.EnDivision  -- AJOUT: Filtrer par même division
         ) AND e.EnIndFEvent = 0)
         OR
         (q.QuSession > (
@@ -96,6 +101,7 @@ $QueryCorrection = "
             WHERE e2.EnCode = e.EnCode 
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
+            AND e2.EnDivision = e.EnDivision  -- AJOUT: Filtrer par même division
         ) AND e.EnIndFEvent = 1)
     )
 ";
@@ -105,7 +111,7 @@ $Result = safe_w_sql($QueryCorrection);
 if ($Result) {
     // Utiliser le nombre d'anomalies compté avant la correction
     $JSON['success'] = true;
-    $JSON['message'] = 'Corrections effectuées avec succès';
+    $JSON['message'] = 'Corrections effectuées avec succès (par division)';
     $JSON['corriges'] = $nbAnomalies;
 } else {
     $JSON['message'] = 'Erreur lors de la correction';
