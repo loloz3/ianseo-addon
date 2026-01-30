@@ -8,7 +8,7 @@
  * 
  * Contributeurs:
  * - Auteur Original
- * - Laurent Petroff - Les Archers de Perols - (modif: 2025-12-11)
+ * - Laurent Petroff - Les Archers de Perols - (modif: 2026-01-30)
  * 
  * Dernière modification: 2026-01-01 par Laurent Petroff
  * rajout du bouton "Tout corriger"
@@ -20,7 +20,7 @@
  * 
  * Règle : 
  * - 1ère inscription (session la plus basse) : EnIndFEvent doit être à 1 (Oui)
- * - Inscriptions suivantes : EnIndFEvent doit être à 0 (Non)
+ * - Inscriptions suivantes dans la même Division (arme) : EnIndFEvent doit être à 0 (Non)
  * - Vérification si archer en Doublon
  * - Vérification que tous les archers ont une arme (Div.), une catégorie (Age Cl.) et une classe (Cl.)
  * - Vérification si des archers ne sont pas assignés à une cible.
@@ -54,31 +54,35 @@ $Query = "
             WHERE e2.EnCode = e.EnCode 
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
-        ) AS PremierDepart,
+            AND e2.EnDivision = e.EnDivision
+        ) AS PremierDepartDivision,
         (
             SELECT COUNT(*) 
             FROM Entries e3
             WHERE e3.EnCode = e.EnCode 
             AND e3.EnTournament = e.EnTournament
             AND e3.EnCode != ''
-        ) AS NbInscriptions,
+            AND e3.EnDivision = e.EnDivision
+        ) AS NbInscriptionsDivision,
         CASE 
             WHEN q.QuSession = (
                 SELECT MIN(q2.QuSession) 
                 FROM Entries e2
                 INNER JOIN Qualifications q2 ON e2.EnId = q2.QuId
                 WHERE e2.EnCode = e.EnCode 
-            AND e2.EnTournament = e.EnTournament
+                AND e2.EnTournament = e.EnTournament
                 AND e2.EnCode != ''
-            ) AND e.EnIndFEvent = 0 THEN 'Premier départ : devrait être OUI'
+                AND e2.EnDivision = e.EnDivision
+            ) AND e.EnIndFEvent = 0 THEN 'Premier départ dans cette division : devrait être OUI'
             WHEN q.QuSession > (
                 SELECT MIN(q2.QuSession) 
                 FROM Entries e2
                 INNER JOIN Qualifications q2 ON e2.EnId = q2.QuId
                 WHERE e2.EnCode = e.EnCode 
-            AND e2.EnTournament = e.EnTournament
+                AND e2.EnTournament = e.EnTournament
                 AND e2.EnCode != ''
-            ) AND e.EnIndFEvent = 1 THEN 'Départ supplémentaire : devrait être NON'
+                AND e2.EnDivision = e.EnDivision
+            ) AND e.EnIndFEvent = 1 THEN 'Départ supplémentaire dans cette division : devrait être NON'
             ELSE 'Erreur inconnue'
         END AS Probleme
     FROM Entries e
@@ -94,6 +98,7 @@ $Query = "
             WHERE e2.EnCode = e.EnCode 
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
+            AND e2.EnDivision = e.EnDivision
         ) AND e.EnIndFEvent = 0)
         OR
         (q.QuSession > (
@@ -103,9 +108,10 @@ $Query = "
             WHERE e2.EnCode = e.EnCode 
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
+            AND e2.EnDivision = e.EnDivision
         ) AND e.EnIndFEvent = 1)
     )
-    ORDER BY e.EnCode, q.QuSession
+    ORDER BY e.EnCode, e.EnDivision, q.QuSession
 ";
 
 $Rs = safe_r_sql($Query);
@@ -679,7 +685,7 @@ if ($NbObligatoires == 0):
 <?php endif; ?>
 
 <?php 
-// SECTION 3: Vérification Finale Individuelle
+// SECTION 3: Vérification Finale Individuelle (PAR DIVISION)
 if ($NbAnomalies == 0): 
 ?>
     <div class="section-title-success">
@@ -687,19 +693,20 @@ if ($NbAnomalies == 0):
     </div>
 <?php else: ?>
     <div class="section-title">
-        ⚠️ <?php echo $NbAnomalies; ?> anomalie(s) détectée(s) dans la configuration "Finale Ind."
+        ⚠️ <?php echo $NbAnomalies; ?> anomalie(s) détectée(s) dans la configuration "Finale Ind." (par division)
     </div>
     
     <div class="summary">
-        <h2>Rappel de la règle pour "Finale Ind." :</h2>
+        <h2>Rappel de la règle pour "Finale Ind." (PAR DIVISION) :</h2>
         <ul>
-            <li><strong>Archer inscrit 1 fois</strong> → "Finale Ind." doit être à <strong>OUI</strong></li>
-            <li><strong>Archer inscrit plusieurs fois :</strong>
+            <li><strong>Archer inscrit 1 fois dans une division</strong> → "Finale Ind." doit être à <strong>OUI</strong></li>
+            <li><strong>Archer inscrit plusieurs fois DANS LA MÊME DIVISION :</strong>
                 <ul>
-                    <li>Premier départ (session la plus basse) → "Finale Ind." à <strong>OUI</strong></li>
-                    <li>Départs suivants → "Finale Ind." à <strong>NON</strong></li>
+                    <li>Premier départ (session la plus basse) dans cette division → "Finale Ind." à <strong>OUI</strong></li>
+                    <li>Départs suivants dans cette même division → "Finale Ind." à <strong>NON</strong></li>
                 </ul>
             </li>
+            <li><strong>Note importante :</strong> Un archer peut avoir "Finale Ind." à OUI dans plusieurs divisions différentes</li>
         </ul>
     </div>
 
@@ -723,9 +730,10 @@ if ($NbAnomalies == 0):
         <?php 
         safe_data_seek($Rs, 0);
         $previousCode = '';
+        $previousDivision = '';
         while ($Row = safe_fetch($Rs)): 
-            $isPremierDepart = ($Row->Depart == $Row->PremierDepart);
-            $isInscriptionUnique = ($Row->NbInscriptions == 1);
+            $isPremierDepart = ($Row->Depart == $Row->PremierDepartDivision);
+            $isInscriptionUnique = ($Row->NbInscriptionsDivision == 1);
             
             if ($isInscriptionUnique) {
                 $rowClass = 'inscription-unique';
@@ -735,8 +743,8 @@ if ($NbAnomalies == 0):
             
             $finaleActuelle = ($Row->FinaleInd == 1) ? 'OUI' : 'NON';
             
-            // Ligne de séparation entre archers différents
-            if ($previousCode != '' && $previousCode != $Row->Licence):
+            // Ligne de séparation entre archers différents ou divisions différentes
+            if ($previousCode != '' && ($previousCode != $Row->Licence || $previousDivision != $Row->Division)):
         ?>
             <tr class="archer-group">
                 <td colspan="11" style="height: 5px;"></td>
@@ -744,6 +752,7 @@ if ($NbAnomalies == 0):
         <?php 
             endif;
             $previousCode = $Row->Licence;
+            $previousDivision = $Row->Division;
         ?>
             <tr class="<?php echo $rowClass; ?>">
                 <td><strong><?php echo $Row->Licence; ?></strong></td>
@@ -755,9 +764,11 @@ if ($NbAnomalies == 0):
                 <td style="text-align: center;"><strong><?php echo $Row->Depart; ?></strong></td>
                 <td style="text-align: center;">
                     <?php if ($isInscriptionUnique): ?>
-                        <span class="badge-unique">Unique</span>
+                        <span class="badge-unique">Unique dans <?php echo $Row->Division; ?></span>
                     <?php else: ?>
-                        <span class="badge-multiple"><?php echo $isPremierDepart ? '1er' : ($Row->Depart . 'ème'); ?> départ</span>
+                        <span class="badge-multiple">
+                            <?php echo $isPremierDepart ? '1er' : ($Row->Depart . 'ème'); ?> départ en <?php echo $Row->Division; ?>
+                        </span>
                     <?php endif; ?>
                 </td>
                 <td style="text-align: center;"><strong><?php echo $finaleActuelle; ?></strong></td>
@@ -925,7 +936,9 @@ if ($NbCiblesDupliquees == 0):
 
 <script>
 function corrigerArcher(enId, nouvelleValeur) {
-    if (!confirm('Voulez-vous vraiment corriger cet archer ?\n\nNouvelle valeur "Finale Ind." : ' + (nouvelleValeur == 1 ? 'OUI' : 'NON'))) {
+    if (!confirm('Voulez-vous vraiment corriger cet archer ?\n\n' +
+                 'Nouvelle valeur "Finale Ind." : ' + (nouvelleValeur == 1 ? 'OUI' : 'NON') + '\n' +
+                 '(La vérification est faite par division)')) {
         return;
     }
     
@@ -1016,7 +1029,8 @@ $(document).ready(function() {
     $('#corriger-tout-sql').click(function() {
         if (!confirm('Êtes-vous sûr de vouloir corriger TOUTES les anomalies "Finale Ind." en une seule opération ?\n\n' + 
                      'Cette action va modifier ' + <?php echo $NbAnomalies; ?> + ' inscription(s).\n' +
-                     'Cette méthode est plus rapide mais ne montre pas la progression détaillée.')) {
+                     'Cette méthode est plus rapide mais ne montre pas la progression détaillée.\n' +
+                     '(Note : la vérification est faite par division)')) {
             return;
         }
         
