@@ -98,11 +98,17 @@ if (isset($_POST['validate_payment']) && isset($_POST['archer_id'])) {
     // Ajouter les paramètres de tri
     $filterParams .= "&sort=" . urlencode($sortColumn) . "&dir=" . urlencode($sortDirection);
     
-    // Déterminer le statut de paiement pour QuNotes
+    // CORRECTION : Déterminer correctement le statut de paiement pour QuNotes
     if ($action == 'validate') {
+        // Pour valider le paiement : "PAYE|METHODE"
         $paymentStatus = 'PAYE|' . $paymentMethod;
+        $successMessage = 'Paiement validé avec succès !';
+        $messageType = 'success';
     } else {
+        // Pour annuler le paiement : "NON_PAYE"
         $paymentStatus = 'NON_PAYE';
+        $successMessage = 'Paiement marqué comme non acquitté.';
+        $messageType = 'info'; // Changé à 'info' pour un message différent
     }
     
     // Mettre à jour QuNotes dans Qualifications pour toutes les qualifications de l'archer
@@ -113,10 +119,8 @@ if (isset($_POST['validate_payment']) && isset($_POST['archer_id'])) {
     $result = safe_w_sql($updateQuery);
     
     if ($result) {
-        $_SESSION['payment_message'] = ($paymentStatus == 'PAYE') 
-            ? 'Paiement validé avec succès !' 
-            : 'Paiement marqué comme non acquitté.';
-        $_SESSION['message_type'] = 'success';
+        $_SESSION['payment_message'] = $successMessage;
+        $_SESSION['message_type'] = $messageType;
     } else {
         $_SESSION['payment_message'] = 'Erreur lors de la mise à jour.';
         $_SESSION['message_type'] = 'error';
@@ -1376,32 +1380,39 @@ include('Common/Templates/head.php');
         color: #555;
     }
     
-    /* Style pour les notifications */
-    .notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        z-index: 1000;
-        animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-out 2.7s forwards;
-    }
-    
-    .notification-success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-    
-    .notification-error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
+	/* Style pour les notifications */
+	.notification {
+		position: fixed;
+		bottom: 20px;
+		right: 20px;
+		padding: 12px 20px;
+		border-radius: 5px;
+		box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		z-index: 1000;
+		animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-out 2.7s forwards;
+	}
+
+	.notification-success {
+		background-color: #d4edda;
+		color: #155724;
+		border: 1px solid #c3e6cb;
+	}
+
+	.notification-error {
+		background-color: #f8d7da;
+		color: #721c24;
+		border: 1px solid #f5c6cb;
+	}
+
+	/* AJOUTER CE STYLE POUR LES MESSAGES INFO */
+	.notification-info {
+		background-color: #d1ecf1;
+		color: #0c5460;
+		border: 1px solid #bee5eb;
+	}
     
     @keyframes slideIn {
         from { transform: translateX(100%); opacity: 0; }
