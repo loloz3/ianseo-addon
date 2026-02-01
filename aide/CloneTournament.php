@@ -31,13 +31,13 @@ function validateDates() {
 
 include('Common/Templates/head.php');
 
-echo '<h1>Cloner un tournoi</h1>';
+echo '<h1>Cloner une compétition</h1>';
 
-// Étape 1 : Sélection du tournoi à cloner
+// Étape 1 : Sélection de la compétition à cloner
 if (!isset($_GET['ToId'])) {
-    echo '<h2>Sélectionnez un tournoi à cloner</h2>';
+    echo '<h2>Sélectionnez une compétition à cloner</h2>';
     
-    // Récupérer la liste des tournois (même logique que index.php)
+    // Récupérer la liste des compétitions (même logique que index.php)
     $AuthFiler = array();
     if(AuthModule && !empty($_SESSION['AUTH_ENABLE']) && empty($_SESSION['AUTH_ROOT'])) {
         $compList = array();
@@ -66,7 +66,7 @@ if (!isset($_GET['ToId'])) {
     $Rs = safe_r_sql($Select);
     
     if (safe_num_rows($Rs) == 0) {
-        echo '<p>Aucun tournoi trouvé.</p>';
+        echo '<p>Aucune compétition trouvée.</p>';
     } else {
         echo '<table class="Tabella" style="width: 100%;">';
         echo '<tr>
@@ -103,12 +103,12 @@ elseif (isset($_GET['ToId']) && !isset($_POST['new_date_from'])) {
     // Vérifier les permissions
     $allowed = false;
     if (AuthModule && !empty($_SESSION['AUTH_ENABLE']) && empty($_SESSION['AUTH_ROOT'])) {
-        // Récupérer le code du tournoi
+        // Récupérer le code de la compétition
         $Select = "SELECT ToCode FROM Tournament WHERE ToId = $ToId";
         $Rs = safe_r_sql($Select);
         if ($MyRow = safe_fetch($Rs)) {
             $tourCode = $MyRow->ToCode;
-            // Vérifier si l'utilisateur a accès à ce tournoi
+            // Vérifier si l'utilisateur a accès à cette compétition
             foreach (($_SESSION["AUTH_COMP"] ?? array()) as $comp) {
                 if (str_contains($comp, '%')) {
                     $pattern = str_replace('%', '.*', $comp);
@@ -127,12 +127,12 @@ elseif (isset($_GET['ToId']) && !isset($_POST['new_date_from'])) {
     }
     
     if (!$allowed) {
-        echo '<div class="error">Vous n\'avez pas la permission d\'accéder à ce tournoi.</div>';
+        echo '<div class="error">Vous n\'avez pas la permission d\'accéder à cette compétition.</div>';
         include('Common/Templates/tail.php');
         exit;
     }
     
-    // Récupérer les informations du tournoi (avec les mêmes champs que Main.php)
+    // Récupérer les informations de la compétition (avec les mêmes champs que Main.php)
     $Select = "SELECT *, 
         DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom,
         DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo, 
@@ -150,7 +150,7 @@ elseif (isset($_GET['ToId']) && !isset($_POST['new_date_from'])) {
     $Rs = safe_r_sql($Select);
     
     if (safe_num_rows($Rs) != 1) {
-        echo '<div class="error">Tournoi non trouvé.</div>';
+        echo '<div class="error">Compétition non trouvée.</div>';
         include('Common/Templates/tail.php');
         exit;
     }
@@ -187,59 +187,81 @@ elseif (isset($_GET['ToId']) && !isset($_POST['new_date_from'])) {
     // Récupérer la liste des pays
     $Countries = get_Countries();
     
-	// Générer un code unique par défaut
-	$baseCode = $MyRow->ToCode;
-
-	// Générer une lettre majuscule aléatoire (A-Z)
-	$randomLetter = chr(mt_rand(65, 90)); // 65 = 'A', 90 = 'Z'
-
-	// Générer 7 chiffres aléatoires
-	$randomNumbers = '';
-	for ($i = 0; $i < 7; $i++) {
-		$randomNumbers .= mt_rand(0, 9);
-	}
-
-	// Combiner pour former le code par défaut
-	$defaultCode = $randomLetter . $randomNumbers;
-
-	// Vérifier si ce code existe déjà
-	$suffix = 1;
-	$originalCode = $defaultCode;
-
-	while (true) {
-		$Check = "SELECT COUNT(*) as count FROM Tournament WHERE ToCode = " . StrSafe_DB($defaultCode);
-		$RsCheck = safe_r_sql($Check);
-		$RowCheck = safe_fetch($RsCheck);
-		
-		if ($RowCheck->count == 0) {
-			break; // Code disponible
-		}
-		
-		// Si le code existe déjà, générer un nouveau code
-		$randomLetter = chr(mt_rand(65, 90));
-		$randomNumbers = '';
-		for ($i = 0; $i < 7; $i++) {
-			$randomNumbers .= mt_rand(0, 9);
-		}
-		$defaultCode = $randomLetter . $randomNumbers;
-		
-		// Sécurité pour éviter une boucle infinie
-		if ($suffix > 20) {
-			// Si on a essayé 20 fois sans succès, ajouter un suffixe
-			$defaultCode = $originalCode . '_' . $suffix;
-		}
-		
-		$suffix++;
-		
-		// Sécurité supplémentaire
-		if ($suffix > 100) {
-			$defaultCode = 'T' . date('Ymd');
-			break;
-		}
-	}
+    // Générer un code selon le format spécifié
+    // Format : F + année (2 chiffres) + initiale ville (majuscule) + type (S/E) + 3 chiffres aléatoires
+    $defaultCode = 'F';
     
-    // Afficher les informations du tournoi comme dans Main.php
-    echo '<h2>Informations du tournoi à cloner</h2>';
+    // Ajouter les deux derniers chiffres de l'année de la nouvelle date (on utilisera l'année courante par défaut)
+    $currentYear = date('Y');
+    $defaultCode .= substr($currentYear, -2);
+    
+    // Ajouter la première lettre de la ville (en majuscule)
+    $city = $MyRow->ToVenue; // Variable contenant le nom de la ville
+    if ($city && strlen($city) > 0) {
+        // Prendre le premier caractère et le mettre en majuscule
+        $firstLetter = strtoupper(substr($city, 0, 1));
+        
+        // Vérifier que c'est bien une lettre (pas un chiffre)
+        if (!preg_match('/[A-Z]/', $firstLetter)) {
+            // Si ce n'est pas une lettre, trouver la première lettre dans le nom
+            for ($i = 0; $i < strlen($city); $i++) {
+                $letter = strtoupper(substr($city, $i, 1));
+                if (preg_match('/[A-Z]/', $letter)) {
+                    $firstLetter = $letter;
+                    break;
+                }
+            }
+        }
+        $defaultCode .= $firstLetter;
+    } else {
+        // Si pas de ville, utiliser X comme placeholder
+        $defaultCode .= 'X';
+    }
+    
+    // Ajouter le type : S pour indoor, E pour extérieur
+    // Vérifier si le type contient "indoor" (insensible à la casse)
+    $typeName = isset($MyRow->ToTypeName) ? strtolower($MyRow->ToTypeName) : '';
+    $isIndoor = (strpos($typeName, 'indoor') !== false);
+    $defaultCode .= $isIndoor ? 'S' : 'E';
+    
+    // Ajouter 3 chiffres aléatoires
+    $defaultCode .= sprintf('%03d', mt_rand(0, 999));
+    
+    // Vérifier si ce code existe déjà
+    $suffix = 1;
+    $originalCode = $defaultCode;
+    
+    while (true) {
+        $Check = "SELECT COUNT(*) as count FROM Tournament WHERE ToCode = " . StrSafe_DB($defaultCode);
+        $RsCheck = safe_r_sql($Check);
+        $RowCheck = safe_fetch($RsCheck);
+        
+        if ($RowCheck->count == 0) {
+            break; // Code disponible
+        }
+        
+        // Si le code existe déjà, générer un nouveau avec des chiffres différents
+        $defaultCode = substr($originalCode, 0, 5); // Garder F + année + ville + type
+        $defaultCode .= sprintf('%03d', mt_rand(0, 999));
+        
+        // Sécurité pour éviter une boucle infinie
+        if ($suffix > 20) {
+            // Si on a essayé 20 fois sans succès, utiliser un suffixe
+            $defaultCode = substr($originalCode, 0, 5) . sprintf('%03d', $suffix);
+        }
+        
+        $suffix++;
+        
+        // Sécurité supplémentaire
+        if ($suffix > 100) {
+            // Fallback: utiliser un code simple
+            $defaultCode = 'F' . date('ym') . 'X' . ($isIndoor ? 'S' : 'E') . sprintf('%03d', mt_rand(0, 999));
+            break;
+        }
+    }
+    
+    // Afficher les informations de la compétition comme dans Main.php
+    echo '<h2>Informations de la compétition à cloner</h2>';
     
     echo '<table class="Tabella" style="width: 100%; margin-bottom: 20px;">
         <tr><th class="Title" colspan="2">' . $MyRow->ToName . '</th></tr>
@@ -322,7 +344,7 @@ elseif (isset($_GET['ToId']) && !isset($_POST['new_date_from'])) {
     
     echo '<hr>';
     echo '<h2>Paramètres du clonage</h2>';
-    echo '<p>Veuillez spécifier les nouvelles informations pour le tournoi cloné :</p>';
+    echo '<p>Veuillez spécifier les nouvelles informations pour la compétition clonée :</p>';
       
     echo '<form method="POST" action="" onsubmit="return validateDates()">';
     echo '<input type="hidden" name="ToId" value="' . $ToId . '">';
@@ -340,11 +362,11 @@ elseif (isset($_GET['ToId']) && !isset($_POST['new_date_from'])) {
     echo '<td><input type="date" id="new_date_to" name="new_date_to" required></td>';
     echo '</tr>';
     echo '<tr>';
-    echo '<td><label for="new_code">Nouveau code de tournoi :</label></td>';
+    echo '<td><label for="new_code">Nouveau code de compétition :</label></td>';
     echo '<td><input type="text" id="new_code" name="new_code" value="' . $defaultCode . '" required maxlength="8"></td>';
     echo '</tr>';
     echo '<tr>';
-    echo '<td><label for="new_name">Nouveau nom de tournoi :</label></td>';
+    echo '<td><label for="new_name">Nouveau nom de compétition :</label></td>';
     echo '<td><input type="text" id="new_name" name="new_name" value="' . htmlspecialchars($MyRow->ToName) . '" required style="width: 300px;"></td>';
     echo '</tr>';
     echo '<tr>';
@@ -361,7 +383,7 @@ elseif (isset($_GET['ToId']) && !isset($_POST['new_date_from'])) {
     echo '</tr>';
     echo '<tr>';
     echo '<td colspan="2" class="Center">';
-    echo '<input type="submit" value="Cloner le tournoi" class="Button">';
+    echo '<input type="submit" value="Cloner la compétition" class="Button">';
     echo ' <a href="?" class="Button">Annuler</a>';
     echo '</td>';
     echo '</tr>';
@@ -381,6 +403,58 @@ elseif (isset($_GET['ToId']) && !isset($_POST['new_date_from'])) {
             }
             endDate.min = this.value;
         });
+        
+        // Mettre à jour le code selon le format quand la date ou la ville change
+        function updateDefaultCode() {
+            var dateFrom = document.getElementById("new_date_from").value;
+            var venue = document.getElementById("new_venue").value;
+            var typeName = "' . (isset($MyRow->ToTypeName) ? $MyRow->ToTypeName : '') . '";
+            var isIndoor = (typeName.toLowerCase().indexOf(\'indoor\') !== -1);
+            
+            // Format : F + année (2 chiffres) + initiale ville (majuscule) + type (S/E) + 3 chiffres aléatoires
+            var code = "F";
+            
+            // Année : prendre l\'année de la date de début si disponible, sinon année courante
+            if (dateFrom) {
+                var year = new Date(dateFrom).getFullYear();
+                code += year.toString().slice(-2);
+            } else {
+                code += new Date().getFullYear().toString().slice(-2);
+            }
+            
+            // Ville : première lettre en majuscule
+            if (venue && venue.length > 0) {
+                var firstLetter = venue.charAt(0).toUpperCase();
+                if (!/[A-Z]/.test(firstLetter)) {
+                    for (var i = 0; i < venue.length; i++) {
+                        var letter = venue.charAt(i).toUpperCase();
+                        if (/[A-Z]/.test(letter)) {
+                            firstLetter = letter;
+                            break;
+                        }
+                    }
+                }
+                code += firstLetter;
+            } else {
+                code += "X";
+            }
+            
+            // Type : S pour indoor, E pour extérieur
+            code += isIndoor ? "S" : "E";
+            
+            // 3 chiffres aléatoires
+            code += Math.floor(Math.random() * 1000).toString().padStart(3, "0");
+            
+            // Mettre à jour le champ
+            document.getElementById("new_code").value = code;
+        }
+        
+        // Attacher les événements
+        document.getElementById("new_date_from").addEventListener("change", updateDefaultCode);
+        document.getElementById("new_venue").addEventListener("input", updateDefaultCode);
+        
+        // Initialiser le code
+        updateDefaultCode();
     </script>';
 }
 // Étape 3 : Traitement du clonage
@@ -427,14 +501,14 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
     }
     
     if (!$allowed) {
-        echo '<div class="error">Vous n\'avez pas la permission de cloner ce tournoi.</div>';
+        echo '<div class="error">Vous n\'avez pas la permission de cloner cette compétition.</div>';
         include('Common/Templates/tail.php');
         exit;
     }
     
     // Valider la longueur du code (max 8 caractères)
     if (strlen($newCode) > 8) {
-        echo '<div class="error">Le code de tournoi ne peut pas dépasser 8 caractères.</div>';
+        echo '<div class="error">Le code de compétition ne peut pas dépasser 8 caractères.</div>';
         echo '<p><a href="?ToId=' . $ToId . '" class="Button">Retour</a></p>';
         include('Common/Templates/tail.php');
         exit;
@@ -446,30 +520,70 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         $RsCheck = safe_r_sql($Check);
         $RowCheck = safe_fetch($RsCheck);
         if ($RowCheck->count > 0) {
-            echo '<div class="error">Ce code de tournoi existe déjà. Veuillez en choisir un autre.</div>';
+            echo '<div class="error">Ce code de compétition existe déjà. Veuillez en choisir un autre.</div>';
             echo '<p><a href="?ToId=' . $ToId . '" class="Button">Retour</a></p>';
             include('Common/Templates/tail.php');
             exit;
         }
     }
     
-    // Récupérer le tournoi original
+    // Récupérer la compétition originale
     $Select = "SELECT * FROM Tournament WHERE ToId = $ToId";
     $Rs = safe_r_sql($Select);
     
     if (safe_num_rows($Rs) != 1) {
-        echo '<div class="error">Tournoi non trouvé.</div>';
+        echo '<div class="error">Compétition non trouvée.</div>';
         include('Common/Templates/tail.php');
         exit;
     }
     
     $MyRow = safe_fetch($Rs);
     
-    // Si aucun code n'a été fourni, en générer un unique
+    // Si aucun code n'a été fourni, en générer un selon le format spécifié
     if (empty($newCode)) {
-        $baseCode = $MyRow->ToCode;
+        // Format : F + année (2 chiffres) + initiale ville (majuscule) + type (S/E) + 3 chiffres aléatoires
+        $defaultCode = 'F';
+        
+        // Prendre l'année de la nouvelle date
+        if ($newDateFrom) {
+            $year = date('Y', strtotime($newDateFrom));
+        } else {
+            $year = date('Y');
+        }
+        $defaultCode .= substr($year, -2);
+        
+        // Prendre la première lettre de la ville
+        $city = $newVenue ?: $MyRow->ToVenue;
+        if ($city && strlen($city) > 0) {
+            $firstLetter = strtoupper(substr($city, 0, 1));
+            if (!preg_match('/[A-Z]/', $firstLetter)) {
+                for ($i = 0; $i < strlen($city); $i++) {
+                    $letter = strtoupper(substr($city, $i, 1));
+                    if (preg_match('/[A-Z]/', $letter)) {
+                        $firstLetter = $letter;
+                        break;
+                    }
+                }
+            }
+            $defaultCode .= $firstLetter;
+        } else {
+            $defaultCode .= 'X';
+        }
+        
+        // Type : S pour indoor, E pour extérieur
+        // Vérifier si le type contient "indoor" (insensible à la casse)
+        $typeName = isset($MyRow->ToTypeName) ? strtolower($MyRow->ToTypeName) : '';
+        $isIndoor = (strpos($typeName, 'indoor') !== false);
+        $defaultCode .= $isIndoor ? 'S' : 'E';
+        
+        // 3 chiffres aléatoires
+        $defaultCode .= sprintf('%03d', mt_rand(0, 999));
+        
+        $newCode = $defaultCode;
+        
+        // Vérifier si ce code existe déjà
         $suffix = 1;
-        $newCode = $baseCode . '_COPY';
+        $originalCode = $newCode;
         
         while (true) {
             $Check = "SELECT COUNT(*) as count FROM Tournament WHERE ToCode = " . StrSafe_DB($newCode);
@@ -480,11 +594,18 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
                 break;
             }
             
+            // Générer un nouveau code avec des chiffres différents
+            $newCode = substr($originalCode, 0, 5);
+            $newCode .= sprintf('%03d', mt_rand(0, 999));
+            
+            if ($suffix > 20) {
+                $newCode = substr($originalCode, 0, 5) . sprintf('%03d', $suffix);
+            }
+            
             $suffix++;
-            $newCode = $baseCode . '_COPY' . $suffix;
             
             if ($suffix > 100) {
-                $newCode = substr($baseCode, 0, 4) . date('md');
+                $newCode = 'F' . date('ym') . 'X' . ($isIndoor ? 'S' : 'E') . sprintf('%03d', mt_rand(0, 999));
                 break;
             }
         }
@@ -496,7 +617,7 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
     $finalWhere = $newWhere ?: $MyRow->ToWhere;
     $finalVenue = $newVenue ?: $MyRow->ToVenue;
     
-    // Cloner le tournoi
+    // Cloner la compétition
     $Insert = "INSERT INTO Tournament (
                 ToOnlineId, ToType, ToCode, ToIocCode, ToTimeZone, ToName, ToNameShort,
                 ToCommitee, ToComDescr, ToWhere, ToVenue, ToCountry, ToWhenFrom, ToWhenTo,
@@ -568,10 +689,10 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
     
     if ($newToId) {
         echo '<div class="success">';
-        echo '<h3>Tournoi cloné avec succès !</h3>';
+        echo '<h3>Compétition clonée avec succès !</h3>';
         
         // Afficher les informations clonées
-        echo '<h4>Informations du nouveau tournoi :</h4>';
+        echo '<h4>Informations de la nouvelle compétition :</h4>';
         echo '<table class="Tabella" style="width: 100%; margin-bottom: 20px;">
             <tr><th class="Title" colspan="2">' . htmlspecialchars($finalName) . '</th></tr>
             <tr class="Divider"><td colspan="2"></td></tr>
@@ -625,7 +746,7 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
             $dateOffset = ($newTimestamp - $oldTimestamp) / (60 * 60 * 24); // Différence en jours
         }
         
-        // 1. Cloner les événements liés au tournoi
+        // 1. Cloner les événements liés à la compétition
         $CloneEvents = "
             INSERT INTO Events 
             (EvCode, EvTeamEvent, EvTournament, EvEventName, EvProgr, EvShootOff, 
@@ -663,9 +784,8 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneEvents);
         $eventsCloned = safe_w_affected_rows();
-        //echo '<p><strong>Événements clonés :</strong> ' . $eventsCloned . '</p>';
         
-        // 2. Cloner les classes liées au tournoi
+        // 2. Cloner les classes liées à la compétition
         $CloneClasses = "
             INSERT INTO Classes 
             (ClId, ClTournament, ClDescription, ClViewOrder, ClAgeFrom, ClAgeTo, 
@@ -681,9 +801,8 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneClasses);
         $classesCloned = safe_w_affected_rows();
-        //echo '<p><strong>Classes clonées :</strong> ' . $classesCloned . '</p>';
         
-        // 3. Cloner les divisions liées au tournoi
+        // 3. Cloner les divisions liées à la compétition
         $CloneDivisions = "
             INSERT INTO Divisions 
             (DivId, DivTournament, DivDescription, DivViewOrder, DivAthlete, 
@@ -697,9 +816,8 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneDivisions);
         $divisionsCloned = safe_w_affected_rows();
-        //echo '<p><strong>Divisions clonées :</strong> ' . $divisionsCloned . '</p>';
         
-        // 4. Cloner les informations de distance liées au tournoi
+        // 4. Cloner les informations de distance liées à la compétition
         $CloneDistanceInfo = "
             INSERT INTO DistanceInformation 
             (DiTournament, DiSession, DiDistance, DiEnds, DiArrows, DiMaxpoints, 
@@ -717,7 +835,6 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneDistanceInfo);
         $distanceInfoCloned = safe_w_affected_rows();
-        //echo '<p><strong>Informations de distance clonées :</strong> ' . $distanceInfoCloned . '</p>';
         
         // 5. Cloner les associations événement-classe (EventClass)
         $CloneEventClass = "
@@ -733,9 +850,8 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneEventClass);
         $eventClassCloned = safe_w_affected_rows();
-        //echo '<p><strong>Associations événement-classe clonées :</strong> ' . $eventClassCloned . '</p>';
         
-        // 6. Cloner les sessions liées au tournoi
+        // 6. Cloner les sessions liées à la compétition
         $CloneSessions = "
             INSERT INTO Session 
             (SesTournament, SesOrder, SesType, SesName, SesTar4Session, 
@@ -755,7 +871,6 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneSessions);
         $sessionsCloned = safe_w_affected_rows();
-        //echo '<p><strong>Sessions clonées :</strong> ' . $sessionsCloned . '</p>';
         
         // 7. Cloner les faces de cible (TargetFaces)
         $CloneTargetFaces = "
@@ -789,9 +904,8 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneTargetFaces);
         $targetFacesCloned = safe_w_affected_rows();
-        //echo '<p><strong>Faces de cible clonées :</strong> ' . $targetFacesCloned . '</p>';
         
-        // 8. Cloner les distances du tournoi (TournamentDistances)
+        // 8. Cloner les distances de la compétition (TournamentDistances)
         $CloneTournamentDistances = "
             INSERT INTO TournamentDistances 
             (TdClasses, TdType, TdTournament, Td1, Td2, Td3, Td4, Td5, Td6, 
@@ -807,7 +921,6 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneTournamentDistances);
         $tournamentDistancesCloned = safe_w_affected_rows();
-        //echo '<p><strong>Distances du tournoi clonées :</strong> ' . $tournamentDistancesCloned . '</p>';
         
         // 9. Cloner les personnes impliquées (TournamentInvolved)
         $CloneTournamentInvolved = "
@@ -823,7 +936,6 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneTournamentInvolved);
         $tournamentInvolvedCloned = safe_w_affected_rows();
-        //echo '<p><strong>Personnes impliquées clonées :</strong> ' . $tournamentInvolvedCloned . '</p>';
         
         // 10. Cloner le planificateur (Scheduler) avec ajustement des dates
         $CloneScheduler = "
@@ -845,35 +957,91 @@ elseif (isset($_POST['ToId'], $_POST['new_date_from'], $_POST['new_date_to'])) {
         
         safe_w_sql($CloneScheduler);
         $schedulerCloned = safe_w_affected_rows();
-        //echo '<p><strong>Événements du planificateur clonés :</strong> ' . $schedulerCloned . '</p>';
-        //echo '<p><em>Les dates du planificateur ont été ajustées de ' . $dateOffset . ' jour(s)</em></p>';
         
+        // 11. Cloner les paramètres TV (TVParams)
+        $CloneTVParams = "
+            INSERT INTO TVParams 
+            (TVPId, TVPTournament, TVPTimeStop, TVPTimeScroll, TVPNumRows, 
+             TVMaxPage, TVPSession, TVPViewNationName, TVPNameComplete, 
+             TVPViewTeamComponents, TVPEventInd, TVPEventTeam, TVPPhasesInd, 
+             TVPPhasesTeam, TVPColumns, TVPPage, TVPDefault, TVP_TR_BGColor, 
+             TVP_TRNext_BGColor, TVP_TR_Color, TVP_TRNext_Color, TVP_Content_BGColor, 
+             TVP_Page_BGColor, TVP_TH_BGColor, TVP_TH_Color, TVP_THTitle_BGColor, 
+             TVP_THTitle_Color, TVP_Carattere, TVPViewPartials, TVPViewDetails, 
+             TVPViewIdCard, TVPSettings)
+            SELECT 
+                TVPId, $newToId, TVPTimeStop, TVPTimeScroll, TVPNumRows, 
+                TVMaxPage, TVPSession, TVPViewNationName, TVPNameComplete, 
+                TVPViewTeamComponents, TVPEventInd, TVPEventTeam, TVPPhasesInd, 
+                TVPPhasesTeam, TVPColumns, TVPPage, TVPDefault, TVP_TR_BGColor, 
+                TVP_TRNext_BGColor, TVP_TR_Color, TVP_TRNext_Color, TVP_Content_BGColor, 
+                TVP_Page_BGColor, TVP_TH_BGColor, TVP_TH_Color, TVP_THTitle_BGColor, 
+                TVP_THTitle_Color, TVP_Carattere, TVPViewPartials, TVPViewDetails, 
+                TVPViewIdCard, TVPSettings
+            FROM TVParams 
+            WHERE TVPTournament = $ToId
+        ";
+        
+        safe_w_sql($CloneTVParams);
+        $tvParamsCloned = safe_w_affected_rows();
+        
+        // 12. Cloner les règles TV (TVRules)
+        $CloneTVRules = "
+            INSERT INTO TVRules 
+            (TVRId, TVRTournament, TVRName, TV_TR_BGColor, TV_TRNext_BGColor, 
+             TV_TR_Color, TV_TRNext_Color, TV_Content_BGColor, TV_Page_BGColor, 
+             TV_TH_BGColor, TV_TH_Color, TV_THTitle_BGColor, TV_THTitle_Color, 
+             TV_Carattere, TVRSettings)
+            SELECT 
+                TVRId, $newToId, TVRName, TV_TR_BGColor, TV_TRNext_BGColor, 
+                TV_TR_Color, TV_TRNext_Color, TV_Content_BGColor, TV_Page_BGColor, 
+                TV_TH_BGColor, TV_TH_Color, TV_THTitle_BGColor, TV_THTitle_Color, 
+                TV_Carattere, TVRSettings
+            FROM TVRules 
+            WHERE TVRTournament = $ToId
+        ";
+        
+        safe_w_sql($CloneTVRules);
+        $tvRulesCloned = safe_w_affected_rows();
+        
+        // 13. Cloner les séquences TV (TVSequence)
+        $CloneTVSequence = "
+            INSERT INTO TVSequence 
+            (TVSId, TVSTournament, TVSRule, TVSContent, TVSCntSameTour, 
+             TVSTime, TVSScroll, TVSTable, TVSOrder, TVSFullScreen)
+            SELECT 
+                TVSId, $newToId, TVSRule, TVSContent, TVSCntSameTour, 
+                TVSTime, TVSScroll, TVSTable, TVSOrder, TVSFullScreen
+            FROM TVSequence 
+            WHERE TVSTournament = $ToId
+        ";
+        
+        safe_w_sql($CloneTVSequence);
+        $tvSequenceCloned = safe_w_affected_rows();
         
         echo '<hr>';
-        echo '<p>Le tournoi a été cloné avec succès.</p>';
+        echo '<p>La compétition a été clonée avec succès.</p>';
        
-	   // Conseils pour les prochaines étapes
+       // Conseils pour les prochaines étapes
         echo '<hr>';
-        echo '<h4>Conseils pour le nouveau tournoi :</h4>';
+        echo '<h4>Conseils pour la nouvelle compétition :</h4>';
         echo '<ol>';
         echo '<li><strong>Vérifiez les dates</strong> : Toutes les dates ont été ajustées selon votre sélection.</li>';
         echo '<li><strong>Modifiez les Arbitres</strong> : Ajuster les juges, arbitres, etc.</li>';
         echo '<li><strong>Vérifiez le planificateur</strong> : Les événements du planificateur ont été décalés de ' . $dateOffset . ' jour(s).</li>';
         echo '<li><strong>Configurez les sessions</strong> : Les sessions ont été copiées avec leurs nouveaux horaires.</li>';
         echo '<li><strong>Vérifiez les informations de distance</strong> : Les dates ont été mises à jour.</li>';
+        echo '<li><strong>Vérifiez les paramètres TV</strong> : Les configurations d\'affichage TV ont été copiées.</li>';
         echo '</ol>';
 		echo '<p>Vous pouvez maintenant :</p>';
 		
         echo '<ul>';
-        echo '<li><a href="' . $CFG->ROOT_DIR . 'Common/TourOn.php?ToId=' . $newToId . '" class="Button">Ouvrir le nouveau tournoi</a></li>';
-
+        echo '<li><a href="' . $CFG->ROOT_DIR . 'Common/TourOn.php?ToId=' . $newToId . '" class="Button">Ouvrir la nouvelle compétition</a></li>';
         echo '</ul>';
-        
-
         
         echo '</div>';
     } else {
-        echo '<div class="error">Erreur lors du clonage du tournoi. Aucun ID retourné.</div>';
+        echo '<div class="error">Erreur lors du clonage de la compétition. Aucun ID retourné.</div>';
         echo '<p>Erreur SQL possible. Veuillez vérifier les logs.</p>';
         echo '<p><a href="?ToId=' . $ToId . '" class="Button">Réessayer</a></p>';
     }
