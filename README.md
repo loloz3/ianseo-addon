@@ -3,12 +3,12 @@
 **FR 🇫🇷**  
 Module personnalisable pour **I@nseo** afin d'étendre l'expérience d'organisation : vues graphiques, vérifications des inscriptions (1 départ/2 départs...), impression des « autres tirs », greffe, aide concours. Le module s'installe dans **Modules/Custom** pour rester intact lors des mises à jour de I@nseo.
 
-**Le développement est en cours...** (saison salle 95% testé / saison extérieur 1% ! à suivre en 2026 )
+**Le développement est en cours...** (saison salle 95% testé / saison extérieur 90% ! à suivre... )
 
 **EN 🇬🇧**  
 Customizable module for **I@nseo** that extends the competition workflow with graphical views, consistency checks, and print for archers shooting outside the tournament. Installs under **Modules/Custom** to survive I@nseo updates.
 
-**Development is underway...** (95% indoor season tested / 1% outdoor season! To be continued in 2026)
+**Development is underway...** (95% indoor season tested / 90% outdoor season! To be continued... )
 
 ---
 
