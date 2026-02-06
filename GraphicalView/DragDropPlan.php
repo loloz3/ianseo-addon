@@ -9,15 +9,15 @@
  * 
  * Contributeurs:
  * - Auteur Original
- * - Laurent Petroff - Les Archers de Perols - (modif: 2025-12-11)
+ * - Laurent Petroff - Les Archers de Perols - (modif: 2026-02-06)
  * 
- * Dernière modification: 2025-12-20 par Laurent Petroff
+ * Dernière modification: 2026-02-06 par Laurent Petroff
  *
  * Plan de Cibles graphique
  *
 **/
 
-define('debug', false);
+define('debug', false); // Mettre à true pour activer l'affichage debug des textes de face
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 CheckTourSession(true);
@@ -192,7 +192,6 @@ include('Common/Templates/head.php');
     border-color: #3b82f6 !important;
 }
 
-/* Styles pour le drag d'archer - SIMILAIRE À L'ORIGINAL */
 .archer-draggable {
     transition: all 0.2s ease;
 }
@@ -217,7 +216,7 @@ include('Common/Templates/head.php');
 }
 .archer-drag-preview.regular {
     background: linear-gradient(135deg, rgba(220, 252, 231, 0.98), rgba(187, 247, 208, 0.98)) !important;
-    border-color: #10b981 !important;
+    border-color: '#10b981 !important;
 }
 .dragging-archer {
     opacity: 0.3 !important;
@@ -262,7 +261,7 @@ include('Common/Templates/head.php');
 }
 
 .archer-content {
-    height: calc(100% - 28px); /* 28px = hauteur du header */
+    height: calc(100% - 28px); 
     flex: 1;
     overflow: hidden;
     display: flex;
@@ -283,7 +282,6 @@ include('Common/Templates/head.php');
     position: relative;
 }
 
-/* Style pour l'image de drag qui ressemble à l'original */
 .archer-original-look {
     padding: 6px !important;
     border-radius: 6px !important;
@@ -302,7 +300,6 @@ include('Common/Templates/head.php');
     padding: 2px 4px !important;
 }
 
-/* NOUVEAUX STYLES POUR LES BORDURES SPÉCIFIQUES */
 /* Styles pour les bordures spécifiques */
 .archer-assigned {
     border: 2px solid #15803d !important; /* Vert foncé pour les assignés */
@@ -353,7 +350,7 @@ include('Common/Templates/head.php');
 
 /* Spécifique pour les archers dans les positions */
 .archer-draggable {
-    border-radius: 0.375rem !important; /* Un peu plus petit pour l'intérieur */
+    border-radius: 0.375rem !important; 
 }
 
 /* Ajuster le header des positions */
@@ -531,15 +528,169 @@ button:has(.w-4.h-4) {
     z-index: 10;
 }
 
+/* Style pour EvCode et distance */
+.evcode-distance-badge {
+    background-color: #d1fae5; /* Vert clair */
+    color: #059669; /* Vert foncé */
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 3px;
+    border: 1px solid #10b981;
+}
+
+.distance-badge {
+    background-color: #fbbf24; /* Jaune */
+    color: #92400e; /* Jaune foncé */
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 1px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 3px;
+}
+
+/* Styles pour les informations de taille de cible */
+.target-size-badge {
+    background-color: #e0e7ff; /* Violet clair */
+    color: #4f46e5; /* Violet foncé */
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 1px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 2px;
+    border: 1px solid #c7d2fe;
+}
+
+.face-badge {
+    background-color: #fce7f3; /* Rose clair */
+    color: #be185d; /* Rose foncé */
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 1px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 2px;
+    border: 1px solid #fbcfe8;
+}
+
+.tournament-type-badge {
+    background-color: #fef3c7; /* Jaune clair */
+    color: #92400e; /* Jaune foncé */
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-left: 4px;
+    text-transform: uppercase;
+}
+
+/* Limiter la largeur de la colonne principale */
+.main-target-column {
+    flex: 1;
+    max-width: 80% !important;
+    width: 80% !important;
+}
+
+/* Pour le conteneur flex parent */
+.flex-container {
+    max-width: 90vw !important;
+    margin: 0 auto !important;
+}
+
+.target-thumbnail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.target-thumbnail .relative {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 64px;
+}
+
+.target-thumbnail img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.target-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background-color: #10b981;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    z-index: 10;
+}
+
+.target-thumbnail .font-bold {
+    margin-top: 4px;
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+}
+
+.target-distance {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #2563eb;
+    background-color: rgba(37, 99, 235, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    display: inline-block;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.target-distance-indoor {
+    color: #059669;
+    background-color: rgba(5, 150, 105, 0.1);
+    border-color: rgba(5, 150, 105, 0.2);
+}
+
+.target-distance-outdoor {
+    color: #dc2626;
+    background-color: rgba(220, 38, 38, 0.1);
+    border-color: rgba(220, 38, 38, 0.2);
+}
+
+.target-main-distance {
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-top: 4px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
 </style>
 
 
 <div id="root"></div>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
     body {
-        font-family: 'Inter', sans-serif;
+       // font-family: 'Inter', sans-serif;
     }
     
     /* Style CLUTH comme sur l'image */
@@ -586,53 +737,6 @@ button:has(.w-4.h-4) {
         margin: 10px 0;
         white-space: pre-wrap;
     }
-	/* AJOUTER CES STYLES POUR CORRIGER L'ALIGNEMENT DES IMAGES */
-.target-thumbnail {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-}
-
-.target-thumbnail .relative {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 64px; /* Fixer une hauteur pour l'image */
-}
-
-.target-thumbnail img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-
-.target-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    width: 18px;
-    height: 18px;
-    background-color: #10b981;
-    color: white;
-    font-size: 10px;
-    font-weight: bold;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white;
-    z-index: 10;
-}
-
-.target-thumbnail .font-bold {
-    margin-top: 4px;
-    font-size: 12px;
-    width: 100%;
-    text-align: center;
-}
 
 </style>
 
@@ -922,22 +1026,833 @@ button:has(.w-4.h-4) {
     };
 </script>
 
-<script type="text/babel" src="DragDropPlanUtils.js"></script>
 <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     
-    // Données PHP
+    // Définir le mode debug pour les textes de face
+    const isDebugMode = <?php echo defined('debug') && debug ? 'true' : 'false'; ?>;
+    
+    // FONCTION CORRIGÉE SELON LES NOUVELLES RÈGLES
+    const checkPairValid = (face1, face2) => {
+        if (!face1 || !face2) return true; // Une position vide est toujours valide
+        
+        // Face 3 (80cm) - règles spéciales : ne peut être qu'avec une autre face 3
+        if (face1 === '3' || face2 === '3') {
+            return face1 === face2; // Doivent être identiques
+        }
+        
+        // Faces 4 et 6 - compatibles entre elles
+        if ((face1 === '4' && face2 === '6') || (face1 === '6' && face2 === '4')) {
+            return true;
+        }
+        
+        // Toutes les autres faces doivent être identiques
+        return face1 === face2;
+    };
+
+    const convertDbToInterface = (dbTargetNo) => {
+        // Si targetNo est vide, null, undefined, 0 ou false, retourner chaîne vide
+        if (!dbTargetNo || dbTargetNo === '' || dbTargetNo === '0' || dbTargetNo === 0) {
+            return '';
+        }
+        
+        // Si la longueur est inférieure à 5, c'est probablement un format invalide
+        if (dbTargetNo.length < 5) {
+            return '';
+        }
+        
+        return dbTargetNo.substring(1);
+    };
+
+    const convertInterfaceToDb = (targetNo, session) => {
+        // Si targetNo est vide, null, undefined ou 0, retourner chaîne vide
+        if (!targetNo || targetNo === '' || targetNo === '0' || targetNo === 0) {
+            return '';
+        }
+        return session + targetNo;
+    };
+
+    const getCombinationImage = (target) => {
+        const positions = ['A', 'B', 'C', 'D'];
+        const targetFaces = {};
+        const distances = {};
+        const categories = {};
+        const ages = {};
+        const isCO = {};
+        const isCOInternational = {};
+        const isCONational = {};
+        const targetSizes = {};
+        const evCodes = {};
+        
+        positions.forEach(letter => {
+            const position = target.positions.find(p => p.letter === letter);
+            if (position?.archer) {
+                targetFaces[letter] = position.archer.targetFace || null;
+                distances[letter] = position.archer.distance || null;
+                categories[letter] = position.archer.division || ''; 
+                ages[letter] = position.archer.division || '';
+                isCO[letter] = categories[letter] === 'CO' || (categories[letter] && categories[letter].includes('CO')); 
+                evCodes[letter] = position.archer.evCode || '';
+                isCONational[letter] = evCodes[letter]?.startsWith('N') || false;
+                isCOInternational[letter] = isCO[letter] && !isCONational[letter];
+                targetSizes[letter] = position.archer.targetSize || '';
+            } else {
+                targetFaces[letter] = null;
+                distances[letter] = null;
+                categories[letter] = null;
+                ages[letter] = null;
+                isCO[letter] = false;
+                isCONational[letter] = false;
+                isCOInternational[letter] = false;
+                evCodes[letter] = '';
+                targetSizes[letter] = '';
+            }
+        });
+        
+        // Récupérer la distance commune (si elle existe)
+        const occupiedPositions = positions.filter(letter => targetFaces[letter]);
+        let commonDistance = null;
+        if (occupiedPositions.length > 0) {
+            const firstDistance = distances[occupiedPositions[0]];
+            const allSameDistance = occupiedPositions.every(letter => distances[letter] === firstDistance);
+            
+            if (allSameDistance && firstDistance) {
+                commonDistance = firstDistance;
+            }
+        }
+        
+        // Règle 1: Vérifier si tous les archers ont la même distance
+        if (occupiedPositions.length > 0) {
+            const firstDistance = distances[occupiedPositions[0]];
+            const allSameDistance = occupiedPositions.every(letter => distances[letter] === firstDistance);
+            
+            if (!allSameDistance) {
+                return { image: 'Img/xx.png', distance: commonDistance };
+            }
+        }
+        
+        // Règle 2: Face 3 (80cm) - tous doivent être de type 3
+        const hasTargetFace3 = Object.values(targetFaces).some(face => face === '3');
+        if (hasTargetFace3) {
+            const hasDifferentFace = Object.values(targetFaces).some(face => 
+                face && face !== '3'
+            );
+            
+            if (hasDifferentFace) {
+                return { image: 'Img/xx.png', distance: commonDistance };
+            }
+        }
+        
+        // Règle 3: Vérifier les paires A/C et B/D selon les nouvelles règles
+        const checkPair = (pos1, pos2) => {
+            const face1 = targetFaces[pos1];
+            const face2 = targetFaces[pos2];
+            
+            if (!checkPairValid(face1, face2)) {
+                return false;
+            }
+            return true;
+        };
+        
+        if (!checkPair('A', 'C') || !checkPair('B', 'D')) {
+            return { image: 'Img/xx.png', distance: commonDistance };
+        }
+        
+        // Règle 4: Vérifier les combinaisons spécifiques selon le type
+        const getTensDigit = () => {
+            if (targetFaces['A']) return targetFaces['A'];
+            if (targetFaces['C']) return targetFaces['C'];
+            return 'x';
+        };
+        
+        const getUnitsDigit = () => {
+            if (targetFaces['B']) return targetFaces['B'];
+            if (targetFaces['D']) return targetFaces['D'];
+            return 'x';
+        };
+        
+        const tensDigit = getTensDigit();
+        const unitsDigit = getUnitsDigit();
+        
+        // Règle 5: Vérifier les combinaisons autorisées
+        const isValidCombination = () => {
+            // Si toutes les positions sont vides
+            if (tensDigit === 'x' && unitsDigit === 'x') {
+                return true;
+            }
+            
+            // Type 3 (80cm) - seulement 3, 33, 3x, x3
+            if (hasTargetFace3) {
+                const validFor3 = ['3', '33', '3x', 'x3'];
+                return validFor3.includes(tensDigit + unitsDigit);
+            }
+            
+            // Type 2 (60cm) - 2x, x2, 21, 22, 24, 26, 27, 12, 42, 62, 72
+            const validFor2 = ['2x', 'x2', '21', '22', '24', '26', '27', '12', '42', '62', '72'];
+            if (validFor2.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            // Type 1 (40cm) - 1x, x1, 11, 12, 14, 16, 17, 21, 41, 61, 71
+            const validFor1 = ['1x', 'x1', '11', '12', '14', '16', '17', '21', '41', '61', '71'];
+            if (validFor1.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            // Type 4 (40TCL) - 4x, x4, 44, 41, 42, 46, 47, 14, 24, 64, 74
+            const validFor4 = ['4x', 'x4', '44', '41', '42', '46', '47', '14', '24', '64', '74'];
+            if (validFor4.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            // Type 6 (40TCL) - 6x, x6, 66, 61, 62, 64, 67, 16, 26, 46, 76
+            const validFor6 = ['6x', 'x6', '66', '61', '62', '64', '67', '16', '26', '46', '76'];
+            if (validFor6.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            // Type 7 (30T) - 7x, x7, 77, 71, 72, 74, 76, 17, 27, 47, 67
+            const validFor7 = ['7x', 'x7', '77', '71', '72', '74', '76', '17', '27', '47', '67'];
+            if (validFor7.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            return false;
+        };
+        
+        if (!isValidCombination()) {
+            return { image: 'Img/xx.png', distance: commonDistance };
+        }
+        
+        // Règle 6: Vérifier si on est en outdoor (distance > 18m)
+        const firstDistance = distances[occupiedPositions[0]];
+        const isOutdoor = firstDistance && parseInt(firstDistance) > 18;
+        
+        // NOUVELLE RÈGLE : Si distance = 18 et taille de cible = 80cm, afficher Img/3.png
+        if (firstDistance && parseInt(firstDistance) === 18) {
+            const firstTargetSize = targetSizes[occupiedPositions[0]];
+            if (firstTargetSize === '80') {
+                // Vérifier que toutes les positions ont la même taille 80cm
+                const all80cm = occupiedPositions.every(letter => targetSizes[letter] === '80');
+                if (all80cm) {
+                    return { image: 'Img/3.png', distance: commonDistance };
+                }
+            }
+        }
+        
+        if (isOutdoor && occupiedPositions.length > 0) {
+            // Règle 6a: U11 -> cible type 3 (80cm)   même si les U11 n'ont pas d'exterieur !
+            const hasU11 = occupiedPositions.some(letter => ages[letter] === 'U11');
+            if (hasU11) {
+                const allU11 = occupiedPositions.every(letter => ages[letter] === 'U11');
+                if (allU11) {
+                    return { image: 'Img/3.png', distance: commonDistance };
+                } else {
+                    return { image: 'Img/xx.png', distance: commonDistance };
+                }
+            }
+            
+            // Règle 6b: U13, U15 -> cible standard 80cm - CORRECTION: Img/3b.png  (à 1m30)
+            const hasU13U15 = occupiedPositions.some(letter => 
+                ages[letter] === 'U13' || ages[letter] === 'U15'
+            );
+            if (hasU13U15) {
+                const allU13U15 = occupiedPositions.every(letter => 
+                    ages[letter] === 'U13' || ages[letter] === 'U15'
+                );
+                if (allU13U15) {
+                    // NOUVELLE RÈGLE: U13/U15 -> Img/3b.png
+                    return { image: 'Img/3b.png', distance: commonDistance };
+                } else {
+                    return { image: 'Img/xx.png', distance: commonDistance };
+                }
+            }
+            
+            // Règle 6c: ARCHERS CO (COMPOUND) EN EXTÉRIEUR - GESTION CORRIGÉE
+            const hasCOInternational = occupiedPositions.some(letter => isCOInternational[letter]);
+            const hasCONational = occupiedPositions.some(letter => isCONational[letter]);
+            
+            // CO International (H/F) - règles spécifiques
+            if (hasCOInternational) {
+                // Vérifier que tous les archers sur cette cible sont CO International
+                const allCOInternational = occupiedPositions.every(letter => isCOInternational[letter]);
+                
+                if (!allCOInternational) {
+                    return { image: 'Img/xx.png', distance: commonDistance }; // Mélange CO International + autre chose non autorisé
+                }
+                
+                // Vérifier la taille de cible - doit être 80cm pour CO International en extérieur
+                const has80cm = occupiedPositions.some(letter => targetSizes[letter] === '80');
+                
+                if (!has80cm) {
+                    return { image: 'Img/xx.png', distance: commonDistance }; // CO International en extérieur doit être sur 80cm
+                }
+                
+                // Vérifier que tous ont la même taille 80cm
+                const all80cm = occupiedPositions.every(letter => targetSizes[letter] === '80');
+                if (!all80cm) {
+                    return { image: 'Img/xx.png', distance: commonDistance };
+                }
+                
+                // Prendre le premier archer CO International pour déterminer le sessionAth4Target
+                const firstCOArcher = target.positions.find(p => 
+                    p.archer && 
+                    (p.archer.division === 'CO' || (p.archer.division && p.archer.division.includes('CO'))) && 
+                    !(p.archer.evCode || '').startsWith('N')
+                )?.archer;
+                
+                if (firstCOArcher) {
+                    // Utiliser la valeur sessionAth4Target qui vient de la table Session
+                    const sessionAth4Target = firstCOArcher.sessionAth4Target || 4; // Valeur par défaut 4
+                    
+                    // Logique spécifique pour CO International selon sessionAth4Target
+                    if (sessionAth4Target == 4) {
+                        return { image: 'Img/84.png', distance: commonDistance };  //  AB/CD
+                    } else if (sessionAth4Target == 3) {
+                        return { image: 'Img/83.png', distance: commonDistance };  //  ABC
+                    }
+                    
+                    // Si sessionAth4Target n'est pas 3 ou 4, utiliser l'image standard CO  (ne devrait jamais arriver)
+                    return { image: 'Img/80CO.png', distance: commonDistance };
+                }
+            }
+            
+            // CO National (M/W) - règles différentes
+            if (hasCONational) {
+                // CO National peut être mélangé avec d'autres archers sur 122cm
+                // Vérifier que tous les archers sont sur 122cm
+                const has122cm = occupiedPositions.some(letter => targetSizes[letter] === '122');
+                const all122cm = occupiedPositions.every(letter => targetSizes[letter] === '122');
+                
+                if (!has122cm || !all122cm) {
+                    return { image: 'Img/xx.png', distance: commonDistance }; // CO National doit être sur 122cm
+                }
+                
+                // Vérifier les faces de cible - CO National sur 122cm est face 2
+                const hasFace2 = occupiedPositions.some(letter => targetFaces[letter] === '2');
+                const allFace2 = occupiedPositions.every(letter => targetFaces[letter] === '2');
+                
+                if (!hasFace2 || !allFace2) {
+                    return { image: 'Img/xx.png', distance: commonDistance };
+                }
+                
+                return { image: 'Img/5.png', distance: commonDistance }; // Cible 122cm standard
+            }
+            
+            // Règle 6d: DÉTERMINER L'IMAGE POUR L'EXTÉRIEUR BASÉ SUR LA TAILLE ET LA FACE
+            if (occupiedPositions.length > 0) {
+                const firstTargetSize = targetSizes[occupiedPositions[0]];
+                const firstTargetFace = targetFaces[occupiedPositions[0]];
+                
+                // Vérifier que toutes les positions ont la même taille
+                const allSameSize = occupiedPositions.every(letter => targetSizes[letter] === firstTargetSize);
+                if (!allSameSize) {
+                    return { image: 'Img/xx.png', distance: commonDistance };
+                }
+                
+                // CAS 1: TAILLE 122cm (CIBLE STANDARD EXTRÉRIEUR)
+                if (firstTargetSize === '122') {
+                    // Type 2 (122cm) -> Img/5.png
+                    if (firstTargetFace === '2') {
+                        // Vérifier que toutes les positions ont la même face
+                        const allFace2 = occupiedPositions.every(letter => targetFaces[letter] === '2');
+                        if (allFace2) {
+                            return { image: 'Img/5.png', distance: commonDistance };
+                        }
+                    }
+                    return { image: 'Img/xx.png', distance: commonDistance };
+                }
+                
+                // CAS 2: TAILLE 80cm (NON-CO, NON-U13/U15)
+                if (firstTargetSize === '80' && !hasCOInternational) {
+                    // Type 1 (80cm standard) -> Img/4.png
+                    if (firstTargetFace === '1') {
+                        const allFace1 = occupiedPositions.every(letter => targetFaces[letter] === '1');
+                        if (allFace1) {
+                            return { image: 'Img/4.png', distance: commonDistance };
+                        }
+                    }
+                    
+                    // Type 3 (80cm) -> vérifier si U13/U15 ou standard
+                    if (firstTargetFace === '3') {
+                        const allFace3 = occupiedPositions.every(letter => targetFaces[letter] === '3');
+                        if (allFace3) {
+                            // Vérifier si c'est U13/U15
+                            const hasU13U15Check = occupiedPositions.some(letter => 
+                                ages[letter] === 'U13' || ages[letter] === 'U15'
+                            );
+                            if (hasU13U15Check) {
+                                return { image: 'Img/3b.png', distance: commonDistance }; // U13/U15
+                            }
+                            return { image: 'Img/3.png', distance: commonDistance }; // Standard
+                        }
+                    }
+                }
+            }
+            
+            // Règle 6e: SI AUCUNE TAILLE SPÉCIFIQUE N'EST DÉTECTÉE, UTILISER LE MAPPING PAR COMBINAISON
+            // Mapping spécial pour l'extérieur basé sur la combinaison de faces
+            const outdoorCombinationMapping = {
+                // CIBLE 122cm (standard extérieur)
+                '22': 'Img/5.png',      // Type 2 -> 122cm
+                '2x': 'Img/5.png',      // Type 2 partiel -> 122cm
+                'x2': 'Img/5.png',      // Type 2 partiel -> 122cm
+                
+                // CIBLE 80cm STANDARD
+                '11': 'Img/4.png',      // Type 1 -> 80cm standard
+                '1x': 'Img/4.png',      // Type 1 partiel -> 80cm standard
+                'x1': 'Img/4.png',      // Type 1 partiel -> 80cm standard
+                
+                // CIBLE 80cm (type 3) standard
+                '33': 'Img/3.png',      // Type 3 -> 80cm standard
+                '3x': 'Img/3.png',      // Type 3 partiel -> 80cm standard
+                'x3': 'Img/3.png',      // Type 3 partiel -> 80cm standard
+                
+                // CIBLE 80cm U13/U15 - NOUVELLE RÈGLE
+                '33_U13U15': 'Img/3b.png',  // Type 3 pour U13/U15
+                '3x_U13U15': 'Img/3b.png',
+                'x3_U13U15': 'Img/3b.png',
+                
+            };
+            
+            const combination = tensDigit + unitsDigit;
+            
+            // Vérifier si c'est U13/U15
+            const hasU13U15Check = occupiedPositions.some(letter => 
+                ages[letter] === 'U13' || ages[letter] === 'U15'
+            );
+            
+            const combinationKey = hasU13U15Check && combination.includes('3') 
+                ? `${combination}_U13U15` 
+                : combination;
+            
+            // Vérifier d'abord le mapping spécifique pour l'extérieur
+            if (outdoorCombinationMapping[combinationKey]) {
+                return { image: outdoorCombinationMapping[combinationKey], distance: commonDistance };
+            } else if (outdoorCombinationMapping[combination]) {
+                return { image: outdoorCombinationMapping[combination], distance: commonDistance };
+            }
+            
+            // Si la combinaison n'est pas dans le mapping extérieur mais est valide,
+            // utiliser l'image standard (au cas où)
+            return { image: `Img/${tensDigit}${unitsDigit}.png`, distance: commonDistance };
+        } else {
+            // INDOOR ou distance ≤ 18m
+            if (tensDigit === 'x' && unitsDigit === 'x') {
+                return { image: null, distance: commonDistance };
+            }
+            
+            return { image: `Img/${tensDigit}${unitsDigit}.png`, distance: commonDistance };
+        }
+    };
+
+    const getTargetFaceImage = (targetSize, targetFace, tournamentType, archer) => {
+        if (!targetSize || !targetFace) return '';
+        
+        const isOutdoor = archer?.distance && parseInt(archer.distance) > 18;
+        const isCO = archer?.division === 'CO' || (archer?.division && archer.division.includes('CO'));
+        const isCONational = archer?.evCode?.startsWith('N') || false;
+        const isU13U15 = archer?.division === 'U13' || archer?.division === 'U15';
+        
+        if (isOutdoor) {
+            // Extérieur
+            if (targetSize === '122') {
+                return 'Img/122.png';
+            } else if (targetSize === '80') {
+                if (isCO && !isCONational) {
+                    return 'Img/80CO.png';
+                } else if (isU13U15 && targetFace === '3') {
+                    return 'Img/3b.png'; // U13/U15
+                } else if (targetFace === '1') {
+                    return 'Img/80.png';
+                } else if (targetFace === '3') {
+                    return 'Img/3.png';
+                }
+            }
+        } else {
+            // Intérieur 
+            if (targetSize === '80' && targetFace === '3') {
+                return 'Img/80.png';
+            } else if (targetSize === '60' && targetFace === '2') {
+                return 'Img/60.png';
+            } else if (targetSize === '60' && targetFace === '7') {
+                return 'Img/60T.png';
+            } else if (targetSize === '40' && targetFace === '1') {
+                return 'Img/40.png';
+            } else if (targetSize === '40' && targetFace === '4') {
+                return 'Img/40TCO.png';
+            } else if (targetSize === '40' && targetFace === '6') {
+                return 'Img/40TCL.png';
+            }
+        }
+        
+        // Fallback
+        if (targetSize === '80') return 'Img/80.png';
+        if (targetSize === '122') return 'Img/122.png';
+        if (targetSize === '60') return 'Img/60.png';
+        if (targetSize === '40') return 'Img/40.png';
+        
+        return '';
+    };
+
+    const isPositionBlockedByWheelchair = (target, positionLetter, archers, session) => {
+        const wheelchairPositions = target.positions
+            .filter(pos => pos.archer && pos.archer.wheelchair && pos.archer.session === session)
+            .map(pos => pos.letter);
+        
+        if (wheelchairPositions.length === 0) return false;
+        
+        const blockingPairs = {
+            'A': 'C',
+            'C': 'A',
+            'B': 'D',
+            'D': 'B'
+        };
+        
+        return wheelchairPositions.some(wcPos => {
+            if (wcPos === positionLetter) return false;
+            return blockingPairs[wcPos] === positionLetter;
+        });
+    };
+
+    // FONCTION CORRIGÉE POUR LA COMPATIBILITÉ DES DROPS
+    const checkDropCompatibility = (target, positionLetter, archerToDrop, archers, session) => {
+        const targetFaces = {};
+        const distances = {};
+        const targetSizes = {};
+        const categories = {};
+        const ages = {};
+        const evCodes = {};
+        const positions = ['A', 'B', 'C', 'D'];
+        
+        positions.forEach(letter => {
+            const position = target.positions.find(p => p.letter === letter);
+            if (position?.archer) {
+                targetFaces[letter] = position.archer.targetFace || null;
+                distances[letter] = position.archer.distance || null;
+                targetSizes[letter] = position.archer.targetSize || '';
+                categories[letter] = position.archer.division || ''; 
+                ages[letter] = position.archer.division || '';
+                evCodes[letter] = position.archer.evCode || '';
+            } else {
+                targetFaces[letter] = null;
+                distances[letter] = null;
+                targetSizes[letter] = '';
+                categories[letter] = null;
+                ages[letter] = null;
+                evCodes[letter] = '';
+            }
+        });
+        
+        const otherPositions = positions.filter(letter => 
+            letter !== positionLetter && targetFaces[letter]
+        );
+        
+        // Règle 1: Même distance
+        if (otherPositions.length > 0) {
+            const firstDistance = distances[otherPositions[0]];
+            if (archerToDrop.distance && firstDistance && archerToDrop.distance !== firstDistance) {
+                return { 
+                    valid: false, 
+                    reason: `Distance incompatible (${archerToDrop.distance}m ≠ ${firstDistance}m)` 
+                };
+            }
+        }
+        
+        // Règle 2: Pas de mélange 80cm avec 122cm
+        if (otherPositions.length > 0) {
+            const firstTargetSize = targetSizes[otherPositions[0]];
+            if (archerToDrop.targetSize && firstTargetSize) {
+                const is80cm = archerToDrop.targetSize === '80';
+                const is122cm = archerToDrop.targetSize === '122';
+                const otherIs80cm = firstTargetSize === '80';
+                const otherIs122cm = firstTargetSize === '122';
+                
+                // 80cm et 122cm ne peuvent pas être mélangés
+                if ((is80cm && otherIs122cm) || (is122cm && otherIs80cm)) {
+                    return { 
+                        valid: false, 
+                        reason: `Type de cible incompatible: ne peut pas mélanger ${archerToDrop.targetSize}cm avec ${firstTargetSize}cm` 
+                    };
+                }
+            }
+        }
+        
+        // Règle 3: Face 3 (80cm) ne peut être mélangée avec d'autres faces
+        if (archerToDrop.targetFace === '3') {
+            const hasOtherFaces = positions.some(letter => 
+                targetFaces[letter] && targetFaces[letter] !== '3' && letter !== positionLetter
+            );
+            if (hasOtherFaces) {
+                return { valid: false, reason: 'Face 3 (80cm) ne peut être mélangée avec d\'autres faces' };
+            }
+        }
+        
+        // Règle 4: Si déjà un Face 3, pas d'autre face
+        const existingFace3 = positions.some(letter => 
+            targetFaces[letter] === '3' && letter !== positionLetter
+        );
+        if (existingFace3 && archerToDrop.targetFace !== '3') {
+            return { valid: false, reason: 'Ne peut pas être mélangé avec Face 3 (80cm)' };
+        }
+        
+        // Règle 5: Compatibilité avec la paire opposée
+        const pairPositions = {
+            'A': 'C',
+            'C': 'A',
+            'B': 'D',
+            'D': 'B'
+        };
+        const otherPairLetter = pairPositions[positionLetter];
+        const otherPairFace = targetFaces[otherPairLetter];
+        
+        if (otherPairFace && archerToDrop.targetFace) {
+            if (!checkPairValid(archerToDrop.targetFace, otherPairFace)) {
+                return { 
+                    valid: false, 
+                    reason: `Incompatible avec la position ${otherPairLetter} (face ${otherPairFace})` 
+                };
+            }
+        }
+        
+        // Règle 6: Vérifier les règles Outdoor
+        const isOutdoor = archerToDrop.distance && parseInt(archerToDrop.distance) > 18;
+        
+        if (isOutdoor) {
+            // Règle 6a: U11
+            if (archerToDrop.division === 'U11') {
+                const hasNonU11 = otherPositions.some(letter => ages[letter] !== 'U11');
+                if (hasNonU11) {
+                    return { valid: false, reason: 'U11 ne peut pas être mixé avec d\'autres catégories' };
+                }
+            } else {
+                const hasU11 = otherPositions.some(letter => ages[letter] === 'U11');
+                if (hasU11) {
+                    return { valid: false, reason: 'Ne peut pas être mixé avec U11' };
+                }
+            }
+            
+            // Règle 6b: U13/U15 - doivent être entre eux
+            if (archerToDrop.division === 'U13' || archerToDrop.division === 'U15') {
+                const hasOtherAges = otherPositions.some(letter => 
+                    ages[letter] !== 'U13' && ages[letter] !== 'U15'
+                );
+                if (hasOtherAges) {
+                    return { valid: false, reason: 'U13/U15 ne peuvent être mixés qu\'entre eux' };
+                }
+            } else {
+                const hasU13U15 = otherPositions.some(letter => 
+                    ages[letter] === 'U13' || ages[letter] === 'U15'
+                );
+                if (hasU13U15) {
+                    return { valid: false, reason: 'Ne peut pas être mixé avec U13/U15' };
+                }
+            }
+            
+            // Règle 6c: Vérifier CO International vs CO National
+            const isArcherCO = archerToDrop.division === 'CO' || (archerToDrop.division && archerToDrop.division.includes('CO'));
+            const isArcherCONational = archerToDrop.evCode?.startsWith('N') || false;
+            const isArcherCOInternational = isArcherCO && !isArcherCONational;
+            
+            if (isArcherCOInternational) {
+                // CO International ne peut être mélangé qu'avec d'autres CO International
+                const hasNonCOInternational = otherPositions.some(letter => {
+                    const isOtherCO = categories[letter] === 'CO' || (categories[letter] && categories[letter].includes('CO'));
+                    const isOtherCONational = evCodes[letter]?.startsWith('N') || false;
+                    const isOtherCOInternational = isOtherCO && !isOtherCONational;
+                    return !isOtherCOInternational;
+                });
+                
+                if (hasNonCOInternational) {
+                    return { 
+                        valid: false, 
+                        reason: 'CO International (H/F) ne peut pas être mixé avec d\'autres catégories' 
+                    };
+                }
+            }
+            
+            if (isArcherCONational) {
+                // CO National peut être mélangé avec d'autres archers sur 122cm
+                // Vérifier que tous sont sur 122cm
+                const all122cm = otherPositions.every(letter => targetSizes[letter] === '122');
+                if (!all122cm) {
+                    return { 
+                        valid: false, 
+                        reason: 'CO National (M/W) doit être sur cible 122cm avec d\'autres archers sur 122cm' 
+                    };
+                }
+            }
+            
+            // Règle 6d: Si déjà un CO International sur la cible, pas d'autres catégories
+            const hasExistingCOInternational = positions.some(letter => {
+                const isOtherCO = categories[letter] === 'CO' || (categories[letter] && categories[letter].includes('CO'));
+                const isOtherCONational = evCodes[letter]?.startsWith('N') || false;
+                return isOtherCO && !isOtherCONational && letter !== positionLetter;
+            });
+            
+            if (hasExistingCOInternational && !isArcherCOInternational) {
+                return { 
+                    valid: false, 
+                    reason: 'Ne peut pas être mixé avec CO International (H/F)' 
+                };
+            }
+        }
+        
+        return { valid: true };
+    };
+
     const INITIAL_ARCHERS = <?php
-    $Select = "SELECT EnId, EnCode, EnName, EnFirstName, EnCountry, EnDivision, EnClass, 
-               QuSession, QuTargetNo, EnWChair, QuScore, QuGold, QuXNine,
-               CoCode, CoName, EnTargetFace
-               FROM Entries 
-               INNER JOIN Qualifications ON EnId=QuId 
-               INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
-               WHERE EnTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EnAthlete=1";
+    $tournamentType = '';
+    $tournamentQuery = "SELECT ToTypeName FROM Tournament WHERE ToId=" . StrSafe_DB($_SESSION['TourId']);
+    $tournamentResult = safe_r_sql($tournamentQuery);
+    if ($tournamentRow = safe_fetch($tournamentResult)) {
+        $tournamentType = $tournamentRow->ToTypeName ?: '';
+    }
+    
+    // Récupérer les SesAth4Target pour chaque session
+    $sessionAth4Target = [];
+    $sessionQuery = "SELECT SesOrder, SesAth4Target FROM Session WHERE SesTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND SesType='Q'";
+    $sessionResult = safe_r_sql($sessionQuery);
+    while ($sessionRow = safe_fetch($sessionResult)) {
+        $sessionAth4Target[$sessionRow->SesOrder] = $sessionRow->SesAth4Target;
+    }
+    
+$Select = "SELECT 
+            EnId, 
+            EnCode, 
+            EnName, 
+            EnFirstName, 
+            EnCountry, 
+            EnDivision, 
+            EnClass, 
+            QuSession, 
+            QuTargetNo, 
+            EnWChair, 
+            QuScore, 
+            QuGold, 
+            QuXNine,
+            CoCode, 
+            CoName, 
+            EnTargetFace,
+            -- Distance depuis Events (sans valeur par défaut)
+            EvDistance as EvDistance,
+            -- Taille de blason depuis Events (sans valeur par défaut)
+            EvTargetSize as EvTargetSize,
+            -- Code événement formaté selon les nouvelles règles
+            CASE 
+                -- Pour les divisions BB (Barebow)
+                WHEN EnDivision LIKE '%BB%' OR TRIM(EnDivision) = 'BB' THEN 
+                    CASE 
+                        -- S1HBB/S1FBB, S2HBB/S2FBB, S3HBB/S3FBB, BB -> SHBB/SFBB
+                        WHEN EnDivision IN ('S1HBB', 'S1FBB', 'S2HBB', 'S2FBB', 'S3HBB', 'S3FBB', 'BB') THEN
+                            CASE 
+                                -- Pour 'BB' seul, déterminer le genre à partir de EnClass
+                                WHEN TRIM(EnDivision) = 'BB' THEN
+                                    CASE 
+                                        -- Si EnClass contient 'W' -> SFBB, sinon -> SHBB
+                                        WHEN TRIM(EnClass) LIKE '%W' THEN 'SFBB'
+                                        ELSE 'SHBB'
+                                    END
+                                -- Prendre les 2 derniers caractères pour HBB/FBB
+                                WHEN RIGHT(TRIM(EnDivision), 3) IN ('HBB', 'FBB') THEN 
+                                    CONCAT('S', RIGHT(TRIM(EnDivision), 3))
+                                ELSE TRIM(EnDivision)
+                            END
+                        -- U15HBB/U15FBB, U18HBB/U18FBB, U21HBB/U21FBB -> garder tel quel
+                        ELSE TRIM(EnDivision)
+                    END
+                -- Pour les autres divisions
+                ELSE CONCAT(
+                    -- 'N' si national (M/W), sinon rien
+                    CASE 
+                        WHEN TRIM(EnClass) LIKE '%M' OR TRIM(EnClass) LIKE '%W' THEN 'N'
+                        ELSE ''
+                    END,
+                    -- Classe sans le M/W à la fin
+                    CASE 
+                        WHEN TRIM(EnClass) LIKE '%M' THEN REPLACE(TRIM(EnClass), 'M', 'H')
+                        WHEN TRIM(EnClass) LIKE '%W' THEN REPLACE(TRIM(EnClass), 'W', 'F')
+                        ELSE TRIM(EnClass)
+                    END,
+                    -- Pour handisport OPCL - garder uniquement les 2 derniers caractères (CL)
+                    CASE 
+                        WHEN TRIM(EnDivision) = 'OPCL' THEN 'CL'
+                        -- Division avec H/F selon M/W
+                        WHEN TRIM(EnClass) LIKE '%M' THEN 
+                            CASE 
+                                WHEN RIGHT(TRIM(EnDivision), 1) = 'M' THEN 
+                                    CONCAT(LEFT(TRIM(EnDivision), LENGTH(TRIM(EnDivision)) - 1), 'H')
+                                ELSE TRIM(EnDivision)
+                            END
+                        WHEN TRIM(EnClass) LIKE '%W' THEN 
+                            CASE 
+                                WHEN RIGHT(TRIM(EnDivision), 1) = 'W' THEN 
+                                    CONCAT(LEFT(TRIM(EnDivision), LENGTH(TRIM(EnDivision)) - 1), 'F')
+                                ELSE TRIM(EnDivision)
+                            END
+                        ELSE TRIM(EnDivision)
+                    END
+                )
+            END as EvCode
+           FROM Entries 
+           INNER JOIN Qualifications ON EnId=QuId 
+           INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
+           -- LEFT JOIN sur Events pour récupérer les infos distance et taille blason
+           LEFT JOIN Events ON 
+                Events.EvCode = CASE 
+                    -- Pour les divisions BB (Barebow)
+                    WHEN EnDivision LIKE '%BB%' OR TRIM(EnDivision) = 'BB' THEN 
+                        CASE 
+                            WHEN EnDivision IN ('S1HBB', 'S1FBB', 'S2HBB', 'S2FBB', 'S3HBB', 'S3FBB', 'BB') THEN
+                                CASE 
+                                    WHEN TRIM(EnDivision) = 'BB' THEN
+                                        CASE 
+                                            WHEN TRIM(EnClass) LIKE '%W' THEN 'SFBB'
+                                            ELSE 'SHBB'
+                                        END
+                                    -- Prendre les 2 derniers caractères pour HBB/FBB
+                                    WHEN RIGHT(TRIM(EnDivision), 3) IN ('HBB', 'FBB') THEN 
+                                        CONCAT('S', RIGHT(TRIM(EnDivision), 3))
+                                    ELSE TRIM(EnDivision)
+                                END
+                            ELSE TRIM(EnDivision)
+                        END
+                    ELSE CONCAT(
+                        CASE 
+                            WHEN TRIM(EnClass) LIKE '%M' OR TRIM(EnClass) LIKE '%W' THEN 'N'
+                            ELSE ''
+                        END,
+                        CASE 
+                            WHEN TRIM(EnClass) LIKE '%M' THEN REPLACE(TRIM(EnClass), 'M', 'H')
+                            WHEN TRIM(EnClass) LIKE '%W' THEN REPLACE(TRIM(EnClass), 'W', 'F')
+                            ELSE TRIM(EnClass)
+                        END,
+                        -- Pour handisport OPCL - garder uniquement les 2 derniers caractères (CL)
+                        CASE 
+                            WHEN TRIM(EnDivision) = 'OPCL' THEN 'CL'
+                            -- Division avec H/F selon M/W
+                            WHEN TRIM(EnClass) LIKE '%M' THEN 
+                                CASE 
+                                    WHEN RIGHT(TRIM(EnDivision), 1) = 'M' THEN 
+                                        CONCAT(LEFT(TRIM(EnDivision), LENGTH(TRIM(EnDivision)) - 1), 'H')
+                                    ELSE TRIM(EnDivision)
+                                END
+                            WHEN TRIM(EnClass) LIKE '%W' THEN 
+                                CASE 
+                                    WHEN RIGHT(TRIM(EnDivision), 1) = 'W' THEN 
+                                        CONCAT(LEFT(TRIM(EnDivision), LENGTH(TRIM(EnDivision)) - 1), 'F')
+                                    ELSE TRIM(EnDivision)
+                                END
+                            ELSE TRIM(EnDivision)
+                        END
+                    )
+                END 
+                AND EnTournament = Events.EvTournament
+           WHERE EnTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EnAthlete=1";
+
 
     if (isset($_REQUEST["Event"]) && preg_match("/^[0-9A-Z%_]+$/i", $_REQUEST["Event"])) {
-        $Select .= " AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE " . StrSafe_DB($_REQUEST["Event"]) . " ";
+        $Select .= " AND CONCAT(TRIM(EnClass),TRIM(EnDivision)) LIKE " . StrSafe_DB($_REQUEST["Event"]) . " ";
     }
 
     $Select .= " ORDER BY EnName";
@@ -945,19 +1860,36 @@ button:has(.w-4.h-4) {
     $archers = [];
 
     while ($row = safe_fetch($Rs)) {
+        $enClass = $row->EnClass ?: '';
+        $enDivision = $row->EnDivision ?: '';
+        
+        if ($enDivision && strpos($enClass, $enDivision) === 0) {
+            $pureClass = substr($enClass, strlen($enDivision));
+        } else {
+            $pureClass = $enClass;
+        }
+        
+        // Récupérer le SesAth4Target de la session correspondante
+        $sessionAth4 = isset($sessionAth4Target[$row->QuSession]) ? $sessionAth4Target[$row->QuSession] : 4;
+        
         $archers[] = [
             'id' => (int)$row->EnId,
             'code' => $row->EnCode ?: '',
             'name' => trim($row->EnFirstName . ' ' . $row->EnName),
             'country' => $row->CoCode ?: '',
             'countryName' => $row->CoName ?: '',
-            'division' => $row->EnDivision ?: '',
-            'class' => $row->EnClass ?: '',
+            'division' => $enDivision,
+            'class' => $pureClass,
             'session' => (int)$row->QuSession,
             'targetNo' => $row->QuTargetNo ?: '',
             'score' => ($row->QuScore ? $row->QuScore . '/' . $row->QuGold . '/' . $row->QuXNine : '0/0/0'),
             'wheelchair' => (bool)$row->EnWChair,
-            'targetFace' => $row->EnTargetFace ?: ''
+            'targetFace' => $row->EnTargetFace ?: '',
+            'distance' => $row->EvDistance ?: '',
+            'evCode' => $row->EvCode ?: '',
+            'targetSize' => $row->EvTargetSize ?: '',
+            'tournamentType' => $tournamentType,
+            'sessionAth4Target' => $sessionAth4  // Inclure la valeur SesAth4Target de la session
         ];
     }
 
@@ -979,6 +1911,54 @@ button:has(.w-4.h-4) {
         echo json_encode($sessionsList);
     ?>;
 
+    const getTargetSizeLabel = (targetSize) => {
+        if (!targetSize) return '';
+        
+        const sizeMap = {
+            '80': '80cm',
+            '122': '122cm',
+            '40': '40cm (triple)',
+            '60': '60cm',
+            '3x40': '3x40cm (triple)',
+            '3x20': '3x20cm (triple)'
+        };
+        
+        return sizeMap[targetSize] || `${targetSize}cm`;
+    };
+
+    const getTargetFaceLabel = (targetFace) => {
+        if (!targetFace) return '';
+        
+        const faceMap = {
+            '1': 'Face 1',
+            '2': 'Face 2',
+            '3': 'Face 3',
+            '4': 'Face 4',
+            '6': 'Face 6',
+            '7': 'Face 7',
+            'A': 'Face A',
+            'B': 'Face B',
+            'C': 'Face C',
+            'D': 'Face D',
+            'E': 'Face E'
+        };
+        
+        return faceMap[targetFace] || `Face ${targetFace}`;
+    };
+
+    const isIndoorTournament = (tournamentType) => {
+        if (!tournamentType) return false;
+        
+        const indoorKeywords = ['indoor', 'salle', 'intérieur', 'hall'];
+        const lowerType = tournamentType.toLowerCase();
+        
+        return indoorKeywords.some(keyword => lowerType.includes(keyword));
+    };
+
+    const getArcherTargetFaceImage = (archer) => {
+        if (!archer) return '';
+        return getTargetFaceImage(archer.targetSize, archer.targetFace, archer.tournamentType, archer);
+    };
 
     const TargetAssignmentUI = () => {
         const [archers, setArchers] = useState(INITIAL_ARCHERS);
@@ -995,7 +1975,6 @@ button:has(.w-4.h-4) {
         const targetsOverviewRef = useRef(null);
         const [scrollPosition, setScrollPosition] = useState(0);
 
-        // Fonction pour obtenir la couleur de fond selon le type d'archer
         const getArcherBgColor = (archer, isAssigned = true) => {
             if (!isAssigned) {
                 return 'archer-unassigned';
@@ -1004,7 +1983,6 @@ button:has(.w-4.h-4) {
             return 'archer-assigned';
         };
 
-        // Fonction pour obtenir la couleur de texte selon le type d'archer
         const getArcherTextColor = (archer, isAssigned = true) => {
             if (!isAssigned) {
                 return 'text-orange-700';
@@ -1013,14 +1991,12 @@ button:has(.w-4.h-4) {
             return 'text-green-700';
         };
 
-        // Gestion du drag & drop des archers avec image SIMILAIRE À L'ORIGINALE
         const handleArcherDragStart = (e, archer) => {
             setDraggedArcher(archer);
             e.dataTransfer.setData('text/plain', `archer:${archer.id}`);
             e.dataTransfer.effectAllowed = 'move';
             dragStartPos.current = { x: e.clientX, y: e.clientY };
             
-            // Obtenir les couleurs originales
             const bgColor = archer.wheelchair ? 
                 'linear-gradient(135deg, rgba(219, 234, 254, 0.98), rgba(191, 219, 254, 0.98))' : 
                 'linear-gradient(135deg, rgba(220, 252, 231, 0.98), rgba(187, 247, 208, 0.98))';
@@ -1028,16 +2004,21 @@ button:has(.w-4.h-4) {
             const borderColor = archer.wheelchair ? '#3b82f6' : '#10b981';
             const textColor = archer.wheelchair ? '#1e40af' : '#166534';
             
-            // Créer un élément de drag personnalisé qui ressemble à l'original
             const dragImage = document.createElement('div');
             dragImage.className = `archer-drag-preview ${archer.wheelchair ? 'wheelchair' : 'regular'} archer-original-look`;
             dragImage.setAttribute('data-drag-preview', 'true');
             
-            // Formater le nom pour un affichage plus compact
             const nameParts = archer.name.split(' ');
             const firstName = nameParts[0] || '';
             const lastName = nameParts.slice(1).join(' ') || '';
             const shortLastName = lastName.length > 10 ? lastName.substring(0, 8) + '...' : lastName;
+            
+            const targetFaceImage = getArcherTargetFaceImage(archer);
+            const targetSizeLabel = getTargetSizeLabel(archer.targetSize);
+            const targetFaceLabel = getTargetFaceLabel(archer.targetFace);
+            const isIndoor = isIndoorTournament(archer.tournamentType);
+            const isCONational = archer.evCode?.startsWith('N') || false;
+            const isCOInternational = (archer.division === 'CO' || (archer.division && archer.division.includes('CO'))) && !isCONational;
             
             dragImage.innerHTML = `
                 <div style="
@@ -1050,8 +2031,8 @@ button:has(.w-4.h-4) {
                     border-radius: 4px;
                     border: 1px solid ${archer.wheelchair ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.3)'};
                 ">
-                    ${archer.targetFace ? `
-                        <img src="${getTargetFaceImage(archer.targetFace)}" 
+                    ${targetFaceImage ? `
+                        <img src="${targetFaceImage}" 
                              alt="Target face" 
                              style="width: 30px; height: 30px; object-fit: contain; border-radius: 3px;">
                     ` : ''}
@@ -1073,13 +2054,13 @@ button:has(.w-4.h-4) {
                                 ${archer.countryName || archer.country}
                             </div>
                             <div style="font-size: 9px; font-weight: 600; color: ${textColor};">
-                                ${archer.division || ''}${archer.class || ''}
+                                ${archer.evCode || (archer.class + archer.division)}
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                ${archer.targetNo ? `
+                ${archer.targetNo && archer.targetNo !== '' ? `
                 <div style="
                     text-align: center; 
                     font-size: 10px; 
@@ -1107,6 +2088,87 @@ button:has(.w-4.h-4) {
                 </div>
                 `}
                 
+                ${isDebugMode && (targetSizeLabel || targetFaceLabel) ? `
+                <div style="
+                    display: flex; 
+                    flex-wrap: wrap; 
+                    gap: 3px; 
+                    margin: 2px 0;
+                    justify-content: center;
+                ">
+                    ${targetSizeLabel && isDebugMode ? `
+                    <div style="
+                        font-size: 8px; 
+                        font-weight: bold;
+                        color: #4f46e5;
+                        padding: 1px 4px;
+                        background: #e0e7ff;
+                        border-radius: 3px;
+                        border: 1px solid #c7d2fe;
+                    ">
+                        ${targetSizeLabel}
+                    </div>
+                    ` : ''}
+                    
+                    ${targetFaceLabel && isDebugMode ? `
+                    <div style="
+                        font-size: 8px; 
+                        font-weight: bold;
+                        color: #be185d;
+                        padding: 1px 4px;
+                        background: #fce7f3;
+                        border-radius: 3px;
+                        border: 1px solid #fbcfe8;
+                    ">
+                        ${targetFaceLabel}
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+                
+                ${archer.evCode && archer.distance ? `
+                <div style="
+                    text-align: center; 
+                    font-size: 9px; 
+                    font-weight: bold;
+                    color: #059669;
+                    margin: 2px 0;
+                    padding: 2px 4px;
+                    background: #d1fae5;
+                    border-radius: 3px;
+                    border: 1px solid #10b981;
+                ">
+                    ${archer.evCode} / ${archer.distance}m
+                </div>
+                ` : archer.distance ? `
+                <div style="
+                    text-align: center; 
+                    font-size: 9px; 
+                    font-weight: bold;
+                    color: #92400e;
+                    margin: 2px 0;
+                    padding: 2px 4px;
+                    background: #fbbf24;
+                    border-radius: 3px;
+                ">
+                    ${archer.distance}m
+                </div>
+                ` : archer.evCode ? `
+                <div style="
+                    text-align: center; 
+                    font-size: 9px; 
+                    font-weight: bold;
+                    color: #059669;
+                    margin: 2px 0;
+                    padding: 2px 4px;
+                    background: #d1fae5;
+                    border-radius: 3px;
+                    border: 1px solid #10b981;
+                ">
+                    ${archer.evCode}
+                </div>
+                ` : ''}
+                
                 <div style="
                     text-align: center; 
                     font-size: 8px; 
@@ -1121,18 +2183,14 @@ button:has(.w-4.h-4) {
             
             document.body.appendChild(dragImage);
             
-            // Positionner l'image de drag (hors écran)
             const rect = dragImage.getBoundingClientRect();
             
-            // Utiliser l'élément personnalisé comme image de drag (centré)
             e.dataTransfer.setDragImage(dragImage, rect.width / 2, rect.height / 2);
             
-            // Ajouter une classe à l'élément drag source pour feedback visuel
             if (e.target.classList) {
                 e.target.classList.add('dragging-archer');
             }
             
-            // Nettoyer après le drag
             setTimeout(() => {
                 const preview = document.querySelector('[data-drag-preview="true"]');
                 if (preview) {
@@ -1142,359 +2200,368 @@ button:has(.w-4.h-4) {
         };
 
         const handleArcherDragEnd = (e) => {
-            // Retirer la classe de feedback visuel
             const draggingElements = document.querySelectorAll('.dragging-archer');
             draggingElements.forEach(el => el.classList.remove('dragging-archer'));
             
-            // Nettoyer les éventuels éléments de preview restants
             const remainingPreviews = document.querySelectorAll('[data-drag-preview="true"]');
             remainingPreviews.forEach(preview => preview.remove());
             
             setDraggedArcher(null);
         };
 
-        const generateSimplePDF = () => {
-            console.log('=== GÉNÉRATION PDF SIMPLIFIÉE ===');
-            
-            // Récupérer les données
-            const assignedArchers = archers.filter(a => 
-                a.session === selectedSession && a.targetNo && a.targetNo.length >= 4
-            );
-            
-            // Extraire les cibles uniques
-            const targetNumbers = [];
-            assignedArchers.forEach(archer => {
-                const targetNum = archer.targetNo.substring(0, 3);
-                if (!targetNumbers.includes(targetNum)) {
-                    targetNumbers.push(targetNum);
-                }
-            });
-            
-            // Trier
-            targetNumbers.sort((a, b) => parseInt(a) - parseInt(b));
-            
-            console.log(`✅ ${targetNumbers.length} cibles:`, targetNumbers);
-            
-            if (targetNumbers.length === 0) {
-                alert('Aucune cible assignée pour ce départ');
-                return;
-            }
-            
-            // Ouvrir une fenêtre pour le PDF
-            const printWindow = window.open('', '_blank', 'width=1800,height=1000');
-            
-            if (!printWindow) {
-                alert('⚠️ Veuillez autoriser les popups pour générer le PDF');
-                return;
-            }
-            
-            // Fonction pour récupérer les infos archer d'une position spécifique
-            const getArcherForPosition = (targetId, letter) => {
-                return assignedArchers.find(a => a.targetNo === `${targetId}${letter}`);
-            };
-            
-            // Créer le HTML avec le CSS cible
-            let html = `<!DOCTYPE html>
-            <html>
-            <head>
-                <title>Cibles - Départ ${selectedSession}</title>
-                <meta charset="UTF-8">
-                <style>
-                    @page { 
-                        size: landscape; 
-                        margin: 5mm; 
-                    }
-                    body { 
-                        margin: 0; 
-                        padding: 0; 
-                        font-family: 'Segoe UI', Arial, sans-serif;
-                        background: white; 
-                    }
-                    .page-container { 
-                        padding: 8mm; 
-                    }
-                    .print-header { 
-                        text-align: center; 
-                        margin-bottom: 5mm; 
-                    }
-                    .print-header h1 { 
-                        font-size: 24px; 
-                        margin: 0 0 5px 0; 
-                        color: #000; 
-                    }
-                    .print-header .subtitle { 
-                        font-size: 14px; 
-                        color: #666; 
-                    }
-                    .targets-layout { 
-                        display: flex; 
-                        flex-direction: column; 
-                        gap: 15px; 
-                        margin-bottom: 15mm; 
-                    }
-                    .targets-row { 
-                        display: flex; 
-                        justify-content: center; 
-                        gap: 10px; 
-                    }
-                    .target-row-wrapper { 
-                        display: flex; 
-                        justify-content: space-between; 
-                        width: 100%; 
-                    }
-                    .target-card { 
-                        flex: 0 0 7%; 
-                        text-align: center; 
-                    }
-                    .target-number { 
-                        font-size: 13px; 
-                        font-weight: bold; 
-                        color: #000; 
-                        margin-bottom: 4px; 
-                    }
-                    .target-image { 
-                        width: 55px; 
-                        height: 55px; 
-                        object-fit: contain; 
-                        margin: 0 auto; 
-                    }
-                    .target-archers-grid { 
-                        display: grid; 
-                        grid-template-columns: repeat(4, 1fr); 
-                        gap: 3px; 
-                        font-size: 8px; 
-                    }
-                    .archer-column { 
-                        display: flex; 
-                        flex-direction: column; 
-                        align-items: center; 
-                        min-height: 200px; 
-                        border: 1px solid #e0e0e0; 
-                        padding: 3px 2px; 
-                        background: #fafafa; 
-                    }
-                    .position-header { 
-                        font-weight: bold; 
-                        font-size: 9px; 
-                        color: #333; 
-                        margin-bottom: 2px; 
-                        width: 100%; 
-                        text-align: center; 
-                        background: #f0f0f0; 
-                        padding: 1px 0; 
-                    }
-                    .archer-content { 
-                        display: flex; 
-                        flex-direction: column; 
-                        align-items: center; 
-                        width: 100%; 
-                        height: 200px; 
-                        overflow: hidden; 
-                        padding: 0 1px; 
-                    }
-                    .archer-full-line { 
-                        font-size: 8px; 
-                        writing-mode: vertical-lr; 
-                        text-orientation: mixed; 
-                        height: 200px; 
-                        display: flex; 
-                        align-items: center; 
-                        text-align: center; 
-                        width: 100%; 
-                    }
-                    .empty-position { 
-                        color: #999; 
-                        font-size: 7.5px; 
-                        font-style: italic; 
-                        writing-mode: vertical-lr; 
-                        text-align: center; 
-                        width: 100%; 
-                        display: flex; 
-                        align-items: center; 
-                        height: 100%; 
-                    }
-                    .print-footer { 
-                        text-align: center; 
-                        margin-top: 12mm; 
-                        font-size: 11px; 
-                        color: #666; 
-                        border-top: 1px solid #ddd; 
-                        padding-top: 4mm; 
-                    }
-                    .print-controls { 
-                        position: fixed;
-                        top: 20px; 
-                        right: 20px; 
-                        z-index: 10000; 
-                        display: flex; 
-                        gap: 10px; 
-                    }
-                    .print-button { 
-                        padding: 10px 20px; 
-                        background: #3b82f6; 
-                        color: white; 
-                        border: none; 
-                        border-radius: 5px; 
-                        cursor: pointer; 
-                    }
-                    .close-button { 
-                        padding: 10px 20px; 
-                        background: #6b7280; 
-                        color: white; 
-                        border: none; 
-                        border-radius: 5px; 
-                        cursor: pointer; 
-                    }
-                    .page-break { 
-                        page-break-before: always; 
-                    }
-                    @media print { 
-                        .print-controls { 
-                            display: none !important; 
-                        } 
-                        .page-container { 
-                            padding: 0; 
-                        } 
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="print-controls">
-                    <button class="print-button" onclick="window.print()">Imprimer</button>
-                    <button class="close-button" onclick="window.close()">Fermer</button>
-                </div>
-                
-                <div class="page-container">`;
-            
-            // Diviser en pages de 20 cibles
-            const targetsPerPage = 20;
-            const totalPages = Math.ceil(targetNumbers.length / targetsPerPage);
-            
-            for (let page = 0; page < totalPages; page++) {
-                const start = page * targetsPerPage;
-                const end = start + targetsPerPage;
-                const pageTargets = targetNumbers.slice(start, end);
-                
-                // Ajouter un saut de page sauf pour la première page
-                if (page > 0) {
-                    html += `<div class="page-break"></div>`;
-                }
-                
-                html += `
-                    <div class="print-header">
-                        <h1>Cibles - Départ ${selectedSession}</h1>
-                        <div class="subtitle">Page ${page + 1} sur ${totalPages}</div>
-                    </div>
-                    
-                    <div class="targets-layout">`;
-                
-                // 2 lignes de 10 cibles
-                for (let row = 0; row < 2; row++) {
-                    const rowStart = row * 10;
-                    const rowEnd = rowStart + 10;
-                    const rowTargets = pageTargets.slice(rowStart, rowEnd);
-                    
-                    if (rowTargets.length > 0) {
-                        html += `<div class="targets-row">
-                            <div class="target-row-wrapper">`;
-                        
-                        for (let i = 0; i < 10; i++) {
-                            if (i < rowTargets.length) {
-                                const targetId = rowTargets[i];
-                                // Créer un objet cible pour getCombinationImage
-                                const targetObj = {
-                                    id: targetId,
-                                    positions: ['A', 'B', 'C', 'D'].map(letter => ({
-                                        id: `${targetId}${letter}`,
-                                        letter: letter,
-                                        archer: getArcherForPosition(targetId, letter)
-                                    }))
-                                };
-                                const combinationImage = getCombinationImage(targetObj);
-                                
-                                html += `<div class="target-card">
-                                    <div class="target-number">${targetId}</div>`;
-                                
-                                if (combinationImage && combinationImage !== 'Img/xx.png') {
-                                    html += `<img src="${combinationImage}" class="target-image" alt="Cible ${targetId}" onerror="this.style.display='none'">`;
-                                } else {
-                                    html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
-                                        <div style="font-size: 8px; color: #999;">Pas d'image</div>
-                                    </div>`;
-                                }
-                                
-                                html += `<div class="target-archers-grid">`;
-                                
-                                // Afficher les archers dans l'ordre A, C, B, D
-                                ['A', 'C', 'B', 'D'].forEach(letter => {
-                                    const archer = getArcherForPosition(targetId, letter);
-                                    
-                                    html += `<div class="archer-column">
-                                        <div class="position-header">${letter}</div>
-                                        <div class="archer-content">`;
-                                    
-                                    if (archer) {
-                                        const division = archer.division || '';
-                                        const archerClass = archer.class || '';
-                                        const name = archer.name || '';
-                                        const country = archer.countryName || '';
-                                        
-                                        let line = '';
-                                        if (division) line += `<span style="font-weight: bold;">${division}</span>`;
-                                        if (archerClass) line += (line ? ' ' : '') + `<span>${archerClass}</span>`;
-                                        if ((division || archerClass) && name) line += ' ';
-                                        if (name) line += `<span style="font-weight: bold;">&nbsp;${name}&nbsp;</span>`;
-                                        if (name && country) line += ' ';
-                                        if (country) line += `<span style="font-weight: bold;">&nbsp;/ ${country}</span>`;
-                                        
-                                        html += `<div class="archer-full-line">${line}</div>`;
-                                    } else {
-                                        html += `<div class="empty-position">vide</div>`;
-                                    }
-                                    
-                                    html += `</div></div>`;
-                                });
-                                
-                                html += `</div></div>`;
-                            } else {
-                                // Case vide
-                                html += `<div class="target-card" style="opacity:0.3;">
-                                    <div class="target-number"></div>
-                                    <div class="target-image" style="background: #f5f5f5;"></div>
-                                    <div class="target-archers-grid">
-                                        <div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-                                        <div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-                                        <div class="archer-column"><div class="position-header">B</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-                                        <div class="archer-column"><div class="position-header">D</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-                                    </div>
-                                </div>`;
-                            }
-                        }
-                        
-                        html += `</div></div>`;
-                    }
-                }
-                
-                html += `</div>`;
-                
-            }
-            
-            html += `</div></body></html>`;
-            
-            // Afficher
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.focus();
-            
-            console.log('✅ PDF généré avec succès');
-        };
+		const generateSimplePDF = () => {
+			console.log('=== GÉNÉRATION PDF SIMPLIFIÉE ===');
+			
+			// Récupérer les données
+			const assignedArchers = archers.filter(a => 
+				a.session === selectedSession && a.targetNo && a.targetNo.length >= 4
+			);
+			
+			// Extraire les cibles uniques
+			const targetNumbers = [];
+			assignedArchers.forEach(archer => {
+				const targetNum = archer.targetNo.substring(0, 3);
+				if (!targetNumbers.includes(targetNum)) {
+					targetNumbers.push(targetNum);
+				}
+			});
+			
+			// Trier
+			targetNumbers.sort((a, b) => parseInt(a) - parseInt(b));
+			
+			console.log(`✅ ${targetNumbers.length} cibles:`, targetNumbers);
+			
+			if (targetNumbers.length === 0) {
+				alert('Aucune cible assignée pour ce départ');
+				return;
+			}
+			
+			// Récupérer le chemin de base actuel
+			const currentPath = window.location.pathname;
+			const baseDir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+			// Construire le chemin absolu pour les images
+			const baseUrl = window.location.origin + baseDir + 'Img/';
+			
+			// Fonction pour récupérer les infos archer d'une position spécifique
+			const getArcherForPosition = (targetId, letter) => {
+				return assignedArchers.find(a => a.targetNo === `${targetId}${letter}`);
+			};
+			
+			// Ouvrir une fenêtre pour le PDF
+			const printWindow = window.open('', '_blank', 'width=1800,height=1000');
+			
+			if (!printWindow) {
+				alert('⚠️ Veuillez autoriser les popups pour générer le PDF');
+				return;
+			}
+			
+			// Créer le HTML avec le CSS cible
+			let html = `<!DOCTYPE html>
+			<html>
+			<head>
+				<title>Cibles - Départ ${selectedSession}</title>
+				<meta charset="UTF-8">
+				<style>
+					@page { 
+						size: landscape; 
+						margin: 5mm; 
+					}
+					body { 
+						margin: 0; 
+						padding: 0; 
+						font-family: 'Segoe UI', Arial, sans-serif;
+						background: white; 
+					}
+					.page-container { 
+						padding: 8mm; 
+					}
+					.print-header { 
+						text-align: center; 
+						margin-bottom: 5mm; 
+					}
+					.print-header h1 { 
+						font-size: 24px; 
+						margin: 0 0 5px 0; 
+						color: #000; 
+					}
+					.print-header .subtitle { 
+						font-size: 14px; 
+						color: #666; 
+					}
+					.targets-layout { 
+						display: flex; 
+						flex-direction: column; 
+						gap: 15px; 
+						margin-bottom: 15mm; 
+					}
+					.targets-row { 
+						display: flex; 
+						justify-content: center; 
+						gap: 10px; 
+					}
+					.target-row-wrapper { 
+						display: flex; 
+						justify-content: space-between; 
+						width: 100%; 
+					}
+					.target-card { 
+						flex: 0 0 7%; 
+						text-align: center; 
+					}
+					.target-number { 
+						font-size: 13px; 
+						font-weight: bold; 
+						color: #000; 
+						margin-bottom: 4px; 
+					}
+					.target-image { 
+						width: 55px; 
+						height: 55px; 
+						object-fit: contain; 
+						margin: 0 auto; 
+						border: 1px solid #ddd;
+					}
+					.target-archers-grid { 
+						display: grid; 
+						grid-template-columns: repeat(4, 1fr); 
+						gap: 3px; 
+						font-size: 8px; 
+					}
+					.archer-column { 
+						display: flex; 
+						flex-direction: column; 
+						align-items: center; 
+						min-height: 200px; 
+						border: 1px solid #e0e0e0; 
+						padding: 3px 2px; 
+						background: #fafafa; 
+					}
+					.position-header { 
+						font-weight: bold; 
+						font-size: 9px; 
+						color: #333; 
+						margin-bottom: 2px; 
+						width: 100%; 
+						text-align: center; 
+						background: #f0f0f0; 
+						padding: 1px 0; 
+					}
+					.archer-content { 
+						display: flex; 
+						flex-direction: column; 
+						align-items: center; 
+						width: 100%; 
+						height: 200px; 
+						overflow: hidden; 
+						padding: 0 1px; 
+					}
+					.archer-full-line { 
+						font-size: 8px; 
+						writing-mode: vertical-lr; 
+						text-orientation: mixed; 
+						height: 200px; 
+						display: flex; 
+						align-items: center; 
+						text-align: center; 
+						width: 100%; 
+					}
+					.empty-position { 
+						color: #999; 
+						font-size: 7.5px; 
+						font-style: italic; 
+						writing-mode: vertical-lr; 
+						text-align: center; 
+						width: 100%; 
+						display: flex; 
+						align-items: center; 
+						height: 100%; 
+					}
+					.print-footer { 
+						text-align: center; 
+						margin-top: 12mm; 
+						font-size: 11px; 
+						color: #666; 
+						border-top: 1px solid #ddd; 
+						padding-top: 4mm; 
+					}
+					.print-controls { 
+						position: fixed;
+						top: 20px; 
+						right: 20px; 
+						z-index: 10000; 
+						display: flex; 
+						gap: 10px; 
+					}
+					.print-button { 
+						padding: 10px 20px; 
+						background: #3b82f6; 
+						color: white; 
+						border: none; 
+						border-radius: 5px; 
+						cursor: pointer; 
+					}
+					.close-button { 
+						padding: 10px 20px; 
+						background: #6b7280; 
+						color: white; 
+						border: none; 
+						border-radius: 5px; 
+						cursor: pointer; 
+					}
+					.page-break { 
+						page-break-before: always; 
+					}
+					@media print { 
+						.print-controls { 
+							display: none !important; 
+						} 
+						.page-container { 
+							padding: 0; 
+						} 
+					}
+				</style>
+			</head>
+			<body>
+				<div class="print-controls">
+					<button class="print-button" onclick="window.print()">Imprimer</button>
+					<button class="close-button" onclick="window.close()">Fermer</button>
+				</div>
+				
+				<div class="page-container">`;
+			
+			// Diviser en pages de 20 cibles
+			const targetsPerPage = 20;
+			const totalPages = Math.ceil(targetNumbers.length / targetsPerPage);
+			
+			for (let page = 0; page < totalPages; page++) {
+				const start = page * targetsPerPage;
+				const end = start + targetsPerPage;
+				const pageTargets = targetNumbers.slice(start, end);
+				
+				// Ajouter un saut de page sauf pour la première page
+				if (page > 0) {
+					html += `<div class="page-break"></div>`;
+				}
+				
+				html += `
+					<div class="print-header">
+						<h1>Cibles - Départ ${selectedSession}</h1>
+						<div class="subtitle">Page ${page + 1} sur ${totalPages}</div>
+					</div>
+					
+					<div class="targets-layout">`;
+				
+				// 2 lignes de 10 cibles
+				for (let row = 0; row < 2; row++) {
+					const rowStart = row * 10;
+					const rowEnd = rowStart + 10;
+					const rowTargets = pageTargets.slice(rowStart, rowEnd);
+					
+					if (rowTargets.length > 0) {
+						html += `<div class="targets-row">
+							<div class="target-row-wrapper">`;
+						
+						for (let i = 0; i < 10; i++) {
+							if (i < rowTargets.length) {
+								const targetId = rowTargets[i];
+								// Créer un objet cible pour getCombinationImage
+								const targetObj = {
+									id: targetId,
+									positions: ['A', 'B', 'C', 'D'].map(letter => ({
+										id: `${targetId}${letter}`,
+										letter: letter,
+										archer: getArcherForPosition(targetId, letter)
+									}))
+								};
+								const combinationData = getCombinationImage(targetObj);
+								const combinationImage = combinationData.image;
+								
+								html += `<div class="target-card">
+									<div class="target-number">${targetId}</div>`;
+								
+								if (combinationImage && combinationImage !== 'Img/xx.png') {
+									// Utiliser le chemin absolu pour l'image
+									const absoluteImagePath = baseUrl + combinationImage.replace('Img/', '');
+									html += `<img src="${absoluteImagePath}" class="target-image" alt="Cible ${targetId}" onerror="this.onerror=null; this.src=''; this.style.display='none'; console.error('Image non trouvée:', '${combinationImage}')">`;
+								} else {
+									html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
+										<div style="font-size: 8px; color: #999;">Pas d'image</div>
+									</div>`;
+								}
+								
+								html += `<div class="target-archers-grid">`;
+								
+								// Afficher les archers dans l'ordre A, C, B, D
+								['A', 'C', 'B', 'D'].forEach(letter => {
+									const archer = getArcherForPosition(targetId, letter);
+									
+									html += `<div class="archer-column">
+										<div class="position-header">${letter}</div>
+										<div class="archer-content">`;
+									
+									if (archer) {
+										const division = archer.division || '';
+										const archerClass = archer.class || '';
+										const name = archer.name || '';
+										const country = archer.countryName || '';
+										
+										let line = '';
+										if (division) line += `<span style="font-weight: bold;">${division}</span>`;
+										if (archerClass) line += (line ? ' ' : '') + `<span>${archerClass}</span>`;
+										if ((division || archerClass) && name) line += ' ';
+										if (name) line += `<span style="font-weight: bold;">&nbsp;${name}&nbsp;</span>`;
+										if (name && country) line += ' ';
+										if (country) line += `<span style="font-weight: bold;">&nbsp;/ ${country}</span>`;
+										
+										html += `<div class="archer-full-line">${line}</div>`;
+									} else {
+										html += `<div class="empty-position">vide</div>`;
+									}
+									
+									html += `</div></div>`;
+								});
+								
+								html += `</div></div>`;
+							} else {
+								// Case vide
+								html += `<div class="target-card" style="opacity:0.3;">
+									<div class="target-number"></div>
+									<div class="target-image" style="background: #f5f5f5;"></div>
+									<div class="target-archers-grid">
+										<div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+										<div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+										<div class="archer-column"><div class="position-header">B</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+										<div class="archer-column"><div class="position-header">D</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+									</div>
+								</div>`;
+							}
+						}
+						
+						html += `</div></div>`;
+					}
+				}
+				
+				html += `</div>`;
+				
+			}
+			
+			html += `</div></body></html>`;
+			
+			// Afficher
+			printWindow.document.write(html);
+			printWindow.document.close();
+			printWindow.focus();
+			
+			console.log('✅ PDF généré avec succès');
+			console.log('Base URL pour les images:', baseUrl);
+		};
 
-        // Fonction de débogage
+
         const debugTargets = () => {
             console.log('=== DÉBUG COMPLET DES CIBLES ===');
             
             const assignedArchers = archers.filter(a => 
-                a.session === selectedSession && a.targetNo
+                a.session === selectedSession && a.targetNo && a.targetNo !== ''
             );
             
             const targetNumbers = [...new Set(assignedArchers.map(a => a.targetNo.substring(0, 3)))];
@@ -1503,16 +2570,14 @@ button:has(.w-4.h-4) {
             console.log(`Cibles assignées: ${targetNumbers.length}`);
             console.log('Liste:', targetNumbers);
             
-            // Vérifier spécifiquement 21 et 22
             console.log('Cible 021:', targetNumbers.includes('021'));
             console.log('Cible 022:', targetNumbers.includes('022'));
         };
 
         const generateTargets = () => {
-            // Trouver la cible la plus haute
             let highestTarget = 0;
             archers.forEach(archer => {
-                if (archer.targetNo) {
+                if (archer.targetNo && archer.targetNo !== '') {
                     const targetNum = parseInt(archer.targetNo.substring(0, 3));
                     if (targetNum > highestTarget) {
                         highestTarget = targetNum;
@@ -1520,7 +2585,6 @@ button:has(.w-4.h-4) {
                 }
             });
             
-            // Générer au moins 30 cibles
             const maxTargets = Math.max(highestTarget + 5, 30);
             
             const targets = [];
@@ -1539,7 +2603,6 @@ button:has(.w-4.h-4) {
             return targets;
         };
 
-        // Fonction pour recalculer les targets
         const recalculateTargets = (archersList, session) => {
             const targets = generateTargets();
             return targets.map(target => ({
@@ -1556,7 +2619,6 @@ button:has(.w-4.h-4) {
 
         const [targets, setTargets] = useState(recalculateTargets(archers, selectedSession));
 
-        // Quand on change de session, recalculer les targets
         useEffect(() => {
             const updatedTargets = recalculateTargets(archers, selectedSession);
             setTargets(updatedTargets);
@@ -1569,14 +2631,13 @@ button:has(.w-4.h-4) {
              archer.country.toLowerCase().includes(searchTerm.toLowerCase()))
         );
 
-        const unassignedArchers = filteredArchers.filter(a => !a.targetNo);
-        const assignedArchers = filteredArchers.filter(a => a.targetNo);
+        const unassignedArchers = filteredArchers.filter(a => !a.targetNo || a.targetNo === '');
+        const assignedArchers = filteredArchers.filter(a => a.targetNo && a.targetNo !== '');
 
-        // Fonction pour obtenir la dernière cible assignée
         const getLastAssignedTarget = () => {
             let lastTarget = 0;
             assignedArchers.forEach(archer => {
-                if (archer.targetNo) {
+                if (archer.targetNo && archer.targetNo !== '') {
                     const targetNum = parseInt(archer.targetNo.substring(0, 3));
                     if (targetNum > lastTarget) {
                         lastTarget = targetNum;
@@ -1588,11 +2649,10 @@ button:has(.w-4.h-4) {
 
         const lastAssignedTarget = getLastAssignedTarget();
         
-        // Nouvelle logique pour déterminer le nombre de cibles à afficher dans l'overview
         const getTargetsToDisplay = () => {
             const assignedTargetNumbers = [];
             assignedArchers.forEach(archer => {
-                if (archer.targetNo) {
+                if (archer.targetNo && archer.targetNo !== '') {
                     const targetNum = parseInt(archer.targetNo.substring(0, 3));
                     if (!assignedTargetNumbers.includes(targetNum)) {
                         assignedTargetNumbers.push(targetNum);
@@ -1612,28 +2672,24 @@ button:has(.w-4.h-4) {
 
         const displayTargetsCount = getTargetsToDisplay();
 
-        // Fonction pour vérifier si une cible a des archers assignés
         const hasAssignedArchers = (targetId) => {
             return assignedArchers.some(archer => 
-                archer.targetNo && archer.targetNo.startsWith(targetId)
+                archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(targetId)
             );
         };
 
-        // Fonction pour compter le nombre d'archers sur une cible
         const countArchersOnTarget = (targetId) => {
             return assignedArchers.filter(archer => 
-                archer.targetNo && archer.targetNo.startsWith(targetId)
+                archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(targetId)
             ).length;
         };
 
-        // Gestion du scroll horizontal
         const handleOverviewScroll = () => {
             if (targetsOverviewRef.current) {
                 setScrollPosition(targetsOverviewRef.current.scrollLeft);
             }
         };
 
-        // Effet pour attacher l'événement de scroll
         useEffect(() => {
             const overviewElement = targetsOverviewRef.current;
             if (overviewElement) {
@@ -1660,21 +2716,18 @@ button:has(.w-4.h-4) {
             
             if (!draggedArcher) return;
             
-            // Récupérer la cible et la position
             const targetId = positionId.substring(0, 3);
             const positionLetter = positionId.charAt(3);
             const target = targets.find(t => t.id === targetId);
             
             if (!target) return;
             
-            // Vérifier si la position est bloquée par un fauteuil existant
             const isBlocked = isPositionBlockedByWheelchair(target, positionLetter, archers, selectedSession);
             if (isBlocked) {
                 showNotification('Cette position est bloquée par un archer en fauteuil', 'error');
                 return;
             }
             
-            // Si on déplace un fauteuil, vérifier qu'on ne bloque pas une position occupée
             if (draggedArcher.wheelchair) {
                 const blockingPairs = { 'A': 'C', 'C': 'A', 'B': 'D', 'D': 'B' };
                 const blockedPositionLetter = blockingPairs[positionLetter];
@@ -1689,7 +2742,6 @@ button:has(.w-4.h-4) {
                 }
             }
             
-            // Vérifier la compatibilité des targetFace
             const compatibilityCheck = checkDropCompatibility(
                 target, 
                 positionLetter, 
@@ -1703,18 +2755,14 @@ button:has(.w-4.h-4) {
                 return;
             }
             
-            // Récupérer l'archer actuellement sur cette position (s'il existe)
             const currentArcherOnPosition = archers.find(a => 
                 a.targetNo === positionId && 
                 a.session === selectedSession
             );
             
-            // Échanger ou assigner
             let updatedArchers = [...archers];
             
             if (currentArcherOnPosition) {
-                // Cas 1: Échange entre deux archers
-                // Vérifier aussi la compatibilité pour l'archer déplacé
                 const compatibilityCheck2 = checkDropCompatibility(
                     target,
                     positionLetter,
@@ -1739,7 +2787,6 @@ button:has(.w-4.h-4) {
                     return archer;
                 });
             } else {
-                // Cas 2: Assignation à une position vide
                 updatedArchers = updatedArchers.map(archer => {
                     if (archer.id === draggedArcher.id) {
                         return { ...archer, targetNo: positionId };
@@ -1750,11 +2797,9 @@ button:has(.w-4.h-4) {
             
             setArchers(updatedArchers);
             
-            // Recalculer les targets immédiatement
             const updatedTargets = recalculateTargets(updatedArchers, selectedSession);
             setTargets(updatedTargets);
             
-            // Sauvegarde
             if (!autoSaveBlocked) {
                 saveToDatabase(draggedArcher.id, positionId, selectedSession);
                 if (currentArcherOnPosition) {
@@ -1774,11 +2819,10 @@ button:has(.w-4.h-4) {
             );
         };
 
-        // Gestion du drag & drop des numéros de cible avec l'image
         const handleTargetNumberDragStart = (e, targetId) => {
-            // Vérifier si la cible a des archers assignés
             const hasArchers = archers.some(a => 
                 a.targetNo && 
+                a.targetNo !== '' &&
                 a.targetNo.startsWith(targetId) && 
                 a.session === selectedSession
             );
@@ -1793,7 +2837,6 @@ button:has(.w-4.h-4) {
             e.dataTransfer.effectAllowed = 'move';
             dragStartPos.current = { x: e.clientX, y: e.clientY };
             
-            // Feedback visuel
             setTimeout(() => {
                 const targetElement = e.target.closest('[data-target-id]');
                 if (targetElement) {
@@ -1815,7 +2858,6 @@ button:has(.w-4.h-4) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             
-            // Vérifier que ce n'est pas la même cible qu'on drag
             if (targetId !== draggedTargetId) {
                 setHoverTargetId(targetId);
             }
@@ -1835,15 +2877,14 @@ button:has(.w-4.h-4) {
             
             const sourceTargetId = data.split(':')[1];
             
-            // Vérifier que ce n'est pas la même cible
             if (!sourceTargetId || sourceTargetId === targetId) {
                 setHoverTargetId(null);
                 return;
             }
             
-            // Vérifier si la cible source a des archers
             const sourceArchers = archers.filter(a => 
                 a.targetNo && 
+                a.targetNo !== '' &&
                 a.targetNo.startsWith(sourceTargetId) && 
                 a.session === selectedSession
             );
@@ -1854,26 +2895,23 @@ button:has(.w-4.h-4) {
                 return;
             }
             
-            // Récupérer les archers de la cible destination
             const destArchers = archers.filter(a => 
                 a.targetNo && 
+                a.targetNo !== '' &&
                 a.targetNo.startsWith(targetId) && 
                 a.session === selectedSession
             );
             
-            // Vérifier la compatibilité globale avant l'échange
             const simulateExchange = () => {
                 const allArchersAfterExchange = archers.map(archer => {
                     if (archer.session !== selectedSession) return archer;
                     
-                    // Archers de la cible source → cible destination
-                    if (archer.targetNo && archer.targetNo.startsWith(sourceTargetId)) {
+                    if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(sourceTargetId)) {
                         const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
                         return { ...archer, targetNo: targetId + letter };
                     }
                     
-                    // Archers de la cible destination → cible source
-                    if (archer.targetNo && archer.targetNo.startsWith(targetId)) {
+                    if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(targetId)) {
                         const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
                         return { ...archer, targetNo: sourceTargetId + letter };
                     }
@@ -1881,7 +2919,6 @@ button:has(.w-4.h-4) {
                     return archer;
                 });
                 
-                // Vérifier la validité des deux cibles après échange
                 const sourceTargetAfter = {
                     id: sourceTargetId,
                     positions: ['A', 'B', 'C', 'D'].map(letter => ({
@@ -1906,13 +2943,12 @@ button:has(.w-4.h-4) {
                     }))
                 };
                 
-                // Vérifier les deux cibles
-                const sourceImageAfter = getCombinationImage(sourceTargetAfter);
-                const destImageAfter = getCombinationImage(destTargetAfter);
+                const sourceDataAfter = getCombinationImage(sourceTargetAfter);
+                const destDataAfter = getCombinationImage(destTargetAfter);
                 
                 return {
-                    sourceInvalid: sourceImageAfter === 'Img/xx.png',
-                    destInvalid: destImageAfter === 'Img/xx.png',
+                    sourceInvalid: sourceDataAfter.image === 'Img/xx.png',
+                    destInvalid: destDataAfter.image === 'Img/xx.png',
                     allArchersAfterExchange
                 };
             };
@@ -1931,16 +2967,13 @@ button:has(.w-4.h-4) {
                 return;
             }
             
-            // Échanger les positions
             const updatedArchers = simulation.allArchersAfterExchange;
 
             setArchers(updatedArchers);
             
-            // Recalculer les targets immédiatement
             const updatedTargets = recalculateTargets(updatedArchers, selectedSession);
             setTargets(updatedTargets);
 
-            // Sauvegarder tous les changements
             if (!autoSaveBlocked) {
                 sourceArchers.forEach(archer => {
                     const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
@@ -1982,7 +3015,6 @@ button:has(.w-4.h-4) {
 
             setArchers(updatedArchers);
             
-            // Recalculer les targets immédiatement
             const updatedTargets = recalculateTargets(updatedArchers, selectedSession);
             setTargets(updatedTargets);
 
@@ -2034,53 +3066,46 @@ button:has(.w-4.h-4) {
             return 'archer-assigned';
         };
 
-        // Fonction pour scroller vers une cible spécifique (CENTRER la cible dans le viewport)
         const scrollToTarget = (targetId) => {
             const element = document.querySelector(`[data-target-id="${targetId}"]`);
             if (element) {
-                // Utiliser l'API native scrollIntoView pour centrer la cible
                 element.scrollIntoView({
                     behavior: 'smooth',
-                    block: 'center',    // Centre verticalement la cible dans le conteneur
-                    inline: 'nearest'   // Pas de décalage horizontal
+                    block: 'center',
+                    inline: 'nearest'
                 });
                 
-                // Feedback visuel amélioré
                 element.classList.add('highlight-target');
                 
-                // Retirer le highlight après 2 secondes
                 setTimeout(() => {
                     element.classList.remove('highlight-target');
                 }, 2000);
             }
         };
 
-        // Fonction pour calculer l'image de combinaison d'une cible
         const getTargetCombinationImage = (targetId) => {
             const target = targets.find(t => t.id === targetId);
             if (!target) return null;
             return getCombinationImage(target);
         };
 
-        // Fonction pour vérifier si une cible a une configuration valide
         const isTargetValid = (targetId) => {
             const target = targets.find(t => t.id === targetId);
             if (!target) return true;
-            const image = getCombinationImage(target);
-            return image !== 'Img/xx.png';
+            const combinationData = getCombinationImage(target);
+            return combinationData.image !== 'Img/xx.png';
         };
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
                 <div className="mx-auto">
 
-                    {/* Barre de cibles miniatures */}
                     <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <div className="w-5 h-5 text-blue-600"><Icons.Grid /></div>
                                 <div className="flex items-center gap-3 ml-2">
-                                    <h2 className="text-lg font-bold text-gray-800">Départ :</h2>
+                                    <h2 className="text-lg font-bold text-gray-800">Départ</h2>
                                     <select
                                         value={selectedSession}
                                         onChange={(e) => {
@@ -2100,48 +3125,47 @@ button:has(.w-4.h-4) {
                                 </div>
                             </div>
                             
-<div className="flex items-center gap-2">
-    {/* BOUTON IMPRIMER PDF SIMPLIFIÉ */}
-<button
-    onClick={() => {
-        debugTargets();
-        generateSimplePDF();
-    }}
-    className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-    style={{
-        backgroundColor: '#2563eb',
-        color: 'white',
-        border: '2px solid #1d4ed8'
-    }}
-    onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = '#1d4ed8';
-    }}
-    onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = '#2563eb';
-    }}
-    title="Générer un PDF de toutes les cibles"
->
-    <div className="w-4 h-4"><Icons.Print /></div>
-    <span>Imprimer PDF</span>
-</button>
-    
-    <button
-        onClick={() => setShowTargetsOverview(!showTargetsOverview)}
-        className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
-    >
-        {showTargetsOverview ? (
-            <>
-                <span>Masquer</span>
-                <div className="w-4 h-4"><Icons.ChevronUp /></div>
-            </>
-        ) : (
-            <>
-                <span>Afficher</span>
-                <div className="w-4 h-4"><Icons.ChevronDown /></div>
-            </>
-        )}
-    </button>
-</div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => {
+                                        debugTargets();
+                                        generateSimplePDF();
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                                    style={{
+                                        backgroundColor: '#2563eb',
+                                        color: 'white',
+                                        border: '2px solid #1d4ed8'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#1d4ed8';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#2563eb';
+                                    }}
+                                    title="Générer un PDF de toutes les cibles via DragDropPlanPDF.php"
+                                >
+                                    <div className="w-4 h-4"><Icons.Print /></div>
+                                    <span>Imprimer PDF</span>
+                                </button>
+                                    
+                                    <button
+                                        onClick={() => setShowTargetsOverview(!showTargetsOverview)}
+                                        className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+                                    >
+                                        {showTargetsOverview ? (
+                                            <>
+                                                <span>Masquer</span>
+                                                <div className="w-4 h-4"><Icons.ChevronUp /></div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>Afficher</span>
+                                                <div className="w-4 h-4"><Icons.ChevronDown /></div>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                         </div>
                         
                         {showTargetsOverview && (
@@ -2155,71 +3179,77 @@ button:has(.w-4.h-4) {
                                         const targetNum = index + 1;
                                         const targetId = targetNum.toString().padStart(3, '0');
                                         
-                                        // Vérifier que la cible existe dans targets
                                         if (!targets.find(t => t.id === targetId)) return null;
                                         
-                                        const combinationImage = getTargetCombinationImage(targetId);
+                                        const combinationData = getTargetCombinationImage(targetId);
+                                        const combinationImage = combinationData ? combinationData.image : null;
+                                        const distance = combinationData ? combinationData.distance : null;
                                         const isValid = isTargetValid(targetId);
                                         const hasArchers = hasAssignedArchers(targetId);
                                         const archersCount = countArchersOnTarget(targetId);
                                         const isActive = hoverTargetId === targetId;
                                         
-										return (
-											<div
-												key={targetId}
-												className={`target-thumbnail flex-shrink-0 w-16 p-2 border-2 rounded-lg text-center cursor-pointer transition-all relative ${
-													isActive ? 'active border-blue-500 bg-blue-50' : 
-													!isValid ? 'border-red-300 bg-red-50' :
-													hasArchers ? 'has-archers' : 
-													'border-gray-200 bg-gray-50'
-												}`}
-												onClick={() => scrollToTarget(targetId)}
-												onMouseEnter={() => setHoverTargetId(targetId)}
-												onMouseLeave={() => {
-													if (hoverTargetId === targetId) {
-														setHoverTargetId(null);
-													}
-												}}
-												title={`Cible ${targetId} - ${archersCount} archer(s) - Cliquer pour aller à la cible`}
-											>
-												{/* Conteneur pour l'image */}
-												<div className="relative w-full h-16 mb-1 flex items-center justify-center">
-													{/* Image de combinaison */}
-													{combinationImage ? (
-														<img 
-															src={combinationImage} 
-															alt={`Cible ${targetId}`}
-															className="max-w-full max-h-full object-contain"
-															onError={(e) => {
-																e.target.style.display = 'none';
-															}}
-														/>
-													) : (
-														<div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
-															<div className="w-8 h-8 text-gray-400">
-																<Icons.Target />
-															</div>
-														</div>
-													)}
-													
-													{/* Badge avec nombre d'archers */}
-													{archersCount > 0 && (
-														<div className="target-badge">
-															{archersCount}
-														</div>
-													)}
-												</div>
-												
-												{/* Numéro de cible - TOUJOURS EN BAS */}
-												<div className={`font-bold mt-1 ${
-													!isValid ? 'text-red-600' :
-													hasArchers ? 'text-green-800' : 
-													'text-gray-500'
-												}`}>
-													{targetId}
-												</div>
-											</div>
-										);
+                                        return (
+                                            <div
+                                                key={targetId}
+                                                className={`target-thumbnail flex-shrink-0 w-16 p-2 border-2 rounded-lg text-center cursor-pointer transition-all relative ${
+                                                    isActive ? 'active border-blue-500 bg-blue-50' : 
+                                                    !isValid ? 'border-red-300 bg-red-50' :
+                                                    hasArchers ? 'has-archers' : 
+                                                    'border-gray-200 bg-gray-50'
+                                                }`}
+                                                onClick={() => scrollToTarget(targetId)}
+                                                onMouseEnter={() => setHoverTargetId(targetId)}
+                                                onMouseLeave={() => {
+                                                    if (hoverTargetId === targetId) {
+                                                        setHoverTargetId(null);
+                                                    }
+                                                }}
+                                                title={`Cible ${targetId} - ${archersCount} archer(s) - Cliquer pour aller à la cible`}
+                                            >
+                                                <div className="relative w-full h-16 mb-1 flex items-center justify-center">
+                                                    {combinationImage ? (
+                                                        <img 
+                                                            src={combinationImage} 
+                                                            alt={`Cible ${targetId}`}
+                                                            className="max-w-full max-h-full object-contain"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+                                                            <div className="w-8 h-8 text-gray-400">
+                                                                <Icons.Target />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {archersCount > 0 && (
+                                                        <div className="target-badge">
+                                                            {archersCount}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className={`font-bold mt-1 ${
+                                                    !isValid ? 'text-red-600' :
+                                                    hasArchers ? 'text-green-800' : 
+                                                    'text-gray-500'
+                                                }`}>
+                                                    {targetId}
+                                                </div>
+                                                
+                                                {/* AFFICHAGE DE LA DISTANCE */}
+                                                {distance && (
+                                                    <div className={`target-distance mt-1 ${
+                                                        parseInt(distance) <= 18 ? 'target-distance-indoor' : 'target-distance-outdoor'
+                                                    }`}>
+                                                        {distance}m
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
                                     }).filter(Boolean)}
                                 </div>
                                 
@@ -2227,13 +3257,11 @@ button:has(.w-4.h-4) {
                         )}
                     </div>
 
-                    <div className="flex gap-6">
-                        {/* Liste des archers non assignés - AVEC ZONE DE DROP AMÉLIORÉE */}
+                    <div className="flex gap-6 flex-container">
                         <div className="w-19 flex-shrink-0">
                             <div className="bg-white rounded-lg shadow-lg p-4 sticky top-6">
 
                                 
-                                {/* ZONE DE DROP AMÉLIORÉE - Solution 2 */}
                                 <div 
                                     className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 transition-colors bg-gray-50 min-h-[300px] cursor-copy"
                                     onDragOver={(e) => {
@@ -2248,7 +3276,6 @@ button:has(.w-4.h-4) {
                                         handleDropToUnassigned(e);
                                     }}
                                 >
-                                    {/* Titre amélioré */}
                                     <div className="text-center mb-4 pb-3 border-b border-gray-200">
                                         <div className="text-lg font-bold text-gray-800 mb-1">
                                             Non assignés ({unassignedArchers.length})
@@ -2258,38 +3285,66 @@ button:has(.w-4.h-4) {
                                         </div>
                                     </div>
                                     
-                                    {unassignedArchers.map(archer => (
-                                        <div
-                                            key={archer.id}
-                                            draggable
-                                            onDragStart={(e) => handleArcherDragStart(e, archer)}
-                                            onDragEnd={handleArcherDragEnd}
-                                            className={`p-3 border-2 rounded-lg cursor-move hover:shadow-md transition no-select ${getArcherBgColor(archer, false)}`}
-                                            data-archer-id={archer.id}
-                                        >
-                                            <div className="flex items-start gap-2">
-                                                {archer.targetFace && (
-                                                    <img 
-                                                        src={getTargetFaceImage(archer.targetFace)} 
-                                                        alt="Target face"
-                                                        className="w-12 h-12 flex-shrink-0"
-                                                    />
-                                                )}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className={`font-bold text-sm truncate ${getArcherTextColor(archer, false)}`}>
-                                                        {archer.name}
-                                                        {archer.wheelchair && ' ♿'}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600 mt-1 truncate">
-                                                        {archer.countryName}
-                                                    </div>
-                                                    <div className={`text-xs font-medium mt-1 truncate ${getArcherTextColor(archer, false)}`}>
-                                                        {archer.division}{archer.class}
+                                    {unassignedArchers.map(archer => {
+                                        const targetSizeLabel = getTargetSizeLabel(archer.targetSize);
+                                        const targetFaceLabel = getTargetFaceLabel(archer.targetFace);
+                                        const isIndoor = isIndoorTournament(archer.tournamentType);
+                                        const targetFaceImage = getArcherTargetFaceImage(archer);
+                                        const isCONational = archer.evCode?.startsWith('N') || false;
+                                        const isCOInternational = (archer.division === 'CO' || (archer.division && archer.division.includes('CO'))) && !isCONational;
+                                        
+                                        return (
+                                            <div
+                                                key={archer.id}
+                                                draggable
+                                                onDragStart={(e) => handleArcherDragStart(e, archer)}
+                                                onDragEnd={handleArcherDragEnd}
+                                                className={`p-3 border-2 rounded-lg cursor-move hover:shadow-md transition no-select ${getArcherBgColor(archer, false)}`}
+                                                data-archer-id={archer.id}
+                                            >
+                                                <div className="flex items-start gap-2">
+                                                    {targetFaceImage && (
+                                                        <img 
+                                                            src={targetFaceImage} 
+                                                            alt="Target face"
+                                                            className="w-12 h-12 flex-shrink-0"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className={`font-bold text-sm truncate ${getArcherTextColor(archer, false)}`}>
+                                                            {archer.name}
+                                                            {archer.wheelchair && ' ♿'}
+                                                        </div>
+                                                        <div className="text-xs text-gray-600 mt-1 truncate">
+                                                            {archer.countryName}
+                                                        </div>
+                                                        <div className={`text-xs font-medium mt-1 truncate ${getArcherTextColor(archer, false)}`}>
+                                                            {archer.evCode || (archer.class + archer.division)}
+                                                            {archer.distance && ` / ${archer.distance}m`}
+                                                        </div>
+                                                        
+                                                        {isDebugMode && (targetSizeLabel || targetFaceLabel) && (
+                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                {targetSizeLabel && isDebugMode && (
+                                                                    <span className="target-size-badge">
+                                                                        {targetSizeLabel}
+                                                                    </span>
+                                                                )}
+                                                                {targetFaceLabel && isDebugMode && (
+                                                                    <span className="face-badge">
+                                                                        {getTargetFaceLabel(archer.targetFace)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
 
                                     {unassignedArchers.length === 0 && (
                                         <div className="text-center text-gray-500 text-sm py-12 border-2 border-dashed border-gray-300 rounded-lg bg-white">
@@ -2310,8 +3365,7 @@ button:has(.w-4.h-4) {
                             </div>
                         </div>
 
-                        {/* Zone principale */}
-                        <div className="flex-1">
+                        <div className="main-target-column">
                             <div className="bg-white rounded-lg shadow-lg p-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-xl font-bold text-gray-800">
@@ -2329,12 +3383,15 @@ button:has(.w-4.h-4) {
                                     {targets.map((target) => {
                                         const hasArchers = archers.some(a => 
                                             a.targetNo && 
+                                            a.targetNo !== '' &&
                                             a.targetNo.startsWith(target.id) && 
                                             a.session === selectedSession
                                         );
                                         const isHovered = hoverTargetId === target.id;
-                                        const combinationImage = getCombinationImage(target);
-                                        const combinationLabel = "";  //  pour debug // getCombinationLabel(target);
+                                        const combinationData = getCombinationImage(target);
+                                        const combinationImage = combinationData.image;
+                                        const distance = combinationData.distance;
+                                        const combinationLabel = "";
                                         const isInvalidConfig = combinationImage === 'Img/xx.png';
                                         
                                         return (
@@ -2361,8 +3418,7 @@ button:has(.w-4.h-4) {
                                                 onDrop={(e) => handleTargetNumberDrop(e, target.id)}
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    {/* 4 positions */}
-                                                    <div className="flex-1 grid grid-cols-4 gap-3">
+                                                    <div className="flex-1 grid grid-cols-4 gap-2">
                                                         {target.positions.map((position) => {
                                                             const isBlockedByWheelchair = isPositionBlockedByWheelchair(
                                                                 target, 
@@ -2376,8 +3432,6 @@ button:has(.w-4.h-4) {
                                                                 <div
                                                                     key={position.id}
                                                                     onDragOver={(e) => {
-                                                                        // Permettre le drop même si la position est occupée
-                                                                        // (pour permettre les échanges entre archers)
                                                                         if (!isBlockedByWheelchair) {
                                                                             handleDragOver(e);
                                                                         }
@@ -2416,7 +3470,7 @@ button:has(.w-4.h-4) {
                                                                             <div className="text-xs text-gray-400 text-center">
                                                                                 Bloqué
                                                                             </div>
-                                                                        </div>
+                                                                    </div>
                                                                     ) : isOccupied ? (
                                                                         <div 
                                                                             draggable
@@ -2426,13 +3480,22 @@ button:has(.w-4.h-4) {
                                                                             data-archer-id={position.archer.id}
                                                                         >
                                                                             <div className="flex items-center gap-2 h-full">
-                                                                                {position.archer.targetFace && (
-                                                                                    <img 
-                                                                                        src={getTargetFaceImage(position.archer.targetFace)} 
-                                                                                        alt="Target face"
-                                                                                        className="w-12 h-12 flex-shrink-0"
-                                                                                    />
-                                                                                )}
+                                                                                {(() => {
+                                                                                    const targetFaceImage = getArcherTargetFaceImage(position.archer);
+                                                                                    if (targetFaceImage) {
+                                                                                        return (
+                                                                                            <img 
+                                                                                                src={targetFaceImage} 
+                                                                                                alt="Target face"
+                                                                                                className="w-12 h-12 flex-shrink-0"
+                                                                                                onError={(e) => {
+                                                                                                    e.target.style.display = 'none';
+                                                                                                }}
+                                                                                            />
+                                                                                        );
+                                                                                    }
+                                                                                    return null;
+                                                                                })()}
                                                                                 <div className="flex-1 min-w-0">
                                                                                     <div className={`font-bold text-xs truncate ${
                                                                                         position.archer.wheelchair ? 'text-blue-700' : 'text-green-700'
@@ -2442,28 +3505,43 @@ button:has(.w-4.h-4) {
                                                                                     </div>
                                                                                     <div className="text-xs text-gray-600 mt-1 truncate">
                                                                                         {position.archer.countryName}
-                                                    </div>
-                                                    <div className={`text-xs font-medium mt-1 truncate ${
-                                                        position.archer.wheelchair ? 'text-blue-600' : 'text-green-600'
-                                                    }`}>
-                                                        {position.archer.division}{position.archer.class}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="archer-content flex items-center justify-center">
-                                            <div className="w-6 h-6 text-gray-300">
-                                                <Icons.Target />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                                                                    </div>
+                                                                                    <div className={`text-xs font-medium mt-1 truncate ${
+                                                                                        position.archer.wheelchair ? 'text-blue-600' : 'text-green-600'
+                                                                                    }`}>
+                                                                                        {position.archer.evCode || (position.archer.class + position.archer.division)}
+                                                                                        {position.archer.distance && ` / ${position.archer.distance}m`}
+                                                                                    </div>
+                                                                                    
+                                                                                    {isDebugMode && (position.archer.targetSize || position.archer.targetFace) && (
+                                                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                                                            {position.archer.targetSize && isDebugMode && (
+                                                                                                <span className="target-size-badge">
+                                                                                                    {getTargetSizeLabel(position.archer.targetSize)}
+                                                                                                </span>
+                                                                                            )}
+                                                                                            {position.archer.targetFace && isDebugMode && (
+                                                                                                <span className="face-badge">
+                                                                                                    {getTargetFaceLabel(position.archer.targetFace)}
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="archer-content flex items-center justify-center">
+                                                                            <div className="w-6 h-6 text-gray-300">
+                                                                                <Icons.Target />
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             );
                                                         })}
                                                     </div>
                                                     
-                                                    {/* Numéro de cible + Image de combinaison - DRAGGABLE (INVERSÉ À DROITE) */}
                                                     <div className="flex-shrink-0 w-24 text-center">
                                                         <div 
                                                             draggable={hasArchers}
@@ -2476,7 +3554,6 @@ button:has(.w-4.h-4) {
                                                             }`}
                                                             title={hasArchers ? "Glisser pour échanger cette cible (avec image)" : "Cible vide"}
                                                         >
-                                                            {/* Image de combinaison en haut */}
                                                             {combinationImage && (
                                                                 <div className="relative mb-2">
                                                                     <img 
@@ -2501,7 +3578,6 @@ button:has(.w-4.h-4) {
                                                                 </div>
                                                             )}
                                                             
-                                                            {/* Numéro de cible en bas */}
                                                             <div className={`text-2xl font-bold ${
                                                                 hasArchers 
                                                                     ? 'text-blue-600' 
@@ -2509,14 +3585,22 @@ button:has(.w-4.h-4) {
                                                             }`}>
                                                                 {target.id}
                                                             </div>
+                                                            
+                                                            {/* AFFICHAGE DE LA DISTANCE SOUS LE NUMÉRO DE CIBLE */}
+                                                            {distance && (
+                                                                <div className={`target-main-distance mt-1 ${
+                                                                    parseInt(distance) <= 18 ? 'target-distance-indoor' : 'target-distance-outdoor'
+                                                                }`}>
+                                                                    {distance}m
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 
-                                                {/* Indicateur visuel pour le drag de cible */}
                                                 {isHovered && draggedTargetId && draggedTargetId !== target.id && (
                                                     <div className="mt-2 text-center">
-                                                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                                                        <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-green-100 text-green-800 text-sm rounded-full">
                                                             <Icons.Check />
                                                             <span>Relâcher pour échanger avec la cible {draggedTargetId}</span>
                                                         </div>
@@ -2527,54 +3611,11 @@ button:has(.w-4.h-4) {
                                     })}
                                 </div>
 
-                                <div className="mt-6 pt-4 border-t flex flex-wrap gap-6 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-gray-300 bg-white rounded"></div>
-                                        <span>Position libre (gris clair)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-green-600 bg-green-100 rounded"></div>
-                                        <span>Archer assigné (vert)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-blue-600 bg-blue-100 rounded"></div>
-                                        <span>Archer en fauteuil (bleu)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-orange-500 bg-orange-100 rounded"></div>
-                                        <span>Archer non-assigné (orange)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-gray-300 bg-gray-100 rounded opacity-70"></div>
-                                        <span>Position bloquée (fauteuil)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-blue-600 rounded cursor-move"></div>
-                                        <span>Numéro de cible draggable</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-green-500 rounded bg-green-50"></div>
-                                        <span>Cible prête pour l'échange</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-red-500 rounded bg-red-50"></div>
-                                        <span>Configuration invalide</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-3 border-green-300 bg-green-50 rounded"></div>
-                                        <span>Cible avec archers (en haut)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-orange-400 rounded bg-orange-50 cursor-copy"></div>
-                                        <span>Zone de désassignement</span>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Notifications */}
                 {notification && (
                     <div className={`fixed bottom-6 right-6 p-4 rounded-lg shadow-lg flex items-center gap-3 ${
                         notification.type === 'success' ? 'bg-green-100 text-green-800' :
@@ -2602,6 +3643,5 @@ button:has(.w-4.h-4) {
 </script>
 
 <?php 
-// Inclure le footer de Verification.php
 include('Common/Templates/tail.php');
 ?>
