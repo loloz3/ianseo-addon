@@ -541,6 +541,11 @@ include('Common/Templates/head.php');
 			
         <div class="github-section">
 			<li class="task-item">
+                <span class="task-icon">🛟</span>
+                <a href="<?php echo $basePath; ?>Modules/Custom/aide/ianseo_Backup.html" class="task-link" target="_blank">Guide complet de sauvegarde d'Ianseo sous Windows</a>
+            </li>
+		
+			<li class="task-item">
                 <span class="task-icon">🩺</span>
                 <a href="<?php echo $basePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
             </li>
