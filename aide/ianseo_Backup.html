@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide de sauvegarde Ianseo - Windows</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eaeaea;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        h2 {
+            color: #3498db;
+            margin: 25px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 20px;
+        }
+        
+        h3 {
+            color: #2980b9;
+            margin: 20px 0 10px 0;
+            font-size: 18px;
+        }
+        
+        .step {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .step-number {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            width: 28px;
+            height: 28px;
+            text-align: center;
+            line-height: 28px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .important {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .note {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid #eaeaea;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        
+        .image-caption {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .image-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .image-row .image-container {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+        }
+        
+        ul, ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .download-link {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .download-link:hover {
+            background-color: #2980b9;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            color: #777;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .image-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Guide complet de sauvegarde d'Ianseo sous Windows</h1>
+            <p><b>Procédure pour créer une sauvegarde complète de votre installation Ianseo</b></p>
+			<p>Ce guide reprend le principe du fichier initial fourni avec Ianseo, mais il inclut votre configuration, avec vos mises à jour et les modules additionnels installés.</p>
+        </header>
+        
+        <section>
+            <h2>Prérequis</h2>
+            
+            <div class="step">
+                <h3><span class="step-number">1</span>Télécharger et installer 7-Zip</h3>
+                <p>7-Zip est un logiciel gratuit de compression de fichiers avec un excellent taux de compression.</p>
+                <a href="https://www.7-zip.org/" class="download-link" target="_blank">Télécharger 7-Zip</a>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">2</span>Vérifier si vous avez besoin de la version 32 ou 64 bits</h3>
+                <p>Pour connaître l'architecture de votre système Windows :</p>
+                <ol>
+                    <li>Ouvrez l'invite de commandes (cmd)</li>
+                    <li>Tapez la commande : <code>msinfo32</code> ou <code>systeminfo</code></li>
+                    <li>Recherchez la ligne <strong>Type du système</strong></li>
+                </ol>
+                <div class="image-container">
+                    <img src="img/7zip.png" alt="Informations système avec msinfo32">
+                    <div class="image-caption">Vérifiez le "Type du système" (x64 ou x86)</div>
+                </div>
+            </div>
+            
+            <div class="important">
+                <p><strong>Important :</strong> Une fois 7-Zip installé, vous avez tous les outils nécessaires pour effectuer une sauvegarde complète depuis zéro.</p>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Procédure de sauvegarde</h2>
+            
+            <div class="step">
+                <h3><span class="step-number">1</span>Arrêter Apache et MySQL</h3>
+                <p>Avant toute sauvegarde, il est crucial d'arrêter les services pour éviter la corruption des données.</p>
+                <ol>
+                    <li>Ouvrez le panneau de contrôle XAMPP</li>
+                    <li>Cliquez sur <strong>Stop</strong> pour Apache</li>
+                    <li>Cliquez sur <strong>Stop</strong> pour MySQL</li>
+                </ol>
+                <div class="image-container">
+                    <img src="img/XAMPP_stop.png" alt="Arrêter Apache et MySQL dans XAMPP">
+                    <div class="image-caption">Arrêtez Apache et MySQL dans le panneau de contrôle XAMPP</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">2</span>Fermer complètement XAMPP</h3>
+                <p>Assurez-vous que XAMPP est complètement fermé, y compris l'icône dans la zone de notification.</p>
+                <div class="image-row">
+                    <div class="image-container">
+                        <img src="img/XAMPP_quit1.png" alt="Fermer XAMPP - étape 1">
+                        <div class="image-caption">Cliquez sur "Quit" dans XAMPP</div>
+                    </div>
+                    <div class="image-container">
+                        <img src="img/XAMPP_quit2.png" alt="Fermer XAMPP - étape 2">
+                        <div class="image-caption">Confirmez en cliquant sur "Quit"</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">3</span>Exécuter 7-Zip en tant qu'administrateur</h3>
+                <p>Pour éviter les problèmes de permissions, exécutez 7-Zip avec les privilèges d'administrateur.</p>
+                <div class="image-container">
+                    <img src="img/7zip_runAdmin.png" alt="Exécuter 7-Zip en tant qu'administrateur">
+                    <div class="image-caption">Faites un clic droit sur 7-Zip et sélectionnez "Exécuter en tant qu'administrateur"</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">4</span>Créer l'archive de sauvegarde</h3>
+                <ol>
+                    <li>Dans 7-Zip, sélectionnez le répertoire <code>ianseo</code></li>
+                    <li>Cliquez sur le bouton <strong>Add to archive</strong> (Ajouter à l'archive)</li>
+                    <li>Sélectionnez le format <strong>7z</strong></li>
+                    <li>Cochez l'option <strong>Create SFX archive</strong> (créer une archive auto-extractible)</li>
+                    <li>Cliquez sur <strong>OK</strong></li>
+                </ol>
+                <div class="image-row">
+                    <div class="image-container">
+                        <img src="img/7zip_addArchive.png" alt="Ajouter à l'archive">
+                        <div class="image-caption">Cliquez sur "Quit" dans XAMPP</div>
+                    <br>
+						<img src="img/7zip_SFX.png" alt="Créer une archive SFX avec 7-Zip">
+						<div class="image-caption">Configuration de l'archive SFX dans 7-Zip</div>
+					</div>
+                </div>
+                <div class="note">
+                    <p><strong>Note :</strong> L'option SFX crée un fichier .exe auto-extractible qui n'a pas besoin de 7-Zip pour être décompressé.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">5</span>Attendre la fin du processus</h3>
+                <p>Patientez pendant que 7-Zip crée l'archive de sauvegarde. La durée dépend de la taille de votre installation Ianseo.</p>
+                <p>Une fois terminé, vous aurez un fichier .exe qui contient votre sauvegarde complète !!!</p>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Restauration en cas de problème</h2>
+            
+            <div class="step">
+                <h3>Comment restaurer votre sauvegarde</h3>
+                <p>Si vous rencontrez des problèmes avec Ianseo :</p>
+                <ol>
+                    <li>Arrêtez Apache et MySQL comme indiqué précédemment</li>
+                    <li>Fermez complètement XAMPP</li>
+                    <li>Exécutez le fichier <code>.exe</code> de sauvegarde que vous avez créé</li>
+                    <li>Redémarrez XAMPP et les services</li>
+                </ol>
+                <p>Vous retrouverez rapidement une installation Ianseo fonctionnelle !</p>
+            </div>
+            
+        </section>
+        
+        <div class="footer">
+            <p>Guide de sauvegarde Ianseo - Windows • Dernière mise à jour : Février 2026</p>
+        </div>
+    </div>
+</body>
+</html>
