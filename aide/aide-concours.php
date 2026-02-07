@@ -1,4 +1,3 @@
-
 <?php
 /**
  * @license Libre - Copyright (c) 2025 Auteur Original
@@ -9,7 +8,7 @@
  * 
  * Contributeurs:
  * - Auteur Original
- * - Laurent Petroff - Les archer de Pérols- (modif: 2026-02-07)
+ * - Votre Nom - Votre Club - (modif: 2026-01-02)
  * 
  * Page d'aide pour l'organisation des concours
  * Racourcis et procédures pour avant, pendant et après la compétition
@@ -542,13 +541,8 @@ include('Common/Templates/head.php');
 			
         <div class="github-section">
 			<li class="task-item">
-                <span class="task-icon">💾</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/aide/ianseo_Backup.html" 
-                   class="task-link" 
-                   onclick="openBackupGuide(); return false;"
-                   title="Ouvre le guide dans une petite fenêtre pour le garder ouvert">
-                   Guide complet de sauvegarde d'Ianseo sous Windows
-                </a>
+                <span class="task-icon">🩺</span>
+                <a href="<?php echo $basePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
             </li>
 			
 			<li class="task-item">
@@ -561,25 +555,6 @@ include('Common/Templates/head.php');
 </div>
 
 <script>
-// Fonction pour ouvrir le guide de sauvegarde dans une fenêtre réduite
-function openBackupGuide() {
-    // Définir les dimensions de la fenêtre
-    const width = 900;
-    const height = 700;
-    
-    // Calculer la position pour centrer la fenêtre
-    const left = (screen.width - width) / 2;
-    const top = (screen.height - height) / 2;
-    
-    // Ouvrir la fenêtre avec les paramètres spécifiés
-    window.open(
-        '<?php echo $basePath; ?>Modules/Custom/aide/ianseo_Backup.html',
-        'GuideSauvegarde',
-        'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + 
-        ',scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
-    );
-}
-
 // Fonction pour réinitialiser les titres - INTÉGRÉE DIRECTEMENT
 function resetTitles() {
     // Afficher un indicateur de chargement
@@ -748,7 +723,7 @@ async function sauvegarderTournamentExport() {
             // Rediriger pour télécharger le fichier
             window.location.href = '<?php echo $basePath; ?>Tournament/TournamentExport.php?download=true';
         } else {
-            showNotification('❌ Erreur lors de l'export Tournament', 'error');
+            showNotification('❌ Erreur lors de l\'export Tournament', 'error');
         }
     } catch (error) {
         showNotification('❌ Erreur de connexion', 'error');
