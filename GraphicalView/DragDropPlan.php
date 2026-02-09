@@ -2314,12 +2314,42 @@ $Select = "SELECT
 						color: #000; 
 						margin-bottom: 4px; 
 					}
+					.target-image-container {
+						position: relative;
+						margin-bottom: 5px;
+					}
 					.target-image { 
 						width: 55px; 
 						height: 55px; 
 						object-fit: contain; 
 						margin: 0 auto; 
 						border: 1px solid #ddd;
+					}
+					.target-distance { 
+						position: absolute; 
+						bottom: -8px; 
+						left: 50%; 
+						transform: translateX(-50%);
+						font-size: 8px !important; 
+						font-weight: bold; 
+						padding: 1px 4px; 
+						border-radius: 3px; 
+						z-index: 2;
+						white-space: nowrap;
+						min-width: 30px;
+						text-align: center;
+						border: 1px solid;
+						background: white;
+					}
+					.target-distance-indoor { 
+						color: #059669; 
+						border-color: rgba(5, 150, 105, 0.2);
+						background-color: rgba(5, 150, 105, 0.1);
+					}
+					.target-distance-outdoor { 
+						color: #dc2626; 
+						border-color: rgba(220, 38, 38, 0.2);
+						background-color: rgba(220, 38, 38, 0.1);
 					}
 					.target-archers-grid { 
 						display: grid; 
@@ -2361,10 +2391,10 @@ $Select = "SELECT
 						text-orientation: mixed; 
 						height: 200px; 
 						display: flex; 
-						align-items: center; 
-						text-align: center; 
-						width: 100%; 
-					}
+								align-items: center; 
+								text-align: center; 
+								width: 100%; 
+							}
 					.empty-position { 
 						color: #999; 
 						font-size: 7.5px; 
@@ -2475,21 +2505,32 @@ $Select = "SELECT
 								};
 								const combinationData = getCombinationImage(targetObj);
 								const combinationImage = combinationData.image;
+								const distance = combinationData.distance; // Récupérer la distance
+								const isIndoor = distance && parseInt(distance) <= 18; // Déterminer si c'est intérieur
 								
 								html += `<div class="target-card">
-									<div class="target-number">${targetId}</div>`;
+									<div class="target-number">${targetId}</div>
+									<div class="target-image-container">`;
 								
 								if (combinationImage && combinationImage !== 'Img/xx.png') {
 									// Utiliser le chemin absolu pour l'image
 									const absoluteImagePath = baseUrl + combinationImage.replace('Img/', '');
 									html += `<img src="${absoluteImagePath}" class="target-image" alt="Cible ${targetId}" onerror="this.onerror=null; this.src=''; this.style.display='none'; console.error('Image non trouvée:', '${combinationImage}')">`;
+									
+									// AJOUTER LA DISTANCE SOUS L'IMAGE
+									if (distance) {
+										html += `<div class="target-distance ${isIndoor ? 'target-distance-indoor' : 'target-distance-outdoor'}">
+											${distance}m
+										</div>`;
+									}
 								} else {
 									html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
 										<div style="font-size: 8px; color: #999;">Pas d'image</div>
 									</div>`;
 								}
 								
-								html += `<div class="target-archers-grid">`;
+								html += `</div>
+									<div class="target-archers-grid">`;
 								
 								// Afficher les archers dans l'ordre A, C, B, D
 								['A', 'C', 'B', 'D'].forEach(letter => {
@@ -2526,7 +2567,9 @@ $Select = "SELECT
 								// Case vide
 								html += `<div class="target-card" style="opacity:0.3;">
 									<div class="target-number"></div>
-									<div class="target-image" style="background: #f5f5f5;"></div>
+									<div class="target-image-container">
+										<div class="target-image" style="background: #f5f5f5;"></div>
+									</div>
 									<div class="target-archers-grid">
 										<div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
 										<div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
