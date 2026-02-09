@@ -2209,6 +2209,7 @@ $Select = "SELECT
             setDraggedArcher(null);
         };
 
+
 		const generateSimplePDF = () => {
 			console.log('=== GÉNÉRATION PDF SIMPLIFIÉE ===');
 			
@@ -2245,6 +2246,35 @@ $Select = "SELECT
 			// Fonction pour récupérer les infos archer d'une position spécifique
 			const getArcherForPosition = (targetId, letter) => {
 				return assignedArchers.find(a => a.targetNo === `${targetId}${letter}`);
+			};
+			
+			// Fonction pour déterminer la taille de blason d'une cible
+			const getTargetSizeForTarget = (targetId) => {
+				const archersOnTarget = assignedArchers.filter(a => 
+					a.targetNo && a.targetNo.startsWith(targetId)
+				);
+				
+				if (archersOnTarget.length === 0) return null;
+				
+				// Prendre la taille du premier archer sur la cible
+				const firstArcher = archersOnTarget[0];
+				return firstArcher.targetSize || null;
+			};
+			
+			// Fonction pour formater la taille de blason
+			const formatTargetSize = (targetSize) => {
+				if (!targetSize) return '';
+				
+				const sizeMap = {
+					'80': '80cm',
+					'122': '122cm',
+					'40': '40cm',
+					'60': '60cm',
+					'3x40': '3x40cm',
+					'3x20': '3x20cm'
+				};
+				
+				return sizeMap[targetSize] || `${targetSize}cm`;
 			};
 			
 			// Ouvrir une fenêtre pour le PDF
@@ -2325,11 +2355,14 @@ $Select = "SELECT
 						margin: 0 auto; 
 						border: 1px solid #ddd;
 					}
-					.target-distance { 
-						position: absolute; 
-						bottom: -8px; 
-						left: 50%; 
-						transform: translateX(-50%);
+					.target-info-container {
+						display: flex;
+						justify-content: center;
+						gap: 5px;
+						margin-top: 3px;
+						flex-wrap: wrap;
+					}
+					.target-distance, .target-size { 
 						font-size: 8px !important; 
 						font-weight: bold; 
 						padding: 1px 4px; 
@@ -2341,6 +2374,11 @@ $Select = "SELECT
 						border: 1px solid;
 						background: white;
 					}
+					.target-distance { 
+						color: #dc2626; 
+						border-color: rgba(220, 38, 38, 0.2);
+						background-color: rgba(220, 38, 38, 0.1);
+					}
 					.target-distance-indoor { 
 						color: #059669; 
 						border-color: rgba(5, 150, 105, 0.2);
@@ -2350,6 +2388,11 @@ $Select = "SELECT
 						color: #dc2626; 
 						border-color: rgba(220, 38, 38, 0.2);
 						background-color: rgba(220, 38, 38, 0.1);
+					}
+					.target-size { 
+						color: #4f46e5; 
+						border-color: rgba(79, 70, 229, 0.2);
+						background-color: rgba(79, 70, 229, 0.1);
 					}
 					.target-archers-grid { 
 						display: grid; 
@@ -2391,10 +2434,10 @@ $Select = "SELECT
 						text-orientation: mixed; 
 						height: 200px; 
 						display: flex; 
-								align-items: center; 
-								text-align: center; 
-								width: 100%; 
-							}
+						align-items: center; 
+						text-align: center; 
+						width: 100%; 
+					}
 					.empty-position { 
 						color: #999; 
 						font-size: 7.5px; 
@@ -2508,6 +2551,10 @@ $Select = "SELECT
 								const distance = combinationData.distance; // Récupérer la distance
 								const isIndoor = distance && parseInt(distance) <= 18; // Déterminer si c'est intérieur
 								
+								// Récupérer la taille de blason
+								const targetSize = getTargetSizeForTarget(targetId);
+								const formattedTargetSize = formatTargetSize(targetSize);
+								
 								html += `<div class="target-card">
 									<div class="target-number">${targetId}</div>
 									<div class="target-image-container">`;
@@ -2516,16 +2563,25 @@ $Select = "SELECT
 									// Utiliser le chemin absolu pour l'image
 									const absoluteImagePath = baseUrl + combinationImage.replace('Img/', '');
 									html += `<img src="${absoluteImagePath}" class="target-image" alt="Cible ${targetId}" onerror="this.onerror=null; this.src=''; this.style.display='none'; console.error('Image non trouvée:', '${combinationImage}')">`;
-									
-									// AJOUTER LA DISTANCE SOUS L'IMAGE
-									if (distance) {
-										html += `<div class="target-distance ${isIndoor ? 'target-distance-indoor' : 'target-distance-outdoor'}">
-											${distance}m
-										</div>`;
-									}
 								} else {
 									html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
 										<div style="font-size: 8px; color: #999;">Pas d'image</div>
+									</div>`;
+								}
+								
+								html += `</div>
+									<div class="target-info-container">`;
+								
+								// AFFICHER LA DISTANCE ET LA TAILLE DU BLASON
+								if (distance) {
+									html += `<div class="target-distance ${isIndoor ? 'target-distance-indoor' : 'target-distance-outdoor'}">
+										${distance}m
+									</div>`;
+								}
+								
+								if (formattedTargetSize) {
+									html += `<div class="target-size">
+										${formattedTargetSize}
 									</div>`;
 								}
 								
@@ -2570,6 +2626,10 @@ $Select = "SELECT
 									<div class="target-image-container">
 										<div class="target-image" style="background: #f5f5f5;"></div>
 									</div>
+									<div class="target-info-container">
+										<div class="target-distance target-distance-indoor">-m</div>
+										<div class="target-size">-cm</div>
+									</div>
 									<div class="target-archers-grid">
 										<div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
 										<div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
@@ -2598,7 +2658,6 @@ $Select = "SELECT
 			console.log('✅ PDF généré avec succès');
 			console.log('Base URL pour les images:', baseUrl);
 		};
-
 
         const debugTargets = () => {
             console.log('=== DÉBUG COMPLET DES CIBLES ===');
