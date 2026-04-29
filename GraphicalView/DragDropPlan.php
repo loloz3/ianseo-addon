@@ -2603,455 +2603,468 @@ $Select = "SELECT
             setDraggedArcher(null);
         };
 
+// *************************************************************************************************************************************
+const generateSimplePDF = () => {
+    console.log('=== GÉNÉRATION PDF SIMPLIFIÉE ===');
+    
+    // Récupérer les données
+    const assignedArchers = archers.filter(a => 
+        a.session === selectedSession && a.targetNo && a.targetNo.length >= 4
+    );
+    
+    // Extraire les cibles uniques
+    const targetNumbers = [];
+    assignedArchers.forEach(archer => {
+        const targetNum = archer.targetNo.substring(0, 3);
+        if (!targetNumbers.includes(targetNum)) {
+            targetNumbers.push(targetNum);
+        }
+    });
+    
+    // Trier
+    targetNumbers.sort((a, b) => parseInt(a) - parseInt(b));
+    
+    console.log(`✅ ${targetNumbers.length} cibles:`, targetNumbers);
+    
+    if (targetNumbers.length === 0) {
+        alert('Aucune cible assignée pour ce départ');
+        return;
+    }
+    
+    // Récupérer le chemin de base actuel
+    const currentPath = window.location.pathname;
+    const baseDir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+    const baseUrl = window.location.origin + baseDir + 'Img/';
+    
+    // Créer un objet cible pour getTargetStandardImage
+    const createTargetObject = (targetId, assignedArchersList) => {
+        const positions = ['A', 'B', 'C', 'D'].map(letter => ({
+            id: `${targetId}${letter}`,
+            letter: letter,
+            archer: assignedArchersList.find(a => a.targetNo === `${targetId}${letter}`) || null
+        }));
+        return { id: targetId, positions };
+    };
+    
+    // Récupérer l'image standard d'une cible (utilise la même logique que getTargetStandardImage)
+    const getTargetImage = (targetId, assignedArchersList) => {
+        const targetObj = createTargetObject(targetId, assignedArchersList);
+        const result = getTargetStandardImage(targetObj.id);
+        return result;
+    };
+    
+    // Récupérer la taille du blason pour une cible
+    const getTargetSizeForTarget = (targetId) => {
+        const archersOnTarget = assignedArchers.filter(a => 
+            a.targetNo && a.targetNo.startsWith(targetId)
+        );
+        
+        if (archersOnTarget.length === 0) return null;
+        
+        // Prendre la taille du premier archer sur la cible
+        const firstArcher = archersOnTarget[0];
+        return firstArcher.targetSize || null;
+    };
+    
+    // Formater la taille de blason
+    const formatTargetSize = (targetSize) => {
+        if (!targetSize) return '';
+        
+        const sizeMap = {
+            '80': '80cm',
+            '122': '122cm',
+            '40': '40cm',
+            '60': '60cm',
+            '3x40': '3x40cm',
+            '3x20': '3x20cm'
+        };
+        
+        return sizeMap[targetSize] || `${targetSize}cm`;
+    };
+    
+    // Ouvrir une fenêtre pour le PDF
+    const printWindow = window.open('', '_blank', 'width=1800,height=1000');
+    
+    if (!printWindow) {
+        alert('⚠️ Veuillez autoriser les popups pour générer le PDF');
+        return;
+    }
+    
+    // Configuration des cibles par page
+    const TARGETS_PER_ROW = 10;  // 10 cibles par ligne
+    const MAX_ROWS_PER_PAGE = 2;  // 2 lignes par page maximum
+    const TARGETS_PER_PAGE = TARGETS_PER_ROW * MAX_ROWS_PER_PAGE;  // 20 cibles par page
+    
+    // Créer le HTML
+    let html = `<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Cibles - Départ ${selectedSession}</title>
+        <meta charset="UTF-8">
+        <style>
+            @page { 
+                size: landscape; 
+                margin: 5mm; 
+            }
+            body { 
+                margin: 0; 
+                padding: 0; 
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background: white; 
+            }
+            .page-container { 
+                padding: 8mm; 
+            }
+            .print-header { 
+                text-align: center; 
+                margin-bottom: 5mm; 
+            }
+            .print-header h1 { 
+                font-size: 24px; 
+                margin: 0 0 5px 0; 
+                color: #000; 
+            }
+            .print-header .subtitle { 
+                font-size: 14px; 
+                color: #666; 
+            }
+            .targets-layout { 
+                display: flex; 
+                flex-direction: column; 
+                gap: 15px; 
+                margin-bottom: 15mm; 
+            }
+            .targets-row { 
+                display: flex; 
+                justify-content: center; 
+                gap: 10px; 
+                margin-bottom: 15px;
+            }
+            .target-row-wrapper { 
+                display: flex; 
+                justify-content: space-between; 
+                width: 100%; 
+                gap: 8px;
+            }
+            .target-card { 
+                flex: 1;
+                min-width: 0;
+                text-align: center; 
+                max-width: calc(10% - 8px);
+            }
+            .target-number { 
+                font-size: 11px; 
+                font-weight: bold; 
+                color: #000; 
+                margin-bottom: 4px; 
+            }
+            .target-image-container {
+                position: relative;
+                margin-bottom: 5px;
+            }
+            .target-image { 
+                width: 50px; 
+                height: 50px; 
+                object-fit: contain; 
+                margin: 0 auto; 
+                border: 1px solid #ddd;
+            }
+            .target-info-container {
+                display: flex;
+                justify-content: center;
+                gap: 3px;
+                margin-top: 3px;
+                flex-wrap: wrap;
+            }
+            .target-distance, .target-size { 
+                font-size: 7px !important; 
+                font-weight: bold; 
+                padding: 1px 3px; 
+                border-radius: 3px; 
+                z-index: 2;
+                white-space: nowrap;
+                min-width: 28px;
+                text-align: center;
+                border: 1px solid;
+                background: white;
+            }
+            .target-distance { 
+                color: #dc2626; 
+                border-color: rgba(220, 38, 38, 0.2);
+                background-color: rgba(220, 38, 38, 0.1);
+            }
+            .target-distance-indoor { 
+                color: #059669; 
+                border-color: rgba(5, 150, 105, 0.2);
+                background-color: rgba(5, 150, 105, 0.1);
+            }
+            .target-distance-outdoor { 
+                color: #dc2626; 
+                border-color: rgba(220, 38, 38, 0.2);
+                background-color: rgba(220, 38, 38, 0.1);
+            }
+            .target-size { 
+                color: #4f46e5; 
+                border-color: rgba(79, 70, 229, 0.2);
+                background-color: rgba(79, 70, 229, 0.1);
+            }
+            .target-archers-grid { 
+                display: grid; 
+                grid-template-columns: repeat(4, 1fr); 
+                gap: 2px; 
+                font-size: 7px; 
+                margin-top: 5px;
+            }
+            .archer-column { 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+                min-height: 180px; 
+                border: 1px solid #e0e0e0; 
+                padding: 2px 1px; 
+                background: #fafafa; 
+            }
+            .position-header { 
+                font-weight: bold; 
+                font-size: 8px; 
+                color: #333; 
+                margin-bottom: 2px; 
+                width: 100%; 
+                text-align: center; 
+                background: #f0f0f0; 
+                padding: 1px 0; 
+            }
+            .archer-content { 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+                width: 100%; 
+                height: 180px; 
+                overflow: hidden; 
+                padding: 0 1px; 
+            }
+            .archer-full-line { 
+                font-size: 7px; 
+                writing-mode: vertical-lr; 
+                text-orientation: mixed; 
+                height: 180px; 
+                display: flex; 
+                align-items: center; 
+                text-align: center; 
+                width: 100%; 
+            }
+            .empty-position { 
+                color: #999; 
+                font-size: 6.5px; 
+                font-style: italic; 
+                writing-mode: vertical-lr; 
+                text-align: center; 
+                width: 100%; 
+                display: flex; 
+                align-items: center; 
+                height: 100%; 
+            }
+            .print-footer { 
+                text-align: center; 
+                margin-top: 12mm; 
+                font-size: 11px; 
+                color: #666; 
+                border-top: 1px solid #ddd; 
+                padding-top: 4mm; 
+            }
+            .print-controls { 
+                position: fixed;
+                top: 20px; 
+                right: 20px; 
+                z-index: 10000; 
+                display: flex; 
+                gap: 10px; 
+            }
+            .print-button { 
+                padding: 10px 20px; 
+                background: #3b82f6; 
+                color: white; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+            }
+            .close-button { 
+                padding: 10px 20px; 
+                background: #6b7280; 
+                color: white; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+            }
+            .page-break { 
+                page-break-before: always; 
+            }
+            @media print { 
+                .print-controls { 
+                    display: none !important; 
+                } 
+                .page-container { 
+                    padding: 0; 
+                } 
+            }
+        </style>
+    </head>
+    <body>
+        <div class="print-controls">
+            <button class="print-button" onclick="window.print()">Imprimer</button>
+            <button class="close-button" onclick="window.close()">Fermer</button>
+        </div>
+        
+        <div class="page-container">`;
+    
+    // Calculer le nombre de pages nécessaires
+    const totalPages = Math.ceil(targetNumbers.length / TARGETS_PER_PAGE);
+    
+    for (let page = 0; page < totalPages; page++) {
+        const start = page * TARGETS_PER_PAGE;
+        const end = Math.min(start + TARGETS_PER_PAGE, targetNumbers.length);
+        const pageTargets = targetNumbers.slice(start, end);
+        
+        if (page > 0) {
+            html += `<div class="page-break"></div>`;
+        }
+        
+        html += `
+            <div class="print-header">
+                <h1>Cibles - Départ ${selectedSession}</h1>
+                <div class="subtitle">Page ${page + 1} sur ${totalPages} (${pageTargets.length} cibles)</div>
+            </div>
+            
+            <div class="targets-layout">`;
+        
+        // Parcourir les lignes (2 lignes max par page)
+        const totalRows = Math.min(MAX_ROWS_PER_PAGE, Math.ceil(pageTargets.length / TARGETS_PER_ROW));
+        
+        for (let row = 0; row < totalRows; row++) {
+            const rowStart = row * TARGETS_PER_ROW;
+            const rowEnd = Math.min(rowStart + TARGETS_PER_ROW, pageTargets.length);
+            const rowTargets = pageTargets.slice(rowStart, rowEnd);
+            
+            if (rowTargets.length > 0) {
+                html += `<div class="targets-row">
+                    <div class="target-row-wrapper">`;
+                
+                // Afficher exactement 10 cibles par ligne (certaines peuvent être vides)
+                for (let i = 0; i < TARGETS_PER_ROW; i++) {
+                    if (i < rowTargets.length) {
+                        const targetId = rowTargets[i];
+                        // Utiliser getTargetStandardImage pour l'image
+                        const imageData = getTargetImage(targetId, assignedArchers);
+                        const standardImage = imageData ? imageData.image : null;
+                        const distance = imageData ? imageData.distance : null;
+                        const isIndoor = distance && parseInt(distance) <= 18;
+                        
+                        // Récupérer la taille du blason
+                        const targetSize = getTargetSizeForTarget(targetId);
+                        const formattedTargetSize = formatTargetSize(targetSize);
+                        
+                        html += `<div class="target-card">
+                            <div class="target-number">${targetId}</div>
+                            <div class="target-image-container">`;
+                        
+                        if (standardImage && standardImage !== 'Img/xx.png') {
+                            const absoluteImagePath = baseUrl + standardImage.replace('Img/', '');
+                            html += `<img src="${absoluteImagePath}" class="target-image" alt="Cible ${targetId}" onerror="this.onerror=null; this.src=''; this.style.display='none';">`;
+                        } else {
+                            html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
+                                <div style="font-size: 7px; color: #999;">Pas d'image</div>
+                            </div>`;
+                        }
+                        
+                        html += `</div>
+                            <div class="target-info-container">`;
+                        
+                        // Afficher la distance
+                        if (distance) {
+                            html += `<div class="target-distance ${isIndoor ? 'target-distance-indoor' : 'target-distance-outdoor'}">
+                                ${distance}m
+                            </div>`;
+                        }
+                        
+                        // Afficher la taille du blason
+                        if (formattedTargetSize) {
+                            html += `<div class="target-size">
+                                ${formattedTargetSize}
+                            </div>`;
+                        }
+                        
+                        html += `</div>
+                            <div class="target-archers-grid">`;
+                        
+                        // Afficher les archers dans l'ordre A, C, B, D
+                        ['A', 'C', 'B', 'D'].forEach(letter => {
+                            const archer = assignedArchers.find(a => a.targetNo === `${targetId}${letter}`);
+                            
+                            html += `<div class="archer-column">
+                                <div class="position-header">${letter}</div>
+                                <div class="archer-content">`;
+                            
+                            if (archer) {
+                                const division = archer.division || '';
+                                const archerClass = archer.class || '';
+                                const name = archer.name || '';
+                                const country = archer.countryName || '';
+                                
+                                let line = '';
+                                if (division) line += `<span style="font-weight: bold;">${division}</span>`;
+                                if (archerClass) line += (line ? ' ' : '') + `<span>${archerClass}</span>`;
+                                if ((division || archerClass) && name) line += ' ';
+                                if (name) line += `<span style="font-weight: bold;">&nbsp;${name}&nbsp;</span>`;
+                                if (name && country) line += ' ';
+                                if (country) line += `<span style="font-weight: bold;">&nbsp;/ ${country}</span>`;
+                                
+                                html += `<div class="archer-full-line">${line}</div>`;
+                            } else {
+                                html += `<div class="empty-position">vide</div>`;
+                            }
+                            
+                            html += `</div></div>`;
+                        });
+                        
+                        html += `</div></div>`;
+                    } else {
+                        // Case vide pour compléter la ligne à 10 cibles
+                        html += `<div class="target-card" style="opacity:0.3;">
+                            <div class="target-number"></div>
+                            <div class="target-image-container">
+                                <div class="target-image" style="background: #f5f5f5;"></div>
+                            </div>
+                            <div class="target-info-container">
+                                <div class="target-distance target-distance-indoor">-m</div>
+                                <div class="target-size">-cm</div>
+                            </div>
+                            <div class="target-archers-grid">
+                                <div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                <div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                <div class="archer-column"><div class="position-header">B</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                                <div class="archer-column"><div class="position-header">D</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
+                            </div>
+                        </div>`;
+                    }
+                }
+                
+                html += `</div></div>`;
+            }
+        }
+        
+        html += `</div>`;
+    }
+    
+    html += `</div></body></html>`;
+    
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    
+    console.log('✅ PDF généré avec succès');
+};
 
-		const generateSimplePDF = () => {
-			console.log('=== GÉNÉRATION PDF SIMPLIFIÉE ===');
-			
-			// Récupérer les données
-			const assignedArchers = archers.filter(a => 
-				a.session === selectedSession && a.targetNo && a.targetNo.length >= 4
-			);
-			
-			// Extraire les cibles uniques
-			const targetNumbers = [];
-			assignedArchers.forEach(archer => {
-				const targetNum = archer.targetNo.substring(0, 3);
-				if (!targetNumbers.includes(targetNum)) {
-					targetNumbers.push(targetNum);
-				}
-			});
-			
-			// Trier
-			targetNumbers.sort((a, b) => parseInt(a) - parseInt(b));
-			
-			console.log(`✅ ${targetNumbers.length} cibles:`, targetNumbers);
-			
-			if (targetNumbers.length === 0) {
-				alert('Aucune cible assignée pour ce départ');
-				return;
-			}
-			
-			// Récupérer le chemin de base actuel
-			const currentPath = window.location.pathname;
-			const baseDir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-			// Construire le chemin absolu pour les images
-			const baseUrl = window.location.origin + baseDir + 'Img/';
-			
-			// Fonction pour récupérer les infos archer d'une position spécifique
-			const getArcherForPosition = (targetId, letter) => {
-				return assignedArchers.find(a => a.targetNo === `${targetId}${letter}`);
-			};
-			
-			// Fonction pour déterminer la taille de blason d'une cible
-			const getTargetSizeForTarget = (targetId) => {
-				const archersOnTarget = assignedArchers.filter(a => 
-					a.targetNo && a.targetNo.startsWith(targetId)
-				);
-				
-				if (archersOnTarget.length === 0) return null;
-				
-				// Prendre la taille du premier archer sur la cible
-				const firstArcher = archersOnTarget[0];
-				return firstArcher.targetSize || null;
-			};
-			
-			// Fonction pour formater la taille de blason
-			const formatTargetSize = (targetSize) => {
-				if (!targetSize) return '';
-				
-				const sizeMap = {
-					'80': '80cm',
-					'122': '122cm',
-					'40': '40cm',
-					'60': '60cm',
-					'3x40': '3x40cm',
-					'3x20': '3x20cm'
-				};
-				
-				return sizeMap[targetSize] || `${targetSize}cm`;
-			};
-			
-			// Ouvrir une fenêtre pour le PDF
-			const printWindow = window.open('', '_blank', 'width=1800,height=1000');
-			
-			if (!printWindow) {
-				alert('⚠️ Veuillez autoriser les popups pour générer le PDF');
-				return;
-			}
-			
-			// Créer le HTML avec le CSS cible
-			let html = `<!DOCTYPE html>
-			<html>
-			<head>
-				<title>Cibles - Départ ${selectedSession}</title>
-				<meta charset="UTF-8">
-				<style>
-					@page { 
-						size: landscape; 
-						margin: 5mm; 
-					}
-					body { 
-						margin: 0; 
-						padding: 0; 
-						font-family: 'Segoe UI', Arial, sans-serif;
-						background: white; 
-					}
-					.page-container { 
-						padding: 8mm; 
-					}
-					.print-header { 
-						text-align: center; 
-						margin-bottom: 5mm; 
-					}
-					.print-header h1 { 
-						font-size: 24px; 
-						margin: 0 0 5px 0; 
-						color: #000; 
-					}
-					.print-header .subtitle { 
-						font-size: 14px; 
-						color: #666; 
-					}
-					.targets-layout { 
-						display: flex; 
-						flex-direction: column; 
-						gap: 15px; 
-						margin-bottom: 15mm; 
-					}
-					.targets-row { 
-						display: flex; 
-						justify-content: center; 
-						gap: 10px; 
-					}
-					.target-row-wrapper { 
-						display: flex; 
-						justify-content: space-between; 
-						width: 100%; 
-					}
-					.target-card { 
-						flex: 0 0 7%; 
-						text-align: center; 
-					}
-					.target-number { 
-						font-size: 13px; 
-						font-weight: bold; 
-						color: #000; 
-						margin-bottom: 4px; 
-					}
-					.target-image-container {
-						position: relative;
-						margin-bottom: 5px;
-					}
-					.target-image { 
-						width: 55px; 
-						height: 55px; 
-						object-fit: contain; 
-						margin: 0 auto; 
-						border: 1px solid #ddd;
-					}
-					.target-info-container {
-						display: flex;
-						justify-content: center;
-						gap: 5px;
-						margin-top: 3px;
-						flex-wrap: wrap;
-					}
-					.target-distance, .target-size { 
-						font-size: 8px !important; 
-						font-weight: bold; 
-						padding: 1px 4px; 
-						border-radius: 3px; 
-						z-index: 2;
-						white-space: nowrap;
-						min-width: 30px;
-						text-align: center;
-						border: 1px solid;
-						background: white;
-					}
-					.target-distance { 
-						color: #dc2626; 
-						border-color: rgba(220, 38, 38, 0.2);
-						background-color: rgba(220, 38, 38, 0.1);
-					}
-					.target-distance-indoor { 
-						color: #059669; 
-						border-color: rgba(5, 150, 105, 0.2);
-						background-color: rgba(5, 150, 105, 0.1);
-					}
-					.target-distance-outdoor { 
-						color: #dc2626; 
-						border-color: rgba(220, 38, 38, 0.2);
-						background-color: rgba(220, 38, 38, 0.1);
-					}
-					.target-size { 
-						color: #4f46e5; 
-						border-color: rgba(79, 70, 229, 0.2);
-						background-color: rgba(79, 70, 229, 0.1);
-					}
-					.target-archers-grid { 
-						display: grid; 
-						grid-template-columns: repeat(4, 1fr); 
-						gap: 3px; 
-						font-size: 8px; 
-					}
-					.archer-column { 
-						display: flex; 
-						flex-direction: column; 
-						align-items: center; 
-						min-height: 200px; 
-						border: 1px solid #e0e0e0; 
-						padding: 3px 2px; 
-						background: #fafafa; 
-					}
-					.position-header { 
-						font-weight: bold; 
-						font-size: 9px; 
-						color: #333; 
-						margin-bottom: 2px; 
-						width: 100%; 
-						text-align: center; 
-						background: #f0f0f0; 
-						padding: 1px 0; 
-					}
-					.archer-content { 
-						display: flex; 
-						flex-direction: column; 
-						align-items: center; 
-						width: 100%; 
-						height: 200px; 
-						overflow: hidden; 
-						padding: 0 1px; 
-					}
-					.archer-full-line { 
-						font-size: 8px; 
-						writing-mode: vertical-lr; 
-						text-orientation: mixed; 
-						height: 200px; 
-						display: flex; 
-						align-items: center; 
-						text-align: center; 
-						width: 100%; 
-					}
-					.empty-position { 
-						color: #999; 
-						font-size: 7.5px; 
-						font-style: italic; 
-						writing-mode: vertical-lr; 
-						text-align: center; 
-						width: 100%; 
-						display: flex; 
-						align-items: center; 
-						height: 100%; 
-					}
-					.print-footer { 
-						text-align: center; 
-						margin-top: 12mm; 
-						font-size: 11px; 
-						color: #666; 
-						border-top: 1px solid #ddd; 
-						padding-top: 4mm; 
-					}
-					.print-controls { 
-						position: fixed;
-						top: 20px; 
-						right: 20px; 
-						z-index: 10000; 
-						display: flex; 
-						gap: 10px; 
-					}
-					.print-button { 
-						padding: 10px 20px; 
-						background: #3b82f6; 
-						color: white; 
-						border: none; 
-						border-radius: 5px; 
-						cursor: pointer; 
-					}
-					.close-button { 
-						padding: 10px 20px; 
-						background: #6b7280; 
-						color: white; 
-						border: none; 
-						border-radius: 5px; 
-						cursor: pointer; 
-					}
-					.page-break { 
-						page-break-before: always; 
-					}
-					@media print { 
-						.print-controls { 
-							display: none !important; 
-						} 
-						.page-container { 
-							padding: 0; 
-						} 
-					}
-				</style>
-			</head>
-			<body>
-				<div class="print-controls">
-					<button class="print-button" onclick="window.print()">Imprimer</button>
-					<button class="close-button" onclick="window.close()">Fermer</button>
-				</div>
-				
-				<div class="page-container">`;
-			
-			// Diviser en pages de 20 cibles
-			const targetsPerPage = 20;
-			const totalPages = Math.ceil(targetNumbers.length / targetsPerPage);
-			
-			for (let page = 0; page < totalPages; page++) {
-				const start = page * targetsPerPage;
-				const end = start + targetsPerPage;
-				const pageTargets = targetNumbers.slice(start, end);
-				
-				// Ajouter un saut de page sauf pour la première page
-				if (page > 0) {
-					html += `<div class="page-break"></div>`;
-				}
-				
-				html += `
-					<div class="print-header">
-						<h1>Cibles - Départ ${selectedSession}</h1>
-						<div class="subtitle">Page ${page + 1} sur ${totalPages}</div>
-					</div>
-					
-					<div class="targets-layout">`;
-				
-				// 2 lignes de 10 cibles
-				for (let row = 0; row < 2; row++) {
-					const rowStart = row * 10;
-					const rowEnd = rowStart + 10;
-					const rowTargets = pageTargets.slice(rowStart, rowEnd);
-					
-					if (rowTargets.length > 0) {
-						html += `<div class="targets-row">
-							<div class="target-row-wrapper">`;
-						
-						for (let i = 0; i < 10; i++) {
-							if (i < rowTargets.length) {
-								const targetId = rowTargets[i];
-								// Créer un objet cible pour getCombinationImage
-								const targetObj = {
-									id: targetId,
-									positions: ['A', 'B', 'C', 'D'].map(letter => ({
-										id: `${targetId}${letter}`,
-										letter: letter,
-										archer: getArcherForPosition(targetId, letter)
-									}))
-								};
-								const combinationData = getCombinationImage(targetObj);
-								const combinationImage = combinationData.image;
-								const distance = combinationData.distance; // Récupérer la distance
-								const isIndoor = distance && parseInt(distance) <= 18; // Déterminer si c'est intérieur
-								
-								// Récupérer la taille de blason
-								const targetSize = getTargetSizeForTarget(targetId);
-								const formattedTargetSize = formatTargetSize(targetSize);
-								
-								html += `<div class="target-card">
-									<div class="target-number">${targetId}</div>
-									<div class="target-image-container">`;
-								
-								if (combinationImage && combinationImage !== 'Img/xx.png') {
-									// Utiliser le chemin absolu pour l'image
-									const absoluteImagePath = baseUrl + combinationImage.replace('Img/', '');
-									html += `<img src="${absoluteImagePath}" class="target-image" alt="Cible ${targetId}" onerror="this.onerror=null; this.src=''; this.style.display='none'; console.error('Image non trouvée:', '${combinationImage}')">`;
-								} else {
-									html += `<div class="target-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 3px;">
-										<div style="font-size: 8px; color: #999;">Pas d'image</div>
-									</div>`;
-								}
-								
-								html += `</div>
-									<div class="target-info-container">`;
-								
-								// AFFICHER LA DISTANCE ET LA TAILLE DU BLASON
-								if (distance) {
-									html += `<div class="target-distance ${isIndoor ? 'target-distance-indoor' : 'target-distance-outdoor'}">
-										${distance}m
-									</div>`;
-								}
-								
-								if (formattedTargetSize) {
-									html += `<div class="target-size">
-										${formattedTargetSize}
-									</div>`;
-								}
-								
-								html += `</div>
-									<div class="target-archers-grid">`;
-								
-								// Afficher les archers dans l'ordre A, C, B, D
-								['A', 'C', 'B', 'D'].forEach(letter => {
-									const archer = getArcherForPosition(targetId, letter);
-									
-									html += `<div class="archer-column">
-										<div class="position-header">${letter}</div>
-										<div class="archer-content">`;
-									
-									if (archer) {
-										const division = archer.division || '';
-										const archerClass = archer.class || '';
-										const name = archer.name || '';
-										const country = archer.countryName || '';
-										
-										let line = '';
-										if (division) line += `<span style="font-weight: bold;">${division}</span>`;
-										if (archerClass) line += (line ? ' ' : '') + `<span>${archerClass}</span>`;
-										if ((division || archerClass) && name) line += ' ';
-										if (name) line += `<span style="font-weight: bold;">&nbsp;${name}&nbsp;</span>`;
-										if (name && country) line += ' ';
-										if (country) line += `<span style="font-weight: bold;">&nbsp;/ ${country}</span>`;
-										
-										html += `<div class="archer-full-line">${line}</div>`;
-									} else {
-										html += `<div class="empty-position">vide</div>`;
-									}
-									
-									html += `</div></div>`;
-								});
-								
-								html += `</div></div>`;
-							} else {
-								// Case vide
-								html += `<div class="target-card" style="opacity:0.3;">
-									<div class="target-number"></div>
-									<div class="target-image-container">
-										<div class="target-image" style="background: #f5f5f5;"></div>
-									</div>
-									<div class="target-info-container">
-										<div class="target-distance target-distance-indoor">-m</div>
-										<div class="target-size">-cm</div>
-									</div>
-									<div class="target-archers-grid">
-										<div class="archer-column"><div class="position-header">A</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-										<div class="archer-column"><div class="position-header">C</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-										<div class="archer-column"><div class="position-header">B</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-										<div class="archer-column"><div class="position-header">D</div><div class="archer-content" style="background: #f9f9f9;"></div></div>
-									</div>
-								</div>`;
-							}
-						}
-						
-						html += `</div></div>`;
-					}
-				}
-				
-				html += `</div>`;
-				
-			}
-			
-			html += `</div></body></html>`;
-			
-			// Afficher
-			printWindow.document.write(html);
-			printWindow.document.close();
-			printWindow.focus();
-			
-			console.log('✅ PDF généré avec succès');
-			console.log('Base URL pour les images:', baseUrl);
-		};
+// *************************************************************************************************************************************
 
         const debugTargets = () => {
             console.log('=== DÉBUG COMPLET DES CIBLES ===');
