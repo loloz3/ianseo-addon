@@ -511,6 +511,10 @@ include('Common/Templates/head.php');
             </li>
             
             <li class="task-item">
+                <span class="task-icon">🔒</span>
+                <a href="<?php echo $basePath; ?>/Api/ISK-NG/Sessions.php" class="task-link" target="_blank">Vérouillage d'un départ</a>
+            </li>
+            <li class="task-item">
                 <span class="task-icon">🔄</span>
                 <a href="<?php echo $basePath; ?>Tournament/UploadResults.php?QUAL&" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
             </li>
