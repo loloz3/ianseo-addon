@@ -32,10 +32,125 @@ $IncludeJquery = true;
 
 // Affichage du header avant le contenu HTML
 include('Common/Templates/head.php');
+
+function calculateDistanceAndTargetSize($division, $class, $evCode, $isIndoor = false) {
+    $distance = '';
+    $targetSize = '';
+    
+    // Extraire la catégorie d'âge
+    $category = '';
+    if (preg_match('/(U11|U13|U15|U18|U21|S1|S2|S3)/', $division, $matches)) {
+        $category = $matches[1];
+    } elseif (preg_match('/(U11|U13|U15|U18|U21|S1|S2|S3)/', $class, $matches)) {
+        $category = $matches[1];
+    }
+    
+    // Déterminer si c'est National (M/W dans la classe) ou International
+    $isNational = (strpos($class, 'M') !== false || strpos($class, 'W') !== false);
+    $isInternational = !$isNational;
+    
+    // Déterminer le type d'arc
+    $isClassique = (strpos($division, 'CL') !== false);
+    $isCompound = (strpos($division, 'CO') !== false);
+    $isBarebow = (strpos($division, 'BB') !== false) || $evCode === 'SHBB' || $evCode === 'SFBB';
+    
+    // ========== RÈGLES INDOOR ==========
+    if ($isIndoor) {
+        // RÈGLES TAE INDOOR
+        
+        // Pour tous les archers en Indoor
+        if ($isBarebow) {
+            // Barebow indoor - 18m, blason 60cm (par défaut)
+            $distance = '18';
+            $targetSize = '60';
+        } elseif ($isCompound) {
+            // Compound indoor - 18m, blason 40cm (6 zones)
+            $distance = '18';
+            $targetSize = '40';
+        } elseif ($isClassique) {
+            // Classique indoor - 18m, blason 60cm
+            $distance = '18';
+            $targetSize = '60';
+        } else {
+            // Par défaut
+            $distance = '18';
+            $targetSize = '60';
+        }
+        
+        return ['distance' => $distance, 'targetSize' => $targetSize];
+    }
+    
+    // ========== RÈGLES OUTDOOR (TAE Extérieur) ==========
+    // TAE NATIONAL pour BB (Barebow)
+    if ($isBarebow && $isNational) {
+        switch ($category) {
+            case 'U15': $distance = '30'; $targetSize = '80'; break;
+            case 'U18': $distance = '30'; $targetSize = '80'; break;
+            case 'U21': $distance = '50'; $targetSize = '122'; break;
+            case 'S1':  $distance = '50'; $targetSize = '122'; break;
+            case 'S2':  $distance = '50'; $targetSize = '122'; break;
+            case 'S3':  $distance = '50'; $targetSize = '122'; break;
+            default:    $distance = '50'; $targetSize = '122'; break;
+        }
+    }
+    // TAE NATIONAL pour Classique
+    elseif ($isClassique && $isNational) {
+        switch ($category) {
+            case 'U13': $distance = '20'; $targetSize = '80'; break;
+            case 'U15': $distance = '30'; $targetSize = '80'; break;
+            case 'U18': $distance = '50'; $targetSize = '122'; break;
+            case 'U21': $distance = '50'; $targetSize = '122'; break;
+            case 'S1':  $distance = '50'; $targetSize = '122'; break;
+            case 'S2':  $distance = '50'; $targetSize = '122'; break;
+            case 'S3':  $distance = '50'; $targetSize = '122'; break;
+            default:    $distance = '50'; $targetSize = '122'; break;
+        }
+    }
+    // TAE NATIONAL pour Compound
+    elseif ($isCompound && $isNational) {
+        switch ($category) {
+            case 'U13': $distance = '30'; $targetSize = '80'; break;
+            case 'U15': $distance = '30'; $targetSize = '80'; break;
+            case 'U18': $distance = '50'; $targetSize = '122'; break;
+            case 'U21': $distance = '50'; $targetSize = '122'; break;
+            case 'S1':  $distance = '50'; $targetSize = '122'; break;
+            case 'S2':  $distance = '50'; $targetSize = '122'; break;
+            case 'S3':  $distance = '50'; $targetSize = '122'; break;
+            default:    $distance = '50'; $targetSize = '122'; break;
+        }
+    }
+    // TAE INTERNATIONAL
+    elseif ($isInternational) {
+        if ($isClassique) {
+            switch ($category) {
+                case 'U11': $distance = '20'; $targetSize = '80'; break;
+                case 'U13': $distance = '30'; $targetSize = '80'; break;
+                case 'U15': $distance = '40'; $targetSize = '80'; break;
+                case 'U18': $distance = '60'; $targetSize = '122'; break;
+                case 'U21': $distance = '70'; $targetSize = '122'; break;
+                case 'S1':  $distance = '70'; $targetSize = '122'; break;
+                case 'S2':  $distance = '70'; $targetSize = '122'; break;
+                case 'S3':  $distance = '60'; $targetSize = '122'; break;
+                default:    $distance = '70'; $targetSize = '122'; break;
+            }
+        } elseif ($isCompound) {
+            switch ($category) {
+                case 'U18': $distance = '50'; $targetSize = '80'; break;
+                case 'U21': $distance = '50'; $targetSize = '80'; break;
+                case 'S1':  $distance = '50'; $targetSize = '80'; break;
+                case 'S2':  $distance = '50'; $targetSize = '80'; break;
+                case 'S3':  $distance = '50'; $targetSize = '80'; break;
+                default:    $distance = '50'; $targetSize = '80'; break;
+            }
+        }
+    }
+    
+    return ['distance' => $distance, 'targetSize' => $targetSize];
+}
 ?>
 
 <style>
-/* Styles de Verification.php */
+/* [Tous les styles identiques à l'original - conservés] */
 .anomaly-table {
     width: 100%;
     border-collapse: collapse;
@@ -302,45 +417,45 @@ include('Common/Templates/head.php');
 
 /* Styles pour les bordures spécifiques */
 .archer-assigned {
-    border: 2px solid #15803d !important; /* Vert foncé pour les assignés */
-    background-color: #dcfce7 !important; /* Vert clair */
-    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+    border: 2px solid #15803d !important;
+    background-color: #dcfce7 !important;
+    border-radius: 0.5rem !important;
 }
 
 .archer-wheelchair-assigned {
-    border: 2px solid #1d4ed8 !important; /* Bleu foncé pour les fauteuils */
-    background-color: #dbeafe !important; /* Bleu clair */
-    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+    border: 2px solid #1d4ed8 !important;
+    background-color: #dbeafe !important;
+    border-radius: 0.5rem !important;
 }
 
 .position-empty {
-    border: 2px solid #e5e7eb !important; /* Gris clair pour les positions vides */
-    background-color: #f9fafb !important; /* Gris très clair */
-    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+    border: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    border-radius: 0.5rem !important;
 }
 
 .archer-unassigned {
-    border: 2px solid #ea580c !important; /* Orange foncé pour les non-assignés */
-    background-color: #ffedd5 !important; /* Orange clair */
-    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+    border: 2px solid #ea580c !important;
+    background-color: #ffedd5 !important;
+    border-radius: 0.5rem !important;
 }
 
 .target-container {
-    border: 2px solid #e5e7eb !important; /* Gris clair pour les cibles */
-    background-color: #f8fafc !important; /* Gris très clair */
-    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+    border: 2px solid #e5e7eb !important;
+    background-color: #f8fafc !important;
+    border-radius: 0.5rem !important;
 }
 
 /* S'assurer que les bordures soient visibles */
 .p-3.border-2.rounded-lg {
     border-width: 2px !important;
-    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
+    border-radius: 0.5rem !important;
 }
 
 /* Position container spécifique */
 .position-container {
-    border-radius: 0.5rem !important; /* S'assurer que le border-radius est le même */
-    overflow: hidden !important; /* Empêcher le débordement */
+    border-radius: 0.5rem !important;
+    overflow: hidden !important;
 }
 
 /* Ajustements pour la visibilité des bordures */
@@ -369,7 +484,7 @@ include('Common/Templates/head.php');
 
 /* Styles pour les miniatures de cibles en haut - VERT CLAIR */
 .target-thumbnail.has-archers {
-    border: 3px solid #86efac !important; /* Vert clair plus épais */
+    border: 3px solid #86efac !important;
     background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
     box-shadow: 0 2px 8px rgba(134, 239, 172, 0.3) !important;
 }
@@ -401,7 +516,7 @@ include('Common/Templates/head.php');
 
 /* Numéro de cible en gras pour les cibles avec archers */
 .target-thumbnail.has-archers .font-bold {
-    color: #15803d !important; /* Vert foncé pour le numéro */
+    color: #15803d !important;
     font-weight: 800 !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -530,8 +645,8 @@ button:has(.w-4.h-4) {
 
 /* Style pour EvCode et distance */
 .evcode-distance-badge {
-    background-color: #d1fae5; /* Vert clair */
-    color: #059669; /* Vert foncé */
+    background-color: #d1fae5;
+    color: #059669;
     font-size: 0.7rem;
     font-weight: bold;
     padding: 2px 6px;
@@ -542,8 +657,8 @@ button:has(.w-4.h-4) {
 }
 
 .distance-badge {
-    background-color: #fbbf24; /* Jaune */
-    color: #92400e; /* Jaune foncé */
+    background-color: #fbbf24;
+    color: #92400e;
     font-size: 0.7rem;
     font-weight: bold;
     padding: 1px 4px;
@@ -554,8 +669,8 @@ button:has(.w-4.h-4) {
 
 /* Styles pour les informations de taille de cible */
 .target-size-badge {
-    background-color: #e0e7ff; /* Violet clair */
-    color: #4f46e5; /* Violet foncé */
+    background-color: #e0e7ff;
+    color: #4f46e5;
     font-size: 0.7rem;
     font-weight: bold;
     padding: 1px 4px;
@@ -566,8 +681,8 @@ button:has(.w-4.h-4) {
 }
 
 .face-badge {
-    background-color: #fce7f3; /* Rose clair */
-    color: #be185d; /* Rose foncé */
+    background-color: #fce7f3;
+    color: #be185d;
     font-size: 0.7rem;
     font-weight: bold;
     padding: 1px 4px;
@@ -578,8 +693,8 @@ button:has(.w-4.h-4) {
 }
 
 .tournament-type-badge {
-    background-color: #fef3c7; /* Jaune clair */
-    color: #92400e; /* Jaune foncé */
+    background-color: #fef3c7;
+    color: #92400e;
     font-size: 0.6rem;
     font-weight: bold;
     padding: 1px 3px;
@@ -1339,6 +1454,53 @@ button:has(.w-4.h-4) {
                 return { image: 'Img/5.png', distance: commonDistance }; // Cible 122cm standard
             }
             
+// Règle 6c bis: ARCHERS BB (BAREBOW) EN EXTÉRIEUR - CORRECTION POUR BLASON 122cm
+const hasBB = occupiedPositions.some(letter => {
+    const position = target.positions.find(p => p.letter === letter);
+    if (position?.archer) {
+        const evCode = position.archer.evCode || '';
+        const division = position.archer.division || '';
+        return evCode === 'SHBB' || evCode === 'SFBB' || division === 'BB' || division.includes('BB');
+    }
+    return false;
+});
+
+if (hasBB && isOutdoor) {
+    // Vérifier que tous les archers sur cette cible sont BB
+    const allBB = occupiedPositions.every(letter => {
+        const position = target.positions.find(p => p.letter === letter);
+        if (position?.archer) {
+            const evCode = position.archer.evCode || '';
+            const division = position.archer.division || '';
+            return evCode === 'SHBB' || evCode === 'SFBB' || division === 'BB' || division.includes('BB');
+        }
+        return true;
+    });
+    
+    if (allBB) {
+        // CORRECTION: Pour BB en extérieur, utiliser Img/122.png (blason 122cm)
+        return { image: 'Img/122.png', distance: commonDistance };
+    }
+}
+
+            if (hasBB && isOutdoor) {
+                // Vérifier que tous les archers sur cette cible sont BB
+                const allBB = occupiedPositions.every(letter => {
+                    const position = target.positions.find(p => p.letter === letter);
+                    if (position?.archer) {
+                        const evCode = position.archer.evCode || '';
+                        const division = position.archer.division || '';
+                        return evCode === 'SHBB' || evCode === 'SFBB' || division === 'BB' || division.includes('BB');
+                    }
+                    return true;
+                });
+                
+                if (allBB) {
+                    // CORRECTION: Pour BB en extérieur, utiliser Img/5.png (blason 122cm standard 10 zones)
+                    return { image: 'Img/5.png', distance: commonDistance };
+                }
+            }
+
             // Règle 6d: DÉTERMINER L'IMAGE POUR L'EXTÉRIEUR BASÉ SUR LA TAILLE ET LA FACE
             if (occupiedPositions.length > 0) {
                 const firstTargetSize = targetSizes[occupiedPositions[0]];
@@ -1350,7 +1512,7 @@ button:has(.w-4.h-4) {
                     return { image: 'Img/xx.png', distance: commonDistance };
                 }
                 
-                // CAS 1: TAILLE 122cm (CIBLE STANDARD EXTRÉRIEUR)
+                // CAS 1: TAILLE 122cm (CIBLE STANDARD EXTÉRIEUR)
                 if (firstTargetSize === '122') {
                     // Type 2 (122cm) -> Img/5.png
                     if (firstTargetFace === '2') {
@@ -1446,54 +1608,59 @@ button:has(.w-4.h-4) {
         }
     };
 
-    const getTargetFaceImage = (targetSize, targetFace, tournamentType, archer) => {
-        if (!targetSize || !targetFace) return '';
-        
-        const isOutdoor = archer?.distance && parseInt(archer.distance) > 18;
-        const isCO = archer?.division === 'CO' || (archer?.division && archer.division.includes('CO'));
-        const isCONational = archer?.evCode?.startsWith('N') || false;
-        const isU13U15 = archer?.division === 'U13' || archer?.division === 'U15';
-        
-        if (isOutdoor) {
-            // Extérieur
-            if (targetSize === '122') {
-                return 'Img/122.png';
-            } else if (targetSize === '80') {
-                if (isCO && !isCONational) {
-                    return 'Img/80CO.png';
-                } else if (isU13U15 && targetFace === '3') {
-                    return 'Img/3b.png'; // U13/U15
-                } else if (targetFace === '1') {
-                    return 'Img/80.png';
-                } else if (targetFace === '3') {
-                    return 'Img/3.png';
-                }
-            }
-        } else {
-            // Intérieur 
-            if (targetSize === '80' && targetFace === '3') {
+// ************************************************************************************************************************************
+
+const getTargetFaceImage = (targetSize, targetFace, tournamentType, archer) => {
+    if (!targetSize || !targetFace) return '';
+    
+    const isIndoor = tournamentType && tournamentType.toLowerCase().includes('ndoor');
+    const isOutdoor = !isIndoor && archer?.distance && parseInt(archer.distance) > 18;
+    const isCO = archer?.division === 'CO' || (archer?.division && archer.division.includes('CO'));
+    const isCONational = archer?.evCode?.startsWith('N') || false;
+    const isU13U15 = archer?.division === 'U13' || archer?.division === 'U15';
+    
+    if (isOutdoor) {
+        // Extérieur (inchangé)
+        if (targetSize === '122') {
+            return 'Img/122.png';
+        } else if (targetSize === '80') {
+            if (isCO && !isCONational) {
+                return 'Img/80CO.png';
+            } else if (isU13U15 && targetFace === '3') {
+                return 'Img/3b.png';
+            } else if (targetFace === '1') {
                 return 'Img/80.png';
-            } else if (targetSize === '60' && targetFace === '2') {
-                return 'Img/60.png';
-            } else if (targetSize === '60' && targetFace === '7') {
-                return 'Img/60T.png';
-            } else if (targetSize === '40' && targetFace === '1') {
-                return 'Img/40.png';
-            } else if (targetSize === '40' && targetFace === '4') {
-                return 'Img/40TCO.png';
-            } else if (targetSize === '40' && targetFace === '6') {
-                return 'Img/40TCL.png';
+            } else if (targetFace === '3') {
+                return 'Img/3.png';
             }
         }
-        
-        // Fallback
-        if (targetSize === '80') return 'Img/80.png';
-        if (targetSize === '122') return 'Img/122.png';
-        if (targetSize === '60') return 'Img/60.png';
-        if (targetSize === '40') return 'Img/40.png';
-        
-        return '';
-    };
+    } else if (isIndoor) {
+        // Intérieur 
+        if (targetFace === '3') {
+            return 'Img/80.png';
+        } else if (targetFace === '2') {
+            return 'Img/60.png';
+        } else if (targetFace === '7') {
+            return 'Img/60T.png';
+        } else if (targetFace === '1') {
+            return 'Img/40.png';
+        } else if (targetFace === '4') {
+            return 'Img/40TCO.png';
+        } else if (targetFace === '6') {
+            return 'Img/40TCL.png';
+        }
+    }
+    
+    // Fallback
+    if (targetSize === '80') return 'Img/80.png';
+    if (targetSize === '122') return 'Img/122.png';
+    if (targetSize === '60') return 'Img/60.png';
+    if (targetSize === '40') return 'Img/40.png';
+    
+    return '';
+};
+
+// ****************************************************************************************************************************
 
     const isPositionBlockedByWheelchair = (target, positionLetter, archers, session) => {
         const wheelchairPositions = target.positions
@@ -1515,8 +1682,26 @@ button:has(.w-4.h-4) {
         });
     };
 
-    // FONCTION CORRIGÉE POUR LA COMPATIBILITÉ DES DROPS
+    // FONCTION CORRIGÉE POUR LES RÈGLES TAE EXTÉRIEUR FFTA
     const checkDropCompatibility = (target, positionLetter, archerToDrop, archers, session) => {
+    // NOUVEAU : Permettre BB+CL si paramètres identiques
+    const existingArcher = target.positions.find(p => p.letter !== positionLetter && p.archer);
+    if (existingArcher && existingArcher.archer) {
+        const isBB = (archerToDrop.division === 'BB' || archerToDrop.division?.includes('BB'));
+        const isCL = (existingArcher.archer.division === 'CL' || existingArcher.archer.division?.includes('CL'));
+        
+        if ((isBB && isCL) || (isCL && isBB)) {
+            // BB et CL : vérifier uniquement distance et taille de blason
+            if (archerToDrop.distance !== existingArcher.archer.distance) {
+                return { valid: false, reason: `Distance incompatible (${archerToDrop.distance}m ≠ ${existingArcher.archer.distance}m)` };
+            }
+            if (archerToDrop.targetSize !== existingArcher.archer.targetSize) {
+                return { valid: false, reason: `Taille de blason incompatible (${archerToDrop.targetSize}cm ≠ ${existingArcher.archer.targetSize}cm)` };
+            }
+            // Ne pas vérifier les faces pour BB+CL
+            return { valid: true };
+        }
+    }
         const targetFaces = {};
         const distances = {};
         const targetSizes = {};
@@ -1568,7 +1753,6 @@ button:has(.w-4.h-4) {
                 const otherIs80cm = firstTargetSize === '80';
                 const otherIs122cm = firstTargetSize === '122';
                 
-                // 80cm et 122cm ne peuvent pas être mélangés
                 if ((is80cm && otherIs122cm) || (is122cm && otherIs80cm)) {
                     return { 
                         valid: false, 
@@ -1615,86 +1799,289 @@ button:has(.w-4.h-4) {
             }
         }
         
-        // Règle 6: Vérifier les règles Outdoor
+        // Règle 6: Vérifier les règles Outdoor (TAE Extérieur)
         const isOutdoor = archerToDrop.distance && parseInt(archerToDrop.distance) > 18;
         
         if (isOutdoor) {
-            // Règle 6a: U11
-            if (archerToDrop.division === 'U11') {
-                const hasNonU11 = otherPositions.some(letter => ages[letter] !== 'U11');
-                if (hasNonU11) {
-                    return { valid: false, reason: 'U11 ne peut pas être mixé avec d\'autres catégories' };
-                }
-            } else {
-                const hasU11 = otherPositions.some(letter => ages[letter] === 'U11');
-                if (hasU11) {
-                    return { valid: false, reason: 'Ne peut pas être mixé avec U11' };
+            // RÈGLES TAE EXTÉRIEUR SELON FFTA
+            
+            // Déterminer le type d'archer (CL, CO, BB) et sa catégorie
+            const isClassique = archerToDrop.division === 'CL' || 
+                               (archerToDrop.division && archerToDrop.division.includes('CL'));
+            const isCompound = archerToDrop.division === 'CO' || 
+                              (archerToDrop.division && archerToDrop.division.includes('CO'));
+            const isBarebow = archerToDrop.division === 'BB' || 
+                              (archerToDrop.division && archerToDrop.division.includes('BB'));
+            
+            const isInternational = archerToDrop.evCode && !archerToDrop.evCode.startsWith('N');
+            const isNational = archerToDrop.evCode && archerToDrop.evCode.startsWith('N');
+            
+            const category = archerToDrop.division;
+            
+            // Vérifications par catégorie selon FFTA
+            
+            // === U13 ===
+            if (category === 'U13') {
+                if (isInternational) {
+                    // TAE International U13: 30m - blason 80cm (Classique uniquement)
+                    if (isCompound) {
+                        return { valid: false, reason: 'U13 CO n\'existe pas en TAE International' };
+                    }
+                    if (archerToDrop.targetSize !== '80') {
+                        return { valid: false, reason: 'U13 International doit tirer sur blason 80cm' };
+                    }
+                    if (archerToDrop.distance !== '30') {
+                        return { valid: false, reason: 'U13 International doit tirer à 30m' };
+                    }
+                } else if (isNational) {
+                    // TAE National U13: 20m (CL) ou 30m (CO) - blason 80cm
+                    if (isClassique && archerToDrop.distance !== '20') {
+                        return { valid: false, reason: 'U13 CL National doit tirer à 20m' };
+                    }
+                    if (isCompound && archerToDrop.distance !== '30') {
+                        return { valid: false, reason: 'U13 CO National doit tirer à 30m' };
+                    }
+                    if (archerToDrop.targetSize !== '80') {
+                        return { valid: false, reason: 'U13 National doit tirer sur blason 80cm' };
+                    }
                 }
             }
             
-            // Règle 6b: U13/U15 - doivent être entre eux
-            if (archerToDrop.division === 'U13' || archerToDrop.division === 'U15') {
-                const hasOtherAges = otherPositions.some(letter => 
-                    ages[letter] !== 'U13' && ages[letter] !== 'U15'
-                );
-                if (hasOtherAges) {
-                    return { valid: false, reason: 'U13/U15 ne peuvent être mixés qu\'entre eux' };
-                }
-            } else {
-                const hasU13U15 = otherPositions.some(letter => 
-                    ages[letter] === 'U13' || ages[letter] === 'U15'
-                );
-                if (hasU13U15) {
-                    return { valid: false, reason: 'Ne peut pas être mixé avec U13/U15' };
-                }
-            }
-            
-            // Règle 6c: Vérifier CO International vs CO National
-            const isArcherCO = archerToDrop.division === 'CO' || (archerToDrop.division && archerToDrop.division.includes('CO'));
-            const isArcherCONational = archerToDrop.evCode?.startsWith('N') || false;
-            const isArcherCOInternational = isArcherCO && !isArcherCONational;
-            
-            if (isArcherCOInternational) {
-                // CO International ne peut être mélangé qu'avec d'autres CO International
-                const hasNonCOInternational = otherPositions.some(letter => {
-                    const isOtherCO = categories[letter] === 'CO' || (categories[letter] && categories[letter].includes('CO'));
-                    const isOtherCONational = evCodes[letter]?.startsWith('N') || false;
-                    const isOtherCOInternational = isOtherCO && !isOtherCONational;
-                    return !isOtherCOInternational;
-                });
-                
-                if (hasNonCOInternational) {
-                    return { 
-                        valid: false, 
-                        reason: 'CO International (H/F) ne peut pas être mixé avec d\'autres catégories' 
-                    };
+            // === U15 ===
+            if (category === 'U15') {
+                if (isInternational) {
+                    // TAE International U15: 40m - blason 80cm (Classique uniquement)
+                    if (isCompound) {
+                        return { valid: false, reason: 'U15 CO n\'existe pas en TAE International' };
+                    }
+                    if (archerToDrop.targetSize !== '80') {
+                        return { valid: false, reason: 'U15 International doit tirer sur blason 80cm' };
+                    }
+                    if (archerToDrop.distance !== '40') {
+                        return { valid: false, reason: 'U15 International doit tirer à 40m' };
+                    }
+                } else if (isNational) {
+                    // TAE National U15: 30m - blason 80cm (tous arcs)
+                    if (archerToDrop.distance !== '30') {
+                        return { valid: false, reason: 'U15 National doit tirer à 30m' };
+                    }
+                    if (archerToDrop.targetSize !== '80') {
+                        return { valid: false, reason: 'U15 National doit tirer sur blason 80cm' };
+                    }
                 }
             }
             
-            if (isArcherCONational) {
-                // CO National peut être mélangé avec d'autres archers sur 122cm
-                // Vérifier que tous sont sur 122cm
-                const all122cm = otherPositions.every(letter => targetSizes[letter] === '122');
-                if (!all122cm) {
-                    return { 
-                        valid: false, 
-                        reason: 'CO National (M/W) doit être sur cible 122cm avec d\'autres archers sur 122cm' 
-                    };
+            // === U18 ===
+            if (category === 'U18') {
+                if (isInternational) {
+                    // TAE International U18
+                    if (isClassique) {
+                        if (archerToDrop.distance !== '60') {
+                            return { valid: false, reason: 'U18 CL International doit tirer à 60m' };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: 'U18 CL International doit tirer sur blason 122cm' };
+                        }
+                    }
+                    if (isCompound) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: 'U18 CO International doit tirer à 50m' };
+                        }
+                        if (archerToDrop.targetSize !== '80') {
+                            return { valid: false, reason: 'U18 CO International doit tirer sur blason 80cm (6 zones)' };
+                        }
+                    }
+                } else if (isNational) {
+                    // TAE National U18
+                    if (isClassique) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: 'U18 CL National doit tirer à 50m' };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: 'U18 CL National doit tirer sur blason 122cm' };
+                        }
+                    }
+                    if (isCompound) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: 'U18 CO National doit tirer à 50m' };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: 'U18 CO National doit tirer sur blason 122cm' };
+                        }
+                    }
+                    if (isBarebow) {
+                        if (archerToDrop.distance !== '30') {
+                            return { valid: false, reason: 'U18 BB National doit tirer à 30m' };
+                        }
+                        if (archerToDrop.targetSize !== '80') {
+                            return { valid: false, reason: 'U18 BB National doit tirer sur blason 80cm' };
+                        }
+                    }
                 }
             }
             
-            // Règle 6d: Si déjà un CO International sur la cible, pas d'autres catégories
-            const hasExistingCOInternational = positions.some(letter => {
-                const isOtherCO = categories[letter] === 'CO' || (categories[letter] && categories[letter].includes('CO'));
-                const isOtherCONational = evCodes[letter]?.startsWith('N') || false;
-                return isOtherCO && !isOtherCONational && letter !== positionLetter;
+            // === U21 ===
+            if (category === 'U21') {
+                if (isInternational) {
+                    // TAE International U21
+                    if (isClassique) {
+                        if (archerToDrop.distance !== '70') {
+                            return { valid: false, reason: 'U21 CL International doit tirer à 70m' };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: 'U21 CL International doit tirer sur blason 122cm' };
+                        }
+                    }
+                    if (isCompound) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: 'U21 CO International doit tirer à 50m' };
+                        }
+                        if (archerToDrop.targetSize !== '80') {
+                            return { valid: false, reason: 'U21 CO International doit tirer sur blason 80cm (6 zones)' };
+                        }
+                    }
+                } else if (isNational) {
+                    // TAE National U21
+                    if (isClassique || isCompound) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: 'U21 National (CL/CO) doit tirer à 50m' };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: 'U21 National (CL/CO) doit tirer sur blason 122cm' };
+                        }
+                    }
+                    if (isBarebow) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: 'U21 BB National doit tirer à 50m' };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: 'U21 BB National doit tirer sur blason 122cm' };
+                        }
+                    }
+                }
+            }
+            
+            // === S1, S2, S3 ===
+            if (category === 'S1' || category === 'S2') {
+                if (isInternational) {
+                    // TAE International S1/S2
+                    if (isClassique) {
+                        if (archerToDrop.distance !== '70') {
+                            return { valid: false, reason: `${category} CL International doit tirer à 70m` };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: `${category} CL International doit tirer sur blason 122cm` };
+                        }
+                    }
+                    if (isCompound) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: `${category} CO International doit tirer à 50m` };
+                        }
+                        if (archerToDrop.targetSize !== '80') {
+                            return { valid: false, reason: `${category} CO International doit tirer sur blason 80cm (6 zones)` };
+                        }
+                    }
+                } else if (isNational) {
+                    // TAE National S1/S2
+                    if (isClassique || isCompound || isBarebow) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: `${category} National doit tirer à 50m` };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: `${category} National doit tirer sur blason 122cm` };
+                        }
+                    }
+                }
+            }
+            
+            if (category === 'S3') {
+                if (isInternational) {
+                    // TAE International S3
+                    if (isClassique) {
+                        if (archerToDrop.distance !== '60') {
+                            return { valid: false, reason: 'S3 CL International doit tirer à 60m' };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: 'S3 CL International doit tirer sur blason 122cm' };
+                        }
+                    }
+                    if (isCompound) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: 'S3 CO International doit tirer à 50m' };
+                        }
+                        if (archerToDrop.targetSize !== '80') {
+                            return { valid: false, reason: 'S3 CO International doit tirer sur blason 80cm (6 zones)' };
+                        }
+                    }
+                } else if (isNational) {
+                    // TAE National S3
+                    if (isClassique || isCompound || isBarebow) {
+                        if (archerToDrop.distance !== '50') {
+                            return { valid: false, reason: 'S3 National doit tirer à 50m' };
+                        }
+                        if (archerToDrop.targetSize !== '122') {
+                            return { valid: false, reason: 'S3 National doit tirer sur blason 122cm' };
+                        }
+                    }
+                }
+            }
+            
+            // Règle de mélange des catégories sur une même cible
+            const hasDifferentCategory = otherPositions.some(letter => {
+                const otherCategory = ages[letter];
+                return otherCategory && otherCategory !== category;
             });
             
-            if (hasExistingCOInternational && !isArcherCOInternational) {
-                return { 
-                    valid: false, 
-                    reason: 'Ne peut pas être mixé avec CO International (H/F)' 
+            if (hasDifferentCategory) {
+                // Vérifier les mélanges autorisés selon FFTA
+                const isMixingAllowed = (cat1, cat2, type1, type2) => {
+                    // Même catégorie d'âge autorisée
+                    if (cat1 === cat2) return true;
+                    
+                    // U13 et U15 peuvent être mélangés (même distance 30m en National)
+                    if (isNational && 
+                        ((cat1 === 'U13' && cat2 === 'U15') || (cat1 === 'U15' && cat2 === 'U13'))) {
+                        return true;
+                    }
+                    
+                    return false;
                 };
+                
+//                const otherCategory = otherPositions.find(letter => ages[letter] !== category);
+//                if (otherCategory && !isMixingAllowed(category, ages[otherCategory], isInternational, isNational)) {
+//                    return { 
+//                        valid: false, 
+//                        reason: `Ne peut pas mélanger ${category} avec ${ages[otherCategory]}` 
+//                    };
+//                }
+            }
+            
+            // Vérification CO International spécifique
+            if (isCompound && isInternational) {
+                // CO International doit être sur 80cm (6 zones)
+                if (archerToDrop.targetSize !== '80') {
+                    return { valid: false, reason: 'CO International doit tirer sur blason 80cm (6 zones)' };
+                }
+            }
+            
+            // Vérification BB (Barebow) National - CORRECTION
+            if (isBarebow && isNational) {
+                if (category === 'U15' || category === 'U18') {
+                    if (archerToDrop.distance !== '30') {
+                        return { valid: false, reason: `${category} BB National doit tirer à 30m` };
+                    }
+                    if (archerToDrop.targetSize !== '80') {
+                        return { valid: false, reason: `${category} BB National doit tirer sur blason 80cm` };
+                    }
+                } else if (category === 'U21' || category === 'S1' || category === 'S2' || category === 'S3') {
+                    if (archerToDrop.distance !== '50') {
+                        return { valid: false, reason: `${category} BB National doit tirer à 50m` };
+                    }
+                    // CORRECTION: BB Senior sur 122cm
+                    if (archerToDrop.targetSize !== '122') {
+                        return { valid: false, reason: `${category} BB National doit tirer sur blason 122cm` };
+                    }
+                }
             }
         }
         
@@ -1709,6 +2096,8 @@ button:has(.w-4.h-4) {
         $tournamentType = $tournamentRow->ToTypeName ?: '';
     }
     
+    $isIndoorTournament = stripos($tournamentType, 'ndoor') !== false;
+	
     // Récupérer les SesAth4Target pour chaque session
     $sessionAth4Target = [];
     $sessionQuery = "SELECT SesOrder, SesAth4Target FROM Session WHERE SesTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND SesType='Q'";
@@ -1872,25 +2261,28 @@ $Select = "SELECT
         // Récupérer le SesAth4Target de la session correspondante
         $sessionAth4 = isset($sessionAth4Target[$row->QuSession]) ? $sessionAth4Target[$row->QuSession] : 4;
         
-        $archers[] = [
-            'id' => (int)$row->EnId,
-            'code' => $row->EnCode ?: '',
-            'name' => trim($row->EnFirstName . ' ' . $row->EnName),
-            'country' => $row->CoCode ?: '',
-            'countryName' => $row->CoName ?: '',
-            'division' => $enDivision,
-            'class' => $pureClass,
-            'session' => (int)$row->QuSession,
-            'targetNo' => $row->QuTargetNo ?: '',
-            'score' => ($row->QuScore ? $row->QuScore . '/' . $row->QuGold . '/' . $row->QuXNine : '0/0/0'),
-            'wheelchair' => (bool)$row->EnWChair,
-            'targetFace' => $row->EnTargetFace ?: '',
-            'distance' => $row->EvDistance ?: '',
-            'evCode' => $row->EvCode ?: '',
-            'targetSize' => $row->EvTargetSize ?: '',
-            'tournamentType' => $tournamentType,
-            'sessionAth4Target' => $sessionAth4  // Inclure la valeur SesAth4Target de la session
-        ];
+        // Calculer la distance et taille selon les règles FFTA
+		$calculated = calculateDistanceAndTargetSize($enDivision, $enClass, $row->EvCode, $isIndoorTournament);
+
+		$archers[] = [
+			'id' => (int)$row->EnId,
+			'code' => $row->EnCode ?: '',
+			'name' => trim($row->EnFirstName . ' ' . $row->EnName),
+			'country' => $row->CoCode ?: '',
+			'countryName' => $row->CoName ?: '',
+			'division' => $enDivision,
+			'class' => $pureClass,
+			'session' => (int)$row->QuSession,
+			'targetNo' => $row->QuTargetNo ?: '',
+			'score' => ($row->QuScore ? $row->QuScore . '/' . $row->QuGold . '/' . $row->QuXNine : '0/0/0'),
+			'wheelchair' => (bool)$row->EnWChair,
+			'targetFace' => $row->EnTargetFace ?: '',
+			'distance' => $calculated['distance'],  // ← Utilise la valeur calculée
+			'evCode' => $row->EvCode ?: '',
+			'targetSize' => $calculated['targetSize'],  // ← Utilise la valeur calculée
+			'tournamentType' => $tournamentType,
+			'sessionAth4Target' => $sessionAth4
+		];
     }
 
     echo json_encode($archers);
@@ -1911,6 +2303,8 @@ $Select = "SELECT
         echo json_encode($sessionsList);
     ?>;
 
+    const IS_INDOOR_TOURNAMENT = <?php echo $isIndoorTournament ? 'true' : 'false'; ?>;
+	
     const getTargetSizeLabel = (targetSize) => {
         if (!targetSize) return '';
         
@@ -1949,7 +2343,7 @@ $Select = "SELECT
     const isIndoorTournament = (tournamentType) => {
         if (!tournamentType) return false;
         
-        const indoorKeywords = ['indoor', 'salle', 'intérieur', 'hall'];
+        const indoorKeywords = ['ndoor', 'salle', 'intérieur', 'hall'];
         const lowerType = tournamentType.toLowerCase();
         
         return indoorKeywords.some(keyword => lowerType.includes(keyword));
@@ -3005,21 +3399,30 @@ $Select = "SELECT
             );
             
             const simulateExchange = () => {
-                const allArchersAfterExchange = archers.map(archer => {
-                    if (archer.session !== selectedSession) return archer;
-                    
-                    if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(sourceTargetId)) {
-                        const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
-                        return { ...archer, targetNo: targetId + letter };
-                    }
-                    
-                    if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(targetId)) {
-                        const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
-                        return { ...archer, targetNo: sourceTargetId + letter };
-                    }
-                    
-                    return archer;
-                });
+				const allArchersAfterExchange = archers.map(archer => {
+					if (archer.session !== selectedSession) return archer;
+					
+					if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(sourceTargetId)) {
+						const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
+						return { ...archer, targetNo: targetId + letter };
+					}
+					
+					if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(targetId)) {
+						const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
+						return { ...archer, targetNo: sourceTargetId + letter };
+					}
+					
+					return archer;
+				});
+				
+				// CORRECTION : Pour un échange de cibles entières, on autorise toujours
+				// car les deux cibles étaient valides avant l'échange
+				return {
+					sourceInvalid: false,
+					destInvalid: false,
+					allArchersAfterExchange
+				};
+			
                 
                 const sourceTargetAfter = {
                     id: sourceTargetId,
@@ -3185,6 +3588,248 @@ $Select = "SELECT
             }
         };
 
+// **********************************************************************************************************************
+
+// NOUVELLE FONCTION : Image standard pour la cible (colonne de droite)
+const getTargetStandardImage = (targetId) => {
+    const target = targets.find(t => t.id === targetId);
+    if (!target) return null;
+    
+    const archersOnTarget = [];
+    ['A', 'B', 'C', 'D'].forEach(letter => {
+        const position = target.positions.find(p => p.letter === letter);
+        if (position?.archer && position.archer.session === selectedSession) {
+            archersOnTarget.push(position.archer);
+        }
+    });
+    
+    if (archersOnTarget.length === 0) return null;
+    
+    // Vérifier que tous ont la même distance
+    const firstDistance = archersOnTarget[0].distance;
+    const allSameDistance = archersOnTarget.every(a => a.distance === firstDistance);
+    if (!allSameDistance) {
+        return { image: 'Img/xx.png', distance: firstDistance };
+    }
+    
+    // DÉTERMINER SI C'EST UN TOURNOI INDOOR
+    const isIndoor = archersOnTarget[0].tournamentType && 
+                     archersOnTarget[0].tournamentType.toLowerCase().includes('ndoor');
+    
+    if (isIndoor) {
+        // ========== RÈGLES INDOOR REPRISES DE OLD_FILE.PHP ==========
+        
+        // Vérifier que tous les archers sont bien à 18m
+        const allAt18m = archersOnTarget.every(a => parseInt(a.distance) === 18);
+        if (!allAt18m) {
+            return { image: 'Img/xx.png', distance: firstDistance };
+        }
+        
+        // Récupérer les faces pour chaque position
+        const targetFaces = {};
+        const positions = ['A', 'B', 'C', 'D'];
+        
+        positions.forEach(letter => {
+            const position = target.positions.find(p => p.letter === letter);
+            const archer = position?.archer;
+            if (archer && archer.session === selectedSession) {
+                targetFaces[letter] = archer.targetFace || null;
+            } else {
+                targetFaces[letter] = null;
+            }
+        });
+        
+        // Déterminer le tensDigit et unitsDigit selon les règles old_file.php
+        const getTensDigit = () => {
+            if (targetFaces['A']) return targetFaces['A'];
+            if (targetFaces['C']) return targetFaces['C'];
+            return 'x';
+        };
+        
+        const getUnitsDigit = () => {
+            if (targetFaces['B']) return targetFaces['B'];
+            if (targetFaces['D']) return targetFaces['D'];
+            return 'x';
+        };
+        
+        const tensDigit = getTensDigit();
+        const unitsDigit = getUnitsDigit();
+        
+        // Vérifier les paires A/C et B/D
+        const checkPairValidIndoor = (face1, face2) => {
+            if (!face1 || !face2) return true;
+            
+            // Face 3 (80cm) - ne peut être qu'avec une autre face 3
+            if (face1 === '3' || face2 === '3') {
+                return face1 === face2;
+            }
+            
+            // Faces 4 et 6 - compatibles entre elles
+            if ((face1 === '4' && face2 === '6') || (face1 === '6' && face2 === '4')) {
+                return true;
+            }
+            
+            // Toutes les autres faces doivent être identiques
+            return face1 === face2;
+        };
+        
+        if (!checkPairValidIndoor(targetFaces['A'], targetFaces['C']) || 
+            !checkPairValidIndoor(targetFaces['B'], targetFaces['D'])) {
+            return { image: 'Img/xx.png', distance: firstDistance };
+        }
+        
+        // Vérifier les combinaisons autorisées pour INDOOR selon old_file.php
+        const isValidIndoorCombination = () => {
+            // Si toutes les positions sont vides
+            if (tensDigit === 'x' && unitsDigit === 'x') {
+                return true;
+            }
+            
+            // Type 3 (80cm) - seulement 3, 33, 3x, x3
+            const hasTargetFace3 = Object.values(targetFaces).some(face => face === '3');
+            if (hasTargetFace3) {
+                const validFor3 = ['3', '33', '3x', 'x3'];
+                return validFor3.includes(tensDigit + unitsDigit);
+            }
+            
+            // Type 2 (60cm) - combinaisons indoor
+            const validFor2 = ['2x', 'x2', '21', '22', '24', '26', '27', '12', '42', '62', '72'];
+            if (validFor2.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            // Type 1 (40cm)
+            const validFor1 = ['1x', 'x1', '11', '12', '14', '16', '17', '21', '41', '61', '71'];
+            if (validFor1.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            // Type 4 (40TCL)
+            const validFor4 = ['4x', 'x4', '44', '41', '42', '46', '47', '14', '24', '64', '74'];
+            if (validFor4.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            // Type 6 (40TCL)
+            const validFor6 = ['6x', 'x6', '66', '61', '62', '64', '67', '16', '26', '46', '76'];
+            if (validFor6.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            // Type 7 (30T)
+            const validFor7 = ['7x', 'x7', '77', '71', '72', '74', '76', '17', '27', '47', '67'];
+            if (validFor7.includes(tensDigit + unitsDigit)) {
+                return true;
+            }
+            
+            return false;
+        };
+        
+        if (!isValidIndoorCombination()) {
+            return { image: 'Img/xx.png', distance: firstDistance };
+        }
+        
+        // Règle indoor: Si distance = 18 et taille de cible = 80cm, afficher Img/3.png
+        if (firstDistance && parseInt(firstDistance) === 18) {
+            const firstTargetSize = archersOnTarget[0].targetSize;
+            if (firstTargetSize === '80') {
+                const all80cm = archersOnTarget.every(a => a.targetSize === '80');
+                if (all80cm) {
+                    return { image: 'Img/3.png', distance: '18' };
+                }
+            }
+        }
+        
+        // Pour INDOOR, utiliser l'image combinée
+        if (tensDigit === 'x' && unitsDigit === 'x') {
+            return { image: null, distance: '18' };
+        }
+        
+        return { image: `Img/${tensDigit}${unitsDigit}.png`, distance: '18' };
+    }
+    
+    // ========== RÈGLES OUTDOOR (INCHANGÉES) ==========
+    if (parseInt(firstDistance) > 18) {
+        // Détection U11, U13, U15
+        const hasU11 = archersOnTarget.some(archer => {
+            const div = archer.division || '';
+            const cls = archer.class || '';
+            const ev = archer.evCode || '';
+            return div.includes('U11') || cls.includes('U11') || ev.includes('U11');
+        });
+        
+        const hasU13 = archersOnTarget.some(archer => {
+            const div = archer.division || '';
+            const cls = archer.class || '';
+            const ev = archer.evCode || '';
+            return div.includes('U13') || cls.includes('U13') || ev.includes('U13');
+        });
+        
+        const hasU15 = archersOnTarget.some(archer => {
+            const div = archer.division || '';
+            const cls = archer.class || '';
+            const ev = archer.evCode || '';
+            return div.includes('U15') || cls.includes('U15') || ev.includes('U15');
+        });
+        
+        const hasU13U15 = hasU13 || hasU15;
+        
+        // Détection CO International
+        const hasCOInternational = archersOnTarget.some(archer => {
+            const div = archer.division || '';
+            const ev = archer.evCode || '';
+            return div.includes('CO') && !ev.startsWith('N');
+        });
+        
+        let result = null;
+        
+        if (hasU11) {
+            result = { image: 'Img/3.png', distance: firstDistance };
+        } else if (hasU13U15) {
+            result = { image: 'Img/4.png', distance: firstDistance };
+        } else if (hasCOInternational) {
+            const coArcher = archersOnTarget.find(archer => {
+                const div = archer.division || '';
+                const ev = archer.evCode || '';
+                return div.includes('CO') && !ev.startsWith('N');
+            });
+            const sessionAth4Target = parseInt(coArcher?.sessionAth4Target) || 4;
+            
+            if (sessionAth4Target === 4) {
+                result = { image: 'Img/84.png', distance: firstDistance };
+            } else if (sessionAth4Target === 3) {
+                result = { image: 'Img/83.png', distance: firstDistance };
+            } else {
+                result = { image: 'Img/80CO.png', distance: firstDistance };
+            }
+        } else {
+            const targetSize = archersOnTarget[0].targetSize;
+            if (targetSize === '122') {
+                result = { image: 'Img/5.png', distance: firstDistance };
+            } else if (targetSize === '80') {
+                result = { image: 'Img/4.png', distance: firstDistance };
+            } else {
+                result = { image: 'Img/xx.png', distance: firstDistance };
+            }
+        }
+        
+        return result;
+    }
+    
+    // Fallback
+    const targetSize = archersOnTarget[0].targetSize;
+    let result;
+    if (targetSize === '80') result = { image: 'Img/80.png', distance: firstDistance };
+    else if (targetSize === '122') result = { image: 'Img/122.png', distance: firstDistance };
+    else if (targetSize === '60') result = { image: 'Img/60.png', distance: firstDistance };
+    else if (targetSize === '40') result = { image: 'Img/40.png', distance: firstDistance };
+    else result = { image: 'Img/xx.png', distance: firstDistance };
+    
+    return result;
+};
+
+// *******************************************************************************************************************************
+
         const getTargetCombinationImage = (targetId) => {
             const target = targets.find(t => t.id === targetId);
             if (!target) return null;
@@ -3245,7 +3890,7 @@ $Select = "SELECT
                                     onMouseLeave={(e) => {
                                         e.currentTarget.style.backgroundColor = '#2563eb';
                                     }}
-                                    title="Générer un PDF de toutes les cibles via DragDropPlanPDF.php"
+                                    title="Générer un PDF de toutes les cibles"
                                 >
                                     <div className="w-4 h-4"><Icons.Print /></div>
                                     <span>Imprimer PDF</span>
@@ -3283,9 +3928,9 @@ $Select = "SELECT
                                         
                                         if (!targets.find(t => t.id === targetId)) return null;
                                         
-                                        const combinationData = getTargetCombinationImage(targetId);
-                                        const combinationImage = combinationData ? combinationData.image : null;
-                                        const distance = combinationData ? combinationData.distance : null;
+                                        const standardImageData = getTargetStandardImage(targetId);
+										const combinationImage = standardImageData ? standardImageData.image : null;
+										const distance = standardImageData ? standardImageData.distance : null;
                                         const isValid = isTargetValid(targetId);
                                         const hasArchers = hasAssignedArchers(targetId);
                                         const archersCount = countArchersOnTarget(targetId);
@@ -3490,11 +4135,10 @@ $Select = "SELECT
                                             a.session === selectedSession
                                         );
                                         const isHovered = hoverTargetId === target.id;
-                                        const combinationData = getCombinationImage(target);
-                                        const combinationImage = combinationData.image;
-                                        const distance = combinationData.distance;
-                                        const combinationLabel = "";
-                                        const isInvalidConfig = combinationImage === 'Img/xx.png';
+                                        const standardImageData = getTargetStandardImage(target.id);
+                                        const standardImage = standardImageData ? standardImageData.image : null;
+                                        const distance = standardImageData ? standardImageData.distance : null;
+                                        const isInvalidConfig = standardImage === 'Img/xx.png';
                                         
                                         return (
                                             <div 
@@ -3656,27 +4300,24 @@ $Select = "SELECT
                                                             }`}
                                                             title={hasArchers ? "Glisser pour échanger cette cible (avec image)" : "Cible vide"}
                                                         >
-                                                            {combinationImage && (
+                                                            {standardImage && (
                                                                 <div className="relative mb-2">
                                                                     <img 
-                                                                        src={combinationImage} 
-                                                                        alt={combinationLabel}
+                                                                        src={standardImage} 
+                                                                        alt={`Cible ${target.id}`}
                                                                         className="w-60 h-20 mx-auto object-contain"
                                                                         onError={(e) => {
                                                                             e.target.style.display = 'none';
-                                                                            console.warn(`Image non trouvée: ${combinationImage}`);
+                                                                            console.warn(`Image non trouvée: ${standardImage}`);
                                                                         }}
                                                                     />
-                                                                    <div className={`text-xs mt-1 ${
-                                                                        isInvalidConfig ? 'text-red-600 font-medium' : 'text-gray-600'
-                                                                    }`}>
-                                                                        {combinationLabel}
-                                                                        {isInvalidConfig && (
-                                                                            <div className="w-4 h-4 inline-block ml-1">
-                                                                                <Icons.Warning />
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                                                                    {distance && (
+                                                                        <div className={`text-xs mt-1 text-center ${
+                                                                            parseInt(distance) <= 18 ? 'text-green-600' : 'text-red-600'
+                                                                        }`}>
+                                                                            {distance}m
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                             
@@ -3689,7 +4330,7 @@ $Select = "SELECT
                                                             </div>
                                                             
                                                             {/* AFFICHAGE DE LA DISTANCE SOUS LE NUMÉRO DE CIBLE */}
-                                                            {distance && (
+                                                            {distance && !standardImage && (
                                                                 <div className={`target-main-distance mt-1 ${
                                                                     parseInt(distance) <= 18 ? 'target-distance-indoor' : 'target-distance-outdoor'
                                                                 }`}>
