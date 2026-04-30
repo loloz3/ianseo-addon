@@ -555,6 +555,12 @@ include('Common/Templates/head.php');
             </li>
 			
 			<li class="task-item">
+				<span class="task-icon">🧪</span>
+				<a href="<?php echo $basePath; ?>Modules/Custom/test/ScoreSimulate.php" class="task-link" target="_blank">Simulateur de scores (tests)</a>
+			</li>
+
+			
+			<li class="task-item">
                 <span class="task-icon">📊</span>
                 <a href="http://localhost/phpmyadmin/" class="task-link" target="_blank">PHPmyadmin (pour debug)</a>
             </li>
