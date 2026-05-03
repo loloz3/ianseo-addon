@@ -25,6 +25,41 @@ header('Content-Type: application/json');
 
 $TourId = isset($_POST['TourId']) ? intval($_POST['TourId']) : (isset($_SESSION['TourId']) ? $_SESSION['TourId'] : 0);
 
+// Récupérer le type de tournoi - RENOMMÉE pour éviter conflit
+function getTournamentTypeForSimulation($TourId) {
+    global $db_link;
+    
+    // Valeur par défaut outdoor
+    $defaultType = 'outdoor';
+    
+    if (!$TourId || $TourId <= 0) {
+        return $defaultType;
+    }
+    
+    $query = "SELECT ToTypeName FROM Tournament WHERE ToId = " . intval($TourId);
+    $result = mysqli_query($db_link, $query);
+    
+    if ($result && $row = mysqli_fetch_assoc($result)) {
+        $toTypeName = $row['ToTypeName'];
+        // Vérifier si c'est un tournoi indoor (Type_Indoor 18)
+        if (stripos($toTypeName, 'indoor') !== false || stripos($toTypeName, 'type_indoor') !== false) {
+            return 'indoor';
+        }
+        // Vérifier aussi par l'ID si nécessaire (Type_Indoor_18 = 1 selon votre base)
+        if ($toTypeName == '1' || $toTypeName == 'Type_Indoor_18') {
+            return 'indoor';
+        }
+    }
+    
+    return $defaultType; // Par défaut outdoor
+}
+
+// Obtenir le type de tournoi APRÈS que la connexion soit établie
+$tournamentType = getTournamentTypeForSimulation($TourId);
+$arrowsPerEnd = ($tournamentType === 'indoor') ? 3 : 6;  // Indoor: +3 flèches, Outdoor: +6 flèches
+$maxArrowsPerDistance = ($tournamentType === 'indoor') ? 30 : 36; // Indoor: 30 max, Outdoor: 36 max
+$totalArrowsMax = $maxArrowsPerDistance * 2; // 60 ou 72 flèches total
+
 function db_escape($str) {
     global $db_link;
     return mysqli_real_escape_string($db_link, $str);
@@ -32,21 +67,21 @@ function db_escape($str) {
 
 function letterToScore($letter) {
     $conversion = [
-        'A' => 0, 'M' => 0,
+        'A' => 0,
         'B' => 1, 'C' => 2, 'D' => 3, 'E' => 4,
         'F' => 5, 'G' => 6, 'H' => 7, 'I' => 8, 'J' => 9,
-        'K' => 10, 'L' => 10, 'X' => 10
+        'K' => 10, 'L' => 10
     ];
-    $letter = strtoupper($letter);
+	$letter = strtoupper($letter);
     return isset($conversion[$letter]) ? $conversion[$letter] : 0;
 }
 
 // Fonction pour calculer les statistiques à partir d'une chaîne de lettres
 function calculateStats($arrowString) {
     $hits = 0;      // Nombre total de flèches
-    $gold = 0;      // Nombre de 10 (X, K, L)
+    $gold = 0;      // Nombre de 10 (K, L)
     $xnine = 0;     // Nombre de 9 (J)
-    
+
     if (empty($arrowString)) {
         return ['hits' => 0, 'gold' => 0, 'xnine' => 0];
     }
@@ -55,7 +90,7 @@ function calculateStats($arrowString) {
         $letter = strtoupper($arrowString[$i]);
         $hits++;
         
-        if ($letter == 'K' || $letter == 'L' || $letter == 'X') {
+        if ($letter == 'K' || $letter == 'L') {
             $gold++;
         } elseif ($letter == 'J') {
             $xnine++;
@@ -75,17 +110,17 @@ function getArcherTypeSimple($division) {
 
 function generateRandomLetter($archerType) {
     if ($archerType === 'co') {
-        $letters = ['F', 'G', 'H', 'I', 'J', 'X', 'X', 'M'];
+        $letters = ['F', 'G', 'H', 'I', 'J', 'L', 'K', 'A'];
         return $letters[array_rand($letters)];
     } else {
-        $letters = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'X', 'X', 'X', 'M'];
+        $letters = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'A'];
         return $letters[array_rand($letters)];
     }
 }
 
 function generateFixedLetter($arrowType, $letterValue) {
     $letterMap = [
-        '10' => 'X',
+        '10' => 'L',
         '9' => 'J',
         '8' => 'I',
         '7' => 'H',
@@ -95,23 +130,26 @@ function generateFixedLetter($arrowType, $letterValue) {
         '3' => 'D',
         '2' => 'C',
         '1' => 'B',
-        '0' => 'M'
+        '0' => 'A'
     ];
+
     return isset($letterMap[$letterValue]) ? $letterMap[$letterValue] : 'M';
 }
 
-function generateVolley($archerType, $arrowType = 'random') {
+function generateVolley($archerType, $arrowType, $arrowsPerEnd = 3) {
+    $volley = '';
     if ($arrowType === 'all_10') {
-        return 'XXX';
+        $volley = str_repeat('X', $arrowsPerEnd);
     } elseif ($arrowType === 'all_9') {
-        return 'JJJ';
+        $volley = str_repeat('J', $arrowsPerEnd);
     } elseif ($arrowType === 'all_8') {
-        return 'III';
+        $volley = str_repeat('I', $arrowsPerEnd);
     } else {
-        return generateRandomLetter($archerType) . 
-               generateRandomLetter($archerType) . 
-               generateRandomLetter($archerType);
+        for ($i = 0; $i < $arrowsPerEnd; $i++) {
+            $volley .= generateRandomLetter($archerType);
+        }
     }
+    return $volley;
 }
 
 function calculateScore($str) {
@@ -176,11 +214,12 @@ try {
             $totalScore += $a['d1_score'] + $a['d2_score'];
             
             // Convertir la dernière volée en chiffres
-            $last1 = ($d1 >= 3) ? substr($a['d1_str'], -3) : $a['d1_str'];
-            $last2 = ($d2 >= 3) ? substr($a['d2_str'], -3) : $a['d2_str'];
+            $lastVolleySize = $arrowsPerEnd;
+            $last1 = ($d1 >= $lastVolleySize) ? substr($a['d1_str'], -$lastVolleySize) : $a['d1_str'];
+            $last2 = ($d2 >= $lastVolleySize) ? substr($a['d2_str'], -$lastVolleySize) : $a['d2_str'];
             
-            if ($d1 < 3) $last1 = $a['d1_str'];
-            if ($d2 < 3) $last2 = $a['d2_str'];
+            if ($d1 < $lastVolleySize) $last1 = $a['d1_str'];
+            if ($d2 < $lastVolleySize) $last2 = $a['d2_str'];
             
             $list[] = [
                 'id' => $a['id'],
@@ -204,6 +243,10 @@ try {
         echo json_encode([
             'success' => true,
             'archers' => $list,
+            'tournamentType' => $tournamentType,
+            'arrowsPerEnd' => $arrowsPerEnd,
+            'maxArrowsPerDistance' => $maxArrowsPerDistance,
+            'totalArrowsMax' => $totalArrowsMax,
             'stats' => [
                 'total_archers' => count($list),
                 'total_arrows' => $totalArrows,
@@ -217,7 +260,7 @@ try {
         $numVolleys = isset($_POST['num_volleys']) ? intval($_POST['num_volleys']) : 1;
         $group = isset($_POST['archer_group']) ? $_POST['archer_group'] : 'all';
         $arrowType = isset($_POST['arrow_type']) ? $_POST['arrow_type'] : 'random';
-        $targetDistance = isset($_POST['target_distance']) ? $_POST['target_distance'] : 'both'; // 'd1', 'd2', 'both'
+        $targetDistance = isset($_POST['target_distance']) ? $_POST['target_distance'] : 'both';
         
         $affected = 0;
         $totalArrowsAdded = 0;
@@ -236,22 +279,44 @@ try {
             // Ajouter aux distances sélectionnées
             if ($targetDistance === 'd1' || $targetDistance === 'both') {
                 for ($i = 0; $i < $numVolleys; $i++) {
-                    $volley = generateVolley($a['type'], $arrowType);
-                    $a['d1_str'] .= $volley;
-                    $totalArrowsAdded += 3;
+                    $currentLen = strlen($a['d1_str']);
+                    if ($currentLen + $arrowsPerEnd <= $maxArrowsPerDistance) {
+                        $volley = generateVolley($a['type'], $arrowType, $arrowsPerEnd);
+                        $a['d1_str'] .= $volley;
+                        $totalArrowsAdded += $arrowsPerEnd;
+                    } else {
+                        // Ajouter seulement les flèches nécessaires pour atteindre le max
+                        $remaining = $maxArrowsPerDistance - $currentLen;
+                        if ($remaining > 0) {
+                            $partialVolley = generateVolley($a['type'], $arrowType, $remaining);
+                            $a['d1_str'] .= $partialVolley;
+                            $totalArrowsAdded += $remaining;
+                        }
+                    }
                 }
             }
             
             if ($targetDistance === 'd2' || $targetDistance === 'both') {
                 for ($i = 0; $i < $numVolleys; $i++) {
-                    $volley = generateVolley($a['type'], $arrowType);
-                    $a['d2_str'] .= $volley;
-                    $totalArrowsAdded += 3;
+                    $currentLen = strlen($a['d2_str']);
+                    if ($currentLen + $arrowsPerEnd <= $maxArrowsPerDistance) {
+                        $volley = generateVolley($a['type'], $arrowType, $arrowsPerEnd);
+                        $a['d2_str'] .= $volley;
+                        $totalArrowsAdded += $arrowsPerEnd;
+                    } else {
+                        // Ajouter seulement les flèches nécessaires pour atteindre le max
+                        $remaining = $maxArrowsPerDistance - $currentLen;
+                        if ($remaining > 0) {
+                            $partialVolley = generateVolley($a['type'], $arrowType, $remaining);
+                            $a['d2_str'] .= $partialVolley;
+                            $totalArrowsAdded += $remaining;
+                        }
+                    }
                 }
             }
             
-            $a['d1_str'] = substr($a['d1_str'], 0, 30);
-            $a['d2_str'] = substr($a['d2_str'], 0, 30);
+            $a['d1_str'] = substr($a['d1_str'], 0, $maxArrowsPerDistance);
+            $a['d2_str'] = substr($a['d2_str'], 0, $maxArrowsPerDistance);
             
             $newScoreD1 = calculateScore($a['d1_str']);
             $newScoreD2 = calculateScore($a['d2_str']);
@@ -287,9 +352,10 @@ try {
         }
         
         $distanceText = ($targetDistance === 'd1') ? 'D1' : (($targetDistance === 'd2') ? 'D2' : 'D1 et D2');
+        $arrowText = ($arrowsPerEnd === 3) ? '3 flèches' : '6 flèches';
         echo json_encode([
             'success' => true,
-            'message' => $numVolleys . " volée(s) ajoutée(s) sur " . $distanceText . " pour " . $affected . " archers (" . $totalArrowsAdded . " flèches)"
+            'message' => $numVolleys . " volée(s) de " . $arrowText . " ajoutée(s) sur " . $distanceText . " pour " . $affected . " archers (" . $totalArrowsAdded . " flèches) - Tournoi " . ($tournamentType === 'indoor' ? 'INDOOR' : 'OUTDOOR')
         ]);
         exit;
     }
@@ -362,7 +428,7 @@ try {
         $distanceText = ($targetDistance === 'd1') ? 'D1' : (($targetDistance === 'd2') ? 'D2' : 'D1 et D2');
         echo json_encode([
             'success' => true,
-            'message' => "Flèches réinitialisées sur " . $distanceText . " pour " . $affected . " archers"
+            'message' => "Flèches réinitialisées sur " . $distanceText . " pour " . $affected . " archers - Tournoi " . ($tournamentType === 'indoor' ? 'INDOOR' : 'OUTDOOR')
         ]);
         exit;
     }
@@ -387,28 +453,36 @@ try {
             
             if ($targetDistance === 'd1' || $targetDistance === 'both') {
                 $currentLenD1 = strlen($a['d1_str']);
-                $neededD1 = max(0, 30 - $currentLenD1);
-                $volleysNeededD1 = ceil($neededD1 / 3);
+                $neededD1 = max(0, $maxArrowsPerDistance - $currentLenD1);
+                $volleysNeededD1 = ceil($neededD1 / $arrowsPerEnd);
                 
                 for ($i = 0; $i < $volleysNeededD1; $i++) {
-                    $volley = generateVolley($a['type'], $arrowType);
-                    $a['d1_str'] .= $volley;
-                    $totalArrowsAdded += min(3, 30 - strlen($a['d1_str']) + 3);
+                    $remaining = $maxArrowsPerDistance - strlen($a['d1_str']);
+                    $arrowsToAdd = min($arrowsPerEnd, $remaining);
+                    if ($arrowsToAdd > 0) {
+                        $volley = generateVolley($a['type'], $arrowType, $arrowsToAdd);
+                        $a['d1_str'] .= $volley;
+                        $totalArrowsAdded += $arrowsToAdd;
+                    }
                 }
-                $a['d1_str'] = substr($a['d1_str'], 0, 30);
+                $a['d1_str'] = substr($a['d1_str'], 0, $maxArrowsPerDistance);
             }
             
             if ($targetDistance === 'd2' || $targetDistance === 'both') {
                 $currentLenD2 = strlen($a['d2_str']);
-                $neededD2 = max(0, 30 - $currentLenD2);
-                $volleysNeededD2 = ceil($neededD2 / 3);
+                $neededD2 = max(0, $maxArrowsPerDistance - $currentLenD2);
+                $volleysNeededD2 = ceil($neededD2 / $arrowsPerEnd);
                 
                 for ($i = 0; $i < $volleysNeededD2; $i++) {
-                    $volley = generateVolley($a['type'], $arrowType);
-                    $a['d2_str'] .= $volley;
-                    $totalArrowsAdded += min(3, 30 - strlen($a['d2_str']) + 3);
+                    $remaining = $maxArrowsPerDistance - strlen($a['d2_str']);
+                    $arrowsToAdd = min($arrowsPerEnd, $remaining);
+                    if ($arrowsToAdd > 0) {
+                        $volley = generateVolley($a['type'], $arrowType, $arrowsToAdd);
+                        $a['d2_str'] .= $volley;
+                        $totalArrowsAdded += $arrowsToAdd;
+                    }
                 }
-                $a['d2_str'] = substr($a['d2_str'], 0, 30);
+                $a['d2_str'] = substr($a['d2_str'], 0, $maxArrowsPerDistance);
             }
             
             $newScoreD1 = calculateScore($a['d1_str']);
@@ -445,9 +519,11 @@ try {
         }
         
         $distanceText = ($targetDistance === 'd1') ? 'D1' : (($targetDistance === 'd2') ? 'D2' : 'D1 et D2');
+        $arrowText = ($arrowsPerEnd === 3) ? '3 flèches' : '6 flèches';
+        $maxText = ($maxArrowsPerDistance === 30) ? '30 flèches' : '36 flèches';
         echo json_encode([
             'success' => true,
-            'message' => "Session complétée sur " . $distanceText . " pour " . $affected . " archers (" . $totalArrowsAdded . " flèches ajoutées)"
+            'message' => "Session complétée sur " . $distanceText . " pour " . $affected . " archers (" . $totalArrowsAdded . " flèches ajoutées) - Tournoi " . ($tournamentType === 'indoor' ? 'INDOOR' : 'OUTDOOR') . " (" . $arrowText . "/volée, max " . $maxText . " par distance)"
         ]);
         exit;
     }

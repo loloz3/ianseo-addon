@@ -22,7 +22,6 @@ include('Common/Templates/head.php');
 ?>
 
 <style>
-    /* Votre CSS reste inchangé */
     .simulation-container { padding: 20px; max-width: 1400px; margin: 0 auto; }
     .title-section { background: linear-gradient(135deg, #2c5f2d, #1e4620); color: white; padding: 20px; border-radius: 10px; margin-bottom: 25px; text-align: center; }
     .controls-panel { background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border: 1px solid #dee2e6; }
@@ -107,6 +106,20 @@ include('Common/Templates/head.php');
     .saving {
         animation: pulse 0.5s ease-in-out;
     }
+	.badge-warning {
+		background: #ffc107;
+		color: #212529;
+		padding: 5px 10px;
+		border-radius: 4px;
+		font-weight: bold;
+	}
+	.badge-success {
+		background: #28a745;
+		color: white;
+		padding: 5px 10px;
+		border-radius: 4px;
+		font-weight: bold;
+}
 </style>
 
 <div class="simulation-container">
@@ -158,6 +171,15 @@ include('Common/Templates/head.php');
                     <option value="d2">D2 uniquement</option>
                 </select>
             </div>
+			<!-- <button id="btn-test-connection" class="btn-sim btn-info-sim">🔍 Tester connexion AJAX</button> -->
+			<div class="config-row">
+				<label>Type de tournoi détecté :</label>
+				<span id="tournament-type-display" class="badge-info" style="padding: 5px 10px;">Chargement...</span>
+			</div>
+			<div class="config-row">
+				<label>Configuration :</label>
+				<span id="tournament-config-display" style="font-size: 12px; color: #666;">Chargement...</span>
+			</div>
         </div>
         
         <div>
@@ -341,18 +363,56 @@ function formatArrowsAsNumbers(str) {
 }
 
 function loadData() {
+    console.log('Chargement des données...'); // Debug
     $.post(ajaxUrl, { action: 'get_data', TourId: tourId }, function(r) {
+        console.log('Réponse reçue:', r); // Debug
         if (r.success) {
             displayTable(r.archers);
             $('#total-archers').text(r.stats.total_archers);
             $('#total-arrows').text(r.stats.total_arrows);
             $('#total-score').text(r.stats.total_score);
+            
+            // Afficher le type de tournoi si disponible
+            if (r.tournamentType) {
+                var typeText = (r.tournamentType === 'indoor') ? '🏠 INDOOR (18m) - 3 flèches/volée' : '🌳 OUTDOOR - 6 flèches/volée';
+                var configText = (r.tournamentType === 'indoor') ? 
+                    'Configuration: 3 flèches par volée | Maximum: ' + r.maxArrowsPerDistance + ' flèches par distance (Total: ' + r.totalArrowsMax + ' flèches)' : 
+                    'Configuration: 6 flèches par volée | Maximum: ' + r.maxArrowsPerDistance + ' flèches par distance (Total: ' + r.totalArrowsMax + ' flèches)';
+                
+                if ($('#tournament-type-display').length) {
+                    $('#tournament-type-display').text(typeText);
+                    $('#tournament-config-display').text(configText);
+                    
+                    // Ajouter une classe CSS selon le type
+                    if (r.tournamentType === 'indoor') {
+                        $('#tournament-type-display').removeClass('badge-info').addClass('badge-warning');
+                    } else {
+                        $('#tournament-type-display').removeClass('badge-warning').addClass('badge-info');
+                    }
+                }
+                
+                addLog('🏆 Tournoi détecté: ' + typeText, 'success');
+                addLog('📊 ' + configText, 'info');
+            } else {
+                addLog('⚠️ Type de tournoi non détecté, utilisation configuration par défaut (OUTDOOR)', 'warning');
+            }
         } else {
-            addLog('Erreur: ' + r.message, 'error');
+            addLog('Erreur: ' + (r.message || 'Erreur inconnue'), 'error');
+            console.error('Erreur retournée par le serveur:', r);
         }
     }, 'json').fail(function(jqXHR, textStatus, errorThrown) { 
-        addLog('Erreur connexion serveur: ' + textStatus, 'error');
-        console.error('AJAX Error:', textStatus, errorThrown);
+        var errorMsg = 'Erreur AJAX: ' + textStatus + ' - ' + errorThrown;
+        addLog(errorMsg, 'error');
+        console.error('AJAX Error Details:', {
+            status: jqXHR.status,
+            statusText: jqXHR.statusText,
+            responseText: jqXHR.responseText,
+            textStatus: textStatus,
+            errorThrown: errorThrown
+        });
+        
+        // Afficher un message d'erreur dans le tableau
+        $('#archers-table-body').html('<tr><td colspan="12" class="text-center" style="color: red;">❌ Erreur de connexion au serveur. Vérifiez que ajax_simulate.php est accessible.</td></tr>');
     });
 }
 
@@ -499,6 +559,41 @@ $(document).ready(function() {
         }
     });
 });
+
+// Fonction de test pour vérifier l'accès au fichier AJAX
+function testAjaxConnection() {
+    addLog('🔍 Test de connexion à ' + ajaxUrl, 'info');
+    
+    // Test simple pour voir si le fichier existe
+    $.ajax({
+        url: ajaxUrl,
+        type: 'GET',
+        data: { test: 1 },
+        success: function(data, status, xhr) {
+            addLog('✅ Fichier AJAX accessible', 'success');
+            // Vérifier le type de contenu retourné
+            var contentType = xhr.getResponseHeader('Content-Type');
+            addLog('Content-Type reçu: ' + contentType, 'info');
+            
+            // Vérifier si la réponse commence par < (donc HTML)
+            if (data.trim().startsWith('<')) {
+                addLog('⚠️ Le script retourne du HTML au lieu de JSON. Erreur PHP probable.', 'warning');
+                // Afficher les 200 premiers caractères pour debug
+                addLog('Début de la réponse: ' + data.substring(0, 200), 'warning');
+            }
+        },
+        error: function(xhr, status, error) {
+            addLog('❌ Erreur d\'accès: ' + status + ' - ' + error, 'error');
+            addLog('Status HTTP: ' + xhr.status, 'error');
+        }
+    });
+}
+
+$('#btn-test-connection').click(function(e) { 
+    e.preventDefault();
+    testAjaxConnection(); 
+});
+
 </script>
 
 <?php include('Common/Templates/tail.php'); ?>
