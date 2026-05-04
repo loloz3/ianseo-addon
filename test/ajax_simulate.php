@@ -360,79 +360,95 @@ try {
         exit;
     }
     
-    if ($action === 'reset_arrows') {
-        $group = isset($_POST['archer_group']) ? $_POST['archer_group'] : 'all';
-        $targetDistance = isset($_POST['target_distance']) ? $_POST['target_distance'] : 'both';
-        $affected = 0;
+if ($action === 'reset_arrows') {
+    $group = isset($_POST['archer_group']) ? $_POST['archer_group'] : 'all';
+    $targetDistance = isset($_POST['target_distance']) ? $_POST['target_distance'] : 'both';
+    $affected = 0;
+    
+    foreach ($archers as $a) {
+        $skip = false;
+        if ($group === 'co_only' && $a['type'] !== 'co') $skip = true;
+        if ($group === 'spot_only' && $a['type'] !== 'spot') $skip = true;
+        if ($group === 'session1' && $a['session'] != 1) $skip = true;
+        if ($group === 'session2' && $a['session'] != 2) $skip = true;
         
-        foreach ($archers as $a) {
-            $skip = false;
-            if ($group === 'co_only' && $a['type'] !== 'co') $skip = true;
-            if ($group === 'spot_only' && $a['type'] !== 'spot') $skip = true;
-            if ($group === 'session1' && $a['session'] != 1) $skip = true;
-            if ($group === 'session2' && $a['session'] != 2) $skip = true;
-            
-            if ($skip) continue;
-            
-            $affected++;
-            
-            // Construire la requête dynamique selon la distance sélectionnée
-            $setClauses = [];
-            
-            if ($targetDistance === 'd1' || $targetDistance === 'both') {
-                $setClauses[] = "QuD1Arrowstring = ''";
-                $setClauses[] = "QuD1Score = 0";
-                $setClauses[] = "QuD1Hits = 0";
-                $setClauses[] = "QuD1Gold = 0";
-                $setClauses[] = "QuD1Xnine = 0";
-                $setClauses[] = "QuD1Rank = 0";
-            }
-            
-            if ($targetDistance === 'd2' || $targetDistance === 'both') {
-                $setClauses[] = "QuD2Arrowstring = ''";
-                $setClauses[] = "QuD2Score = 0";
-                $setClauses[] = "QuD2Hits = 0";
-                $setClauses[] = "QuD2Gold = 0";
-                $setClauses[] = "QuD2Xnine = 0";
-                $setClauses[] = "QuD2Rank = 0";
-            }
-            
-            // Si on réinitialise une seule distance, il faut recalculer les totaux
-            if ($targetDistance === 'd1') {
-                $statsD2 = calculateStats($a['d2_str']);
-                $setClauses[] = "QuScore = QuD2Score";
-                $setClauses[] = "QuHits = " . $statsD2['hits'];
-                $setClauses[] = "QuGold = " . $statsD2['gold'];
-                $setClauses[] = "QuXnine = " . $statsD2['xnine'];
-            } elseif ($targetDistance === 'd2') {
-                $statsD1 = calculateStats($a['d1_str']);
-                $setClauses[] = "QuScore = QuD1Score";
-                $setClauses[] = "QuHits = " . $statsD1['hits'];
-                $setClauses[] = "QuGold = " . $statsD1['gold'];
-                $setClauses[] = "QuXnine = " . $statsD1['xnine'];
-            } else {
-                // both: tout remettre à zéro
-                $setClauses[] = "QuScore = 0";
-                $setClauses[] = "QuHits = 0";
-                $setClauses[] = "QuGold = 0";
-                $setClauses[] = "QuXnine = 0";
-                $setClauses[] = "QuClRank = 0";
-                $setClauses[] = "QuConfirm = 0";
-            }
-            
-            $updateQuery = "UPDATE Qualifications SET " . implode(", ", $setClauses) . " WHERE QuId = " . $a['id'];
-            
-            safe_w_sql($updateQuery);
+        if ($skip) continue;
+        
+        $affected++;
+        
+        // Déterminer quelles distances réinitialiser
+        $resetD1 = ($targetDistance === 'd1' || $targetDistance === 'both');
+        $resetD2 = ($targetDistance === 'd2' || $targetDistance === 'both');
+        
+        // Valeurs actuelles si on ne réinitialise qu'une seule distance
+        $currentD1Str = $a['d1_str'];
+        $currentD2Str = $a['d2_str'];
+        
+        if ($resetD1) {
+            $a['d1_str'] = '';
+        }
+        if ($resetD2) {
+            $a['d2_str'] = '';
         }
         
-        $distanceText = ($targetDistance === 'd1') ? 'D1' : (($targetDistance === 'd2') ? 'D2' : 'D1 et D2');
-        echo json_encode([
-            'success' => true,
-            'message' => "Flèches réinitialisées sur " . $distanceText . " pour " . $affected . " archers - Tournoi " . ($tournamentType === 'indoor' ? 'INDOOR' : 'OUTDOOR')
-        ]);
-        exit;
+        // Construire la requête dynamique
+        $setClauses = [];
+        
+        if ($resetD1) {
+            $setClauses[] = "QuD1Arrowstring = ''";
+            $setClauses[] = "QuD1Score = 0";
+            $setClauses[] = "QuD1Hits = 0";
+            $setClauses[] = "QuD1Gold = 0";
+            $setClauses[] = "QuD1Xnine = 0";
+            $setClauses[] = "QuD1Rank = 0";
+        }
+        
+        if ($resetD2) {
+            $setClauses[] = "QuD2Arrowstring = ''";
+            $setClauses[] = "QuD2Score = 0";
+            $setClauses[] = "QuD2Hits = 0";
+            $setClauses[] = "QuD2Gold = 0";
+            $setClauses[] = "QuD2Xnine = 0";
+            $setClauses[] = "QuD2Rank = 0";
+        }
+        
+        // Recalculer les totaux si nécessaire
+        if ($resetD1 && $resetD2) {
+            // Tout réinitialiser
+            $setClauses[] = "QuScore = 0";
+            $setClauses[] = "QuHits = 0";
+            $setClauses[] = "QuGold = 0";
+            $setClauses[] = "QuXnine = 0";
+            $setClauses[] = "QuClRank = 0";
+            $setClauses[] = "QuConfirm = 0";
+        } elseif ($resetD1 && !$resetD2) {
+            // Réinitialiser D1, garder D2
+            $statsD2 = calculateStats($currentD2Str);
+            $setClauses[] = "QuScore = QuD2Score";
+            $setClauses[] = "QuHits = " . $statsD2['hits'];
+            $setClauses[] = "QuGold = " . $statsD2['gold'];
+            $setClauses[] = "QuXnine = " . $statsD2['xnine'];
+        } elseif (!$resetD1 && $resetD2) {
+            // Réinitialiser D2, garder D1
+            $statsD1 = calculateStats($currentD1Str);
+            $setClauses[] = "QuScore = QuD1Score";
+            $setClauses[] = "QuHits = " . $statsD1['hits'];
+            $setClauses[] = "QuGold = " . $statsD1['gold'];
+            $setClauses[] = "QuXnine = " . $statsD1['xnine'];
+        }
+        
+        $updateQuery = "UPDATE Qualifications SET " . implode(", ", $setClauses) . " WHERE QuId = " . $a['id'];
+        safe_w_sql($updateQuery);
     }
     
+    $distanceText = ($targetDistance === 'd1') ? 'D1' : (($targetDistance === 'd2') ? 'D2' : 'D1 et D2');
+    echo json_encode([
+        'success' => true,
+        'message' => "Flèches réinitialisées sur " . $distanceText . " pour " . $affected . " archers - Tournoi " . ($tournamentType === 'indoor' ? 'INDOOR' : 'OUTDOOR')
+    ]);
+    exit;
+}
+
     if ($action === 'complete_session') {
         $group = isset($_POST['archer_group']) ? $_POST['archer_group'] : 'all';
         $arrowType = isset($_POST['arrow_type']) ? $_POST['arrow_type'] : 'random';
