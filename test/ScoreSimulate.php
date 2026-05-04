@@ -183,9 +183,9 @@ include('Common/Templates/head.php');
         </div>
         
         <div>
-            <button id="btn-add-3" class="btn-sim btn-primary-sim">➕ +3 Flèches</button>
-            <button id="btn-add-6" class="btn-sim btn-success-sim">➕ +6 Flèches</button>
-            <button id="btn-complete" class="btn-sim btn-warning-sim">🎯 Compléter session (60 flèches)</button>
+            <button id="btn-add-3" class="btn-sim btn-primary-sim">➕ 1 volée </button>
+            <!-- <button id="btn-add-6" class="btn-sim btn-success-sim">➕ 2 volée</button> -->
+            <button id="btn-complete" class="btn-sim btn-warning-sim">🎯 Compléter session (Toutes les flèches)</button>
             <button id="btn-reset" class="btn-sim btn-danger-sim">🗑️ Réinitialiser toutes les flèches</button>
             <button id="btn-refresh" class="btn-sim btn-secondary-sim">🔄 Rafraîchir</button>
         </div>
