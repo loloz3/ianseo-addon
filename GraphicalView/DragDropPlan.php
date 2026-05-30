@@ -797,6 +797,128 @@ button:has(.w-4.h-4) {
     display: inline-block;
 }
 
+/* ===== NOUVEAUX STYLES POUR HAUTEURS FIXES ET ASCENSEURS INDÉPENDANTS ===== */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#root {
+    height: 100%;
+    overflow: hidden;
+}
+
+.fixed-layout-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding: 1.5rem;
+    gap: 1rem;
+}
+
+/* Partie 1: Vue d'ensemble - hauteur fixe */
+.overview-fixed {
+    flex-shrink: 0;
+    height: auto;
+    min-height: 220px;
+    max-height: 280px;
+    overflow: hidden;
+}
+
+/* Partie 2+3: Conteneur principal avec hauteur restante */
+.main-flex-container {
+    display: flex;
+    flex: 1;
+    gap: 1.5rem;
+    min-height: 0;  /* CRUCIAL: permet le flex shrinking */
+    overflow: hidden;
+}
+
+.overview-scroll {
+    height: 180px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+
+/* Panneau gauche - Archers non assignés */
+.left-panel-fixed {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.left-panel-fixed > .bg-white {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.left-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    scrollbar-width: thin;
+    padding: 0.25rem;
+}
+
+/* Panneau droit - Cibles */
+.right-panel-fixed {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.right-panel-fixed > .bg-white {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Conteneur de scroll pour les cibles */
+.right-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    scrollbar-width: thin;
+    padding: 0.25rem;
+    position: relative;
+}
+
+/* Styles pour les scrollbars */
+.left-scroll-area::-webkit-scrollbar,
+.right-scroll-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.left-scroll-area::-webkit-scrollbar-track,
+.right-scroll-area::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.left-scroll-area::-webkit-scrollbar-thumb,
+.right-scroll-area::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.left-scroll-area::-webkit-scrollbar-thumb:hover,
+.right-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
 </style>
 
 
@@ -3584,22 +3706,32 @@ const generateSimplePDF = () => {
             return 'archer-assigned';
         };
 
-        const scrollToTarget = (targetId) => {
-            const element = document.querySelector(`[data-target-id="${targetId}"]`);
-            if (element) {
-                element.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'nearest'
-                });
-                
-                element.classList.add('highlight-target');
-                
-                setTimeout(() => {
-                    element.classList.remove('highlight-target');
-                }, 2000);
-            }
-        };
+		const scrollToTarget = (targetId) => {
+			const element = document.querySelector(`[data-target-id="${targetId}"]`);
+			const rightScrollContainer = document.querySelector('.right-scroll-area');
+			
+			if (element && rightScrollContainer) {
+				// Calculer la position relative de l'élément par rapport au conteneur de scroll
+				const containerRect = rightScrollContainer.getBoundingClientRect();
+				const elementRect = element.getBoundingClientRect();
+				const scrollTop = rightScrollContainer.scrollTop;
+				const elementRelativeTop = elementRect.top - containerRect.top + scrollTop;
+				
+				// Centrer l'élément dans le conteneur
+				const targetScroll = elementRelativeTop - (containerRect.height / 2) + (elementRect.height / 2);
+				
+				rightScrollContainer.scrollTo({
+					top: Math.max(0, targetScroll),
+					behavior: 'smooth'
+				});
+				
+				element.classList.add('highlight-target');
+				
+				setTimeout(() => {
+					element.classList.remove('highlight-target');
+				}, 2000);
+			}
+		};
 
 // **********************************************************************************************************************
 
@@ -3857,58 +3989,59 @@ const getTargetStandardImage = (targetId) => {
         };
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-                <div className="mx-auto">
-
-                    <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 text-blue-600"><Icons.Grid /></div>
-                                <div className="flex items-center gap-3 ml-2">
-                                    <h2 className="text-lg font-bold text-gray-800">Départ</h2>
-                                    <select
-                                        value={selectedSession}
-                                        onChange={(e) => {
-                                            const newSession = Number(e.target.value);
-                                            setSelectedSession(newSession);
-                                            const updatedTargets = recalculateTargets(archers, newSession);
-                                            setTargets(updatedTargets);
-                                        }}
-                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]"
-                                    >
-                                        {SESSIONS.map(session => (
-                                            <option key={session.order} value={session.order}>
-                                                {session.description}
-                                            </option>
-                                        ))}
-                                    </select>
+            <div className="fixed-layout-container">
+                {/* PARTIE 1: Vue d'ensemble des cibles (HAUTEUR FIXE) */}
+                <div className="overview-fixed">
+                    <div className="bg-white rounded-lg shadow-lg">
+                        <div className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 text-blue-600"><Icons.Grid /></div>
+                                    <div className="flex items-center gap-3 ml-2">
+                                        <h2 className="text-lg font-bold text-gray-800">Départ</h2>
+                                        <select
+                                            value={selectedSession}
+                                            onChange={(e) => {
+                                                const newSession = Number(e.target.value);
+                                                setSelectedSession(newSession);
+                                                const updatedTargets = recalculateTargets(archers, newSession);
+                                                setTargets(updatedTargets);
+                                            }}
+                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]"
+                                        >
+                                            {SESSIONS.map(session => (
+                                                <option key={session.order} value={session.order}>
+                                                    {session.description}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => {
-                                        debugTargets();
-                                        generateSimplePDF();
-                                    }}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                                    style={{
-                                        backgroundColor: '#2563eb',
-                                        color: 'white',
-                                        border: '2px solid #1d4ed8'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#1d4ed8';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#2563eb';
-                                    }}
-                                    title="Générer un PDF de toutes les cibles"
-                                >
-                                    <div className="w-4 h-4"><Icons.Print /></div>
-                                    <span>Imprimer PDF</span>
-                                </button>
-                                    
+                                
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => {
+                                            debugTargets();
+                                            generateSimplePDF();
+                                        }}
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                                        style={{
+                                            backgroundColor: '#2563eb',
+                                            color: 'white',
+                                            border: '2px solid #1d4ed8'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#1d4ed8';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#2563eb';
+                                        }}
+                                        title="Générer un PDF de toutes les cibles"
+                                    >
+                                        <div className="w-4 h-4"><Icons.Print /></div>
+                                        <span>Imprimer PDF</span>
+                                    </button>
+                                        
                                     <button
                                         onClick={() => setShowTargetsOverview(!showTargetsOverview)}
                                         className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
@@ -3926,447 +4059,439 @@ const getTargetStandardImage = (targetId) => {
                                         )}
                                     </button>
                                 </div>
-                        </div>
-                        
-                        {showTargetsOverview && (
-                            <>
-                                <div 
-                                    ref={targetsOverviewRef}
-                                    className="targets-overview flex gap-3 pb-3 overflow-x-auto"
-                                    style={{ maxHeight: '180px' }}
-                                >
-                                    {Array.from({ length: displayTargetsCount }, (_, index) => {
-                                        const targetNum = index + 1;
-                                        const targetId = targetNum.toString().padStart(3, '0');
-                                        
-                                        if (!targets.find(t => t.id === targetId)) return null;
-                                        
-                                        const standardImageData = getTargetStandardImage(targetId);
-										const combinationImage = standardImageData ? standardImageData.image : null;
-										const distance = standardImageData ? standardImageData.distance : null;
-                                        const isValid = isTargetValid(targetId);
-                                        const hasArchers = hasAssignedArchers(targetId);
-                                        const archersCount = countArchersOnTarget(targetId);
-                                        const isActive = hoverTargetId === targetId;
-                                        
-                                        return (
-                                            <div
-                                                key={targetId}
-                                                className={`target-thumbnail flex-shrink-0 w-16 p-2 border-2 rounded-lg text-center cursor-pointer transition-all relative ${
-                                                    isActive ? 'active border-blue-500 bg-blue-50' : 
-                                                    !isValid ? 'border-red-300 bg-red-50' :
-                                                    hasArchers ? 'has-archers' : 
-                                                    'border-gray-200 bg-gray-50'
-                                                }`}
-                                                onClick={() => scrollToTarget(targetId)}
-                                                onMouseEnter={() => setHoverTargetId(targetId)}
-                                                onMouseLeave={() => {
-                                                    if (hoverTargetId === targetId) {
-                                                        setHoverTargetId(null);
-                                                    }
-                                                }}
-                                                title={`Cible ${targetId} - ${archersCount} archer(s) - Cliquer pour aller à la cible`}
-                                            >
-                                                <div className="relative w-full h-16 mb-1 flex items-center justify-center">
-                                                    {combinationImage ? (
-                                                        <img 
-                                                            src={combinationImage} 
-                                                            alt={`Cible ${targetId}`}
-                                                            className="max-w-full max-h-full object-contain"
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
-                                                            <div className="w-8 h-8 text-gray-400">
-                                                                <Icons.Target />
+                            </div>
+                            
+                            {showTargetsOverview && (
+                                <div className="overview-scroll">
+                                    <div 
+                                        ref={targetsOverviewRef}
+                                        className="targets-overview flex gap-3 pb-3"
+                                        style={{ minWidth: 'max-content' }}
+                                    >
+                                        {Array.from({ length: displayTargetsCount }, (_, index) => {
+                                            const targetNum = index + 1;
+                                            const targetId = targetNum.toString().padStart(3, '0');
+                                            
+                                            if (!targets.find(t => t.id === targetId)) return null;
+                                            
+                                            const standardImageData = getTargetStandardImage(targetId);
+                                            const combinationImage = standardImageData ? standardImageData.image : null;
+                                            const distance = standardImageData ? standardImageData.distance : null;
+                                            const isValid = isTargetValid(targetId);
+                                            const hasArchers = hasAssignedArchers(targetId);
+                                            const archersCount = countArchersOnTarget(targetId);
+                                            const isActive = hoverTargetId === targetId;
+                                            
+                                            return (
+                                                <div
+                                                    key={targetId}
+                                                    className={`target-thumbnail flex-shrink-0 w-16 p-2 border-2 rounded-lg text-center cursor-pointer transition-all relative ${
+                                                        isActive ? 'active border-blue-500 bg-blue-50' : 
+                                                        !isValid ? 'border-red-300 bg-red-50' :
+                                                        hasArchers ? 'has-archers' : 
+                                                        'border-gray-200 bg-gray-50'
+                                                    }`}
+                                                    onClick={() => scrollToTarget(targetId)}
+                                                    onMouseEnter={() => setHoverTargetId(targetId)}
+                                                    onMouseLeave={() => {
+                                                        if (hoverTargetId === targetId) {
+                                                            setHoverTargetId(null);
+                                                        }
+                                                    }}
+                                                    title={`Cible ${targetId} - ${archersCount} archer(s) - Cliquer pour aller à la cible`}
+                                                >
+                                                    <div className="relative w-full h-16 mb-1 flex items-center justify-center">
+                                                        {combinationImage ? (
+                                                            <img 
+                                                                src={combinationImage} 
+                                                                alt={`Cible ${targetId}`}
+                                                                className="max-w-full max-h-full object-contain"
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+                                                                <div className="w-8 h-8 text-gray-400">
+                                                                    <Icons.Target />
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {archersCount > 0 && (
-                                                        <div className="target-badge">
-                                                            {archersCount}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                
-                                                <div className={`font-bold mt-1 ${
-                                                    !isValid ? 'text-red-600' :
-                                                    hasArchers ? 'text-green-800' : 
-                                                    'text-gray-500'
-                                                }`}>
-                                                    {targetId}
-                                                </div>
-                                                
-                                                {/* AFFICHAGE DE LA DISTANCE */}
-                                                {distance && (
-                                                    <div className={`target-distance mt-1 ${
-                                                        parseInt(distance) <= 18 ? 'target-distance-indoor' : 'target-distance-outdoor'
-                                                    }`}>
-                                                        {distance}m
+                                                        )}
+                                                        
+                                                        {archersCount > 0 && (
+                                                            <div className="target-badge">
+                                                                {archersCount}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    }).filter(Boolean)}
+                                                    
+                                                    <div className={`font-bold mt-1 ${
+                                                        !isValid ? 'text-red-600' :
+                                                        hasArchers ? 'text-green-800' : 
+                                                        'text-gray-500'
+                                                    }`}>
+                                                        {targetId}
+                                                    </div>
+                                                    
+                                                    {distance && (
+                                                        <div className={`target-distance mt-1 ${
+                                                            parseInt(distance) <= 18 ? 'target-distance-indoor' : 'target-distance-outdoor'
+                                                        }`}>
+                                                            {distance}m
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        }).filter(Boolean)}
+                                    </div>
                                 </div>
-                                
-                            </>
-                        )}
+                            )}
+                        </div>
                     </div>
+                </div>
 
-                    <div className="flex gap-6 flex-container">
-                        <div className="w-19 flex-shrink-0">
-                            <div className="bg-white rounded-lg shadow-lg p-4 sticky top-6">
-
-                                
-                                <div 
-                                    className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 transition-colors bg-gray-50 min-h-[300px] cursor-copy"
-                                    onDragOver={(e) => {
-                                        e.preventDefault();
-                                        e.currentTarget.classList.add('border-orange-400', 'bg-orange-50', 'drop-zone-active');
-                                    }}
-                                    onDragLeave={(e) => {
-                                        e.currentTarget.classList.remove('border-orange-400', 'bg-orange-50', 'drop-zone-active');
-                                    }}
-                                    onDrop={(e) => {
-                                        e.currentTarget.classList.remove('border-orange-400', 'bg-orange-50', 'drop-zone-active');
-                                        handleDropToUnassigned(e);
-                                    }}
-                                >
-                                    <div className="text-center mb-4 pb-3 border-b border-gray-200">
-                                        <div className="text-lg font-bold text-gray-800 mb-1">
-                                            Non assignés ({unassignedArchers.length})
+                {/* PARTIE 2+3: Panneau gauche + Panneau droit - HAUTEUR RESTANTE AVEC ASCENSEURS INDÉPENDANTS */}
+                <div className="main-flex-container">
+                    {/* Panneau gauche - Archers non assignés */}
+                    <div className="left-panel-fixed">
+                        <div className="bg-white rounded-lg shadow-lg h-full flex flex-col">
+                            <div className="text-center mb-4 pb-3 border-b border-gray-200 flex-shrink-0 pt-4 px-4">
+                                <div className="text-lg font-bold text-gray-800 mb-1">
+                                    Non assignés ({unassignedArchers.length})
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                    Glissez les archers ici pour les désassigner
+                                </div>
+                            </div>
+                            
+                            <div 
+                                className="left-scroll-area space-y-3 p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 transition-colors bg-gray-50 flex-1 mx-4 mb-4 cursor-copy"
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.add('border-orange-400', 'bg-orange-50', 'drop-zone-active');
+                                }}
+                                onDragLeave={(e) => {
+                                    e.currentTarget.classList.remove('border-orange-400', 'bg-orange-50', 'drop-zone-active');
+                                }}
+                                onDrop={(e) => {
+                                    e.currentTarget.classList.remove('border-orange-400', 'bg-orange-50', 'drop-zone-active');
+                                    handleDropToUnassigned(e);
+                                }}
+                            >
+                                {unassignedArchers.map(archer => {
+                                    const targetSizeLabel = getTargetSizeLabel(archer.targetSize);
+                                    const targetFaceLabel = getTargetFaceLabel(archer.targetFace);
+                                    const targetFaceImage = getArcherTargetFaceImage(archer);
+                                    
+                                    return (
+                                        <div
+                                            key={archer.id}
+                                            draggable
+                                            onDragStart={(e) => handleArcherDragStart(e, archer)}
+                                            onDragEnd={handleArcherDragEnd}
+                                            className={`p-3 border-2 rounded-lg cursor-move hover:shadow-md transition no-select ${getArcherBgColor(archer, false)}`}
+                                            data-archer-id={archer.id}
+                                        >
+                                            <div className="flex items-start gap-2">
+                                                {targetFaceImage && (
+                                                    <img 
+                                                        src={targetFaceImage} 
+                                                        alt="Target face"
+                                                        className="w-12 h-12 flex-shrink-0"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                        }}
+                                                    />
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className={`font-bold text-sm truncate ${getArcherTextColor(archer, false)}`}>
+                                                        {archer.name}
+                                                        {archer.wheelchair && ' ♿'}
+                                                    </div>
+                                                    <div className="text-xs text-gray-600 mt-1 truncate">
+                                                        {archer.countryName}
+                                                    </div>
+                                                    <div className={`text-xs font-medium mt-1 truncate ${getArcherTextColor(archer, false)}`}>
+                                                        {archer.evCode || (archer.class + archer.division)}
+                                                        {archer.distance && ` / ${archer.distance}m`}
+                                                    </div>
+                                                    
+                                                    {isDebugMode && (targetSizeLabel || targetFaceLabel) && (
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            {targetSizeLabel && isDebugMode && (
+                                                                <span className="target-size-badge">
+                                                                    {targetSizeLabel}
+                                                                </span>
+                                                            )}
+                                                            {targetFaceLabel && isDebugMode && (
+                                                                <span className="face-badge">
+                                                                    {getTargetFaceLabel(archer.targetFace)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="text-sm text-gray-600">
-                                            Glissez les archers ici pour les désassigner
+                                    );
+                                })}
+
+                                {unassignedArchers.length === 0 && (
+                                    <div className="text-center text-gray-500 text-sm py-12 border-2 border-dashed border-gray-300 rounded-lg bg-white">
+                                        <div className="w-12 h-12 text-gray-300 mx-auto mb-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        </div>
+                                        <div className="font-medium text-gray-600 mb-1">
+                                            Zone de désassignement vide
+                                        </div>
+                                        <div className="text-gray-500">
+                                            Glissez un archer ici pour le désassigner
                                         </div>
                                     </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Panneau droit - Cibles */}
+                    <div className="right-panel-fixed">
+                        <div className="bg-white rounded-lg shadow-lg p-6 h-full flex flex-col">
+                            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                                <h2 className="text-xl font-bold text-gray-800">
+                                    Terrain de Tir - Départ {selectedSession}
+                                </h2>
+                                <div className="text-sm text-gray-600">
+                                    {assignedArchers.length} / {filteredArchers.length} archers assignés
+                                </div>
+                            </div>
+                            
+                            <div className="right-scroll-area space-y-4">
+                                {targets.map((target) => {
+                                    const hasArchers = archers.some(a => 
+                                        a.targetNo && 
+                                        a.targetNo !== '' &&
+                                        a.targetNo.startsWith(target.id) && 
+                                        a.session === selectedSession
+                                    );
+                                    const isHovered = hoverTargetId === target.id;
+                                    const standardImageData = getTargetStandardImage(target.id);
+                                    const standardImage = standardImageData ? standardImageData.image : null;
+                                    const distance = standardImageData ? standardImageData.distance : null;
+                                    const isInvalidConfig = standardImage === 'Img/xx.png';
                                     
-                                    {unassignedArchers.map(archer => {
-                                        const targetSizeLabel = getTargetSizeLabel(archer.targetSize);
-                                        const targetFaceLabel = getTargetFaceLabel(archer.targetFace);
-                                        const isIndoor = isIndoorTournament(archer.tournamentType);
-                                        const targetFaceImage = getArcherTargetFaceImage(archer);
-                                        const isCONational = archer.evCode?.startsWith('N') || false;
-                                        const isCOInternational = (archer.division === 'CO' || (archer.division && archer.division.includes('CO'))) && !isCONational;
-                                        
-                                        return (
-                                            <div
-                                                key={archer.id}
-                                                draggable
-                                                onDragStart={(e) => handleArcherDragStart(e, archer)}
-                                                onDragEnd={handleArcherDragEnd}
-                                                className={`p-3 border-2 rounded-lg cursor-move hover:shadow-md transition no-select ${getArcherBgColor(archer, false)}`}
-                                                data-archer-id={archer.id}
-                                            >
-                                                <div className="flex items-start gap-2">
-                                                    {targetFaceImage && (
-                                                        <img 
-                                                            src={targetFaceImage} 
-                                                            alt="Target face"
-                                                            className="w-12 h-12 flex-shrink-0"
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                            }}
-                                                        />
-                                                    )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className={`font-bold text-sm truncate ${getArcherTextColor(archer, false)}`}>
-                                                            {archer.name}
-                                                            {archer.wheelchair && ' ♿'}
-                                                        </div>
-                                                        <div className="text-xs text-gray-600 mt-1 truncate">
-                                                            {archer.countryName}
-                                                        </div>
-                                                        <div className={`text-xs font-medium mt-1 truncate ${getArcherTextColor(archer, false)}`}>
-                                                            {archer.evCode || (archer.class + archer.division)}
-                                                            {archer.distance && ` / ${archer.distance}m`}
+                                    return (
+                                        <div 
+                                            key={target.id} 
+                                            data-target-id={target.id}
+                                            className={`target-container border-2 rounded-lg p-4 transition-all target-with-archers ${
+                                                isHovered ? 'drop-target-hover' : ''
+                                            } ${
+                                                isInvalidConfig ? 'invalid-configuration' : ''
+                                            }`}
+                                            onMouseEnter={(e) => {
+                                                if (hasArchers) {
+                                                    e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (hasArchers) {
+                                                    e.currentTarget.style.backgroundColor = '';
+                                                }
+                                            }}
+                                            onDragOver={(e) => handleTargetNumberDragOver(e, target.id)}
+                                            onDragLeave={(e) => handleTargetNumberDragLeave(e, target.id)}
+                                            onDrop={(e) => handleTargetNumberDrop(e, target.id)}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex-1 grid grid-cols-4 gap-2">
+                                                    {target.positions.map((position) => {
+                                                        const isBlockedByWheelchair = isPositionBlockedByWheelchair(
+                                                            target, 
+                                                            position.letter, 
+                                                            archers, 
+                                                            selectedSession
+                                                        );
+                                                        const isOccupied = !!position.archer;
+                                                        
+                                                        return (
+                                                            <div
+                                                                key={position.id}
+                                                                onDragOver={(e) => {
+                                                                    if (!isBlockedByWheelchair) {
+                                                                        handleDragOver(e);
+                                                                    }
+                                                                }}
+                                                                onDrop={(e) => {
+                                                                    if (!isBlockedByWheelchair) {
+                                                                        handleArcherDrop(e, position.id);
+                                                                    } else {
+                                                                        showNotification('Cette position est bloquée par un archer en fauteuil', 'error');
+                                                                    }
+                                                                }}
+                                                                className={`position-container h-28 border-2 rounded-lg relative ${
+                                                                    getPositionColor(position, isBlockedByWheelchair)
+                                                                } ${
+                                                                    isBlockedByWheelchair ? 'position-blocked' :
+                                                                    isOccupied ? 'position-occupied' : 'position-empty'
+                                                                }`}
+                                                                title={isBlockedByWheelchair ? 'Position bloquée par un archer en fauteuil' : ''}
+                                                            >
+                                                                <div className="position-header">
+                                                                    <span className={isBlockedByWheelchair ? 'text-gray-400' : 'text-gray-500'}>
+                                                                        {position.letter}
+                                                                        {isBlockedByWheelchair && (
+                                                                            <span className="ml-1 inline-block w-3 h-3 text-gray-400">
+                                                                                <Icons.Lock />
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                                
+                                                                {isBlockedByWheelchair ? (
+                                                                    <div className="archer-content flex flex-col items-center justify-center p-2">
+                                                                        <div className="w-6 h-6 text-gray-400 mb-1">
+                                                                            <Icons.Wheelchair />
+                                                                        </div>
+                                                                        <div className="text-xs text-gray-400 text-center">
+                                                                            Bloqué
+                                                                        </div>
+                                                                    </div>
+                                                                ) : isOccupied ? (
+                                                                    <div 
+                                                                        draggable
+                                                                        onDragStart={(e) => handleArcherDragStart(e, position.archer)}
+                                                                        onDragEnd={handleArcherDragEnd}
+                                                                        className="archer-content p-2 no-select archer-draggable"
+                                                                        data-archer-id={position.archer.id}
+                                                                    >
+                                                                        <div className="flex items-center gap-2 h-full">
+                                                                            {(() => {
+                                                                                const targetFaceImage = getArcherTargetFaceImage(position.archer);
+                                                                                if (targetFaceImage) {
+                                                                                    return (
+                                                                                        <img 
+                                                                                            src={targetFaceImage} 
+                                                                                            alt="Target face"
+                                                                                            className="w-12 h-12 flex-shrink-0"
+                                                                                            onError={(e) => {
+                                                                                                e.target.style.display = 'none';
+                                                                                            }}
+                                                                                        />
+                                                                                    );
+                                                                                }
+                                                                                return null;
+                                                                            })()}
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className={`font-bold text-xs truncate ${
+                                                                                    position.archer.wheelchair ? 'text-blue-700' : 'text-green-700'
+                                                                                }`}>
+                                                                                    {position.archer.name}
+                                                                                    {position.archer.wheelchair && ' ♿'}
+                                                                                </div>
+                                                                                <div className="text-xs text-gray-600 mt-1 truncate">
+                                                                                    {position.archer.countryName}
+                                                                                </div>
+                                                                                <div className={`text-xs font-medium mt-1 truncate ${
+                                                                                    position.archer.wheelchair ? 'text-blue-600' : 'text-green-600'
+                                                                                }`}>
+                                                                                    {position.archer.evCode || (position.archer.class + position.archer.division)}
+                                                                                    {position.archer.distance && ` / ${position.archer.distance}m`}
+                                                                                </div>
+                                                                                
+                                                                                {isDebugMode && (position.archer.targetSize || position.archer.targetFace) && (
+                                                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                                                        {position.archer.targetSize && isDebugMode && (
+                                                                                            <span className="target-size-badge">
+                                                                                                {getTargetSizeLabel(position.archer.targetSize)}
+                                                                                            </span>
+                                                                                        )}
+                                                                                        {position.archer.targetFace && isDebugMode && (
+                                                                                            <span className="face-badge">
+                                                                                                {getTargetFaceLabel(position.archer.targetFace)}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="archer-content flex items-center justify-center">
+                                                                        <div className="w-6 h-6 text-gray-300">
+                                                                            <Icons.Target />
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                                
+                                                <div className="flex-shrink-0 w-24 text-center">
+                                                    <div 
+                                                        draggable={hasArchers}
+                                                        onDragStart={(e) => handleTargetNumberDragStart(e, target.id)}
+                                                        onDragEnd={handleTargetNumberDragEnd}
+                                                        className={`target-draggable-container ${
+                                                            hasArchers 
+                                                                ? 'cursor-move drag-ready no-select' 
+                                                                : 'cursor-default'
+                                                        }`}
+                                                        title={hasArchers ? "Glisser pour échanger cette cible (avec image)" : "Cible vide"}
+                                                    >
+                                                        {standardImage && (
+                                                            <div className="relative mb-2">
+                                                                <img 
+                                                                    src={standardImage} 
+                                                                    alt={`Cible ${target.id}`}
+                                                                    className="w-60 h-20 mx-auto object-contain"
+                                                                    onError={(e) => {
+                                                                        e.target.style.display = 'none';
+                                                                        console.warn(`Image non trouvée: ${standardImage}`);
+                                                                    }}
+                                                                />
+                                                                {distance && (
+                                                                    <div className={`text-xs mt-1 text-center ${
+                                                                        parseInt(distance) <= 18 ? 'text-green-600' : 'text-red-600'
+                                                                    }`}>
+                                                                        {distance}m
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        <div className={`text-2xl font-bold ${
+                                                            hasArchers 
+                                                                ? 'text-blue-600' 
+                                                                : 'text-gray-400'
+                                                        }`}>
+                                                            {target.id}
                                                         </div>
                                                         
-                                                        {isDebugMode && (targetSizeLabel || targetFaceLabel) && (
-                                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                                {targetSizeLabel && isDebugMode && (
-                                                                    <span className="target-size-badge">
-                                                                        {targetSizeLabel}
-                                                                    </span>
-                                                                )}
-                                                                {targetFaceLabel && isDebugMode && (
-                                                                    <span className="face-badge">
-                                                                        {getTargetFaceLabel(archer.targetFace)}
-                                                                    </span>
-                                                                )}
+                                                        {distance && !standardImage && (
+                                                            <div className={`target-main-distance mt-1 ${
+                                                                parseInt(distance) <= 18 ? 'target-distance-indoor' : 'target-distance-outdoor'
+                                                            }`}>
+                                                                {distance}m
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
-
-                                    {unassignedArchers.length === 0 && (
-                                        <div className="text-center text-gray-500 text-sm py-12 border-2 border-dashed border-gray-300 rounded-lg bg-white">
-                                            <div className="w-12 h-12 text-gray-300 mx-auto mb-3">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
-                                                </svg>
-                                            </div>
-                                            <div className="font-medium text-gray-600 mb-1">
-                                                Zone de désassignement vide
-                                            </div>
-                                            <div className="text-gray-500">
-                                                Glissez un archer ici pour le désassigner
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="main-target-column">
-                            <div className="bg-white rounded-lg shadow-lg p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-xl font-bold text-gray-800">
-                                        Terrain de Tir - Départ {selectedSession}
-                                    </h2>
-                                    <div className="text-sm text-gray-600">
-                                        {assignedArchers.length} / {filteredArchers.length} archers assignés
-                                    </div>
-                                </div>
-                                
-                                <div 
-                                    id="targets-scroll-container"
-                                    className="space-y-4 max-h-[600px] overflow-y-auto p-1"
-                                >
-                                    {targets.map((target) => {
-                                        const hasArchers = archers.some(a => 
-                                            a.targetNo && 
-                                            a.targetNo !== '' &&
-                                            a.targetNo.startsWith(target.id) && 
-                                            a.session === selectedSession
-                                        );
-                                        const isHovered = hoverTargetId === target.id;
-                                        const standardImageData = getTargetStandardImage(target.id);
-                                        const standardImage = standardImageData ? standardImageData.image : null;
-                                        const distance = standardImageData ? standardImageData.distance : null;
-                                        const isInvalidConfig = standardImage === 'Img/xx.png';
-                                        
-                                        return (
-                                            <div 
-                                                key={target.id} 
-                                                data-target-id={target.id}
-                                                className={`target-container border-2 rounded-lg p-4 transition-all target-with-archers ${
-                                                    isHovered ? 'drop-target-hover' : ''
-                                                } ${
-                                                    isInvalidConfig ? 'invalid-configuration' : ''
-                                                }`}
-                                                onMouseEnter={(e) => {
-                                                    if (hasArchers) {
-                                                        e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
-                                                    }
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    if (hasArchers) {
-                                                        e.currentTarget.style.backgroundColor = '';
-                                                    }
-                                                }}
-                                                onDragOver={(e) => handleTargetNumberDragOver(e, target.id)}
-                                                onDragLeave={(e) => handleTargetNumberDragLeave(e, target.id)}
-                                                onDrop={(e) => handleTargetNumberDrop(e, target.id)}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex-1 grid grid-cols-4 gap-2">
-                                                        {target.positions.map((position) => {
-                                                            const isBlockedByWheelchair = isPositionBlockedByWheelchair(
-                                                                target, 
-                                                                position.letter, 
-                                                                archers, 
-                                                                selectedSession
-                                                            );
-                                                            const isOccupied = !!position.archer;
-                                                            
-                                                            return (
-                                                                <div
-                                                                    key={position.id}
-                                                                    onDragOver={(e) => {
-                                                                        if (!isBlockedByWheelchair) {
-                                                                            handleDragOver(e);
-                                                                        }
-                                                                    }}
-                                                                    onDrop={(e) => {
-                                                                        if (!isBlockedByWheelchair) {
-                                                                            handleArcherDrop(e, position.id);
-                                                                        } else {
-                                                                            showNotification('Cette position est bloquée par un archer en fauteuil', 'error');
-                                                                        }
-                                                                    }}
-                                                                    className={`position-container h-28 border-2 rounded-lg relative ${
-                                                                        getPositionColor(position, isBlockedByWheelchair)
-                                                                    } ${
-                                                                        isBlockedByWheelchair ? 'position-blocked' :
-                                                                        isOccupied ? 'position-occupied' : 'position-empty'
-                                                                    }`}
-                                                                    title={isBlockedByWheelchair ? 'Position bloquée par un archer en fauteuil' : ''}
-                                                                >
-                                                                    <div className="position-header">
-                                                                        <span className={isBlockedByWheelchair ? 'text-gray-400' : 'text-gray-500'}>
-                                                                            {position.letter}
-                                                                            {isBlockedByWheelchair && (
-                                                                                <span className="ml-1 inline-block w-3 h-3 text-gray-400">
-                                                                                    <Icons.Lock />
-                                                                                </span>
-                                                                            )}
-                                                                        </span>
-                                                                    </div>
-                                                                    
-                                                                    {isBlockedByWheelchair ? (
-                                                                        <div className="archer-content flex flex-col items-center justify-center p-2">
-                                                                            <div className="w-6 h-6 text-gray-400 mb-1">
-                                                                                <Icons.Wheelchair />
-                                                                            </div>
-                                                                            <div className="text-xs text-gray-400 text-center">
-                                                                                Bloqué
-                                                                            </div>
-                                                                    </div>
-                                                                    ) : isOccupied ? (
-                                                                        <div 
-                                                                            draggable
-                                                                            onDragStart={(e) => handleArcherDragStart(e, position.archer)}
-                                                                            onDragEnd={handleArcherDragEnd}
-                                                                            className="archer-content p-2 no-select archer-draggable"
-                                                                            data-archer-id={position.archer.id}
-                                                                        >
-                                                                            <div className="flex items-center gap-2 h-full">
-                                                                                {(() => {
-                                                                                    const targetFaceImage = getArcherTargetFaceImage(position.archer);
-                                                                                    if (targetFaceImage) {
-                                                                                        return (
-                                                                                            <img 
-                                                                                                src={targetFaceImage} 
-                                                                                                alt="Target face"
-                                                                                                className="w-12 h-12 flex-shrink-0"
-                                                                                                onError={(e) => {
-                                                                                                    e.target.style.display = 'none';
-                                                                                                }}
-                                                                                            />
-                                                                                        );
-                                                                                    }
-                                                                                    return null;
-                                                                                })()}
-                                                                                <div className="flex-1 min-w-0">
-                                                                                    <div className={`font-bold text-xs truncate ${
-                                                                                        position.archer.wheelchair ? 'text-blue-700' : 'text-green-700'
-                                                                                    }`}>
-                                                                                        {position.archer.name}
-                                                                                        {position.archer.wheelchair && ' ♿'}
-                                                                                    </div>
-                                                                                    <div className="text-xs text-gray-600 mt-1 truncate">
-                                                                                        {position.archer.countryName}
-                                                                                    </div>
-                                                                                    <div className={`text-xs font-medium mt-1 truncate ${
-                                                                                        position.archer.wheelchair ? 'text-blue-600' : 'text-green-600'
-                                                                                    }`}>
-                                                                                        {position.archer.evCode || (position.archer.class + position.archer.division)}
-                                                                                        {position.archer.distance && ` / ${position.archer.distance}m`}
-                                                                                    </div>
-                                                                                    
-                                                                                    {isDebugMode && (position.archer.targetSize || position.archer.targetFace) && (
-                                                                                        <div className="flex flex-wrap gap-1 mt-2">
-                                                                                            {position.archer.targetSize && isDebugMode && (
-                                                                                                <span className="target-size-badge">
-                                                                                                    {getTargetSizeLabel(position.archer.targetSize)}
-                                                                                                </span>
-                                                                                            )}
-                                                                                            {position.archer.targetFace && isDebugMode && (
-                                                                                                <span className="face-badge">
-                                                                                                    {getTargetFaceLabel(position.archer.targetFace)}
-                                                                                                </span>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="archer-content flex items-center justify-center">
-                                                                            <div className="w-6 h-6 text-gray-300">
-                                                                                <Icons.Target />
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                    
-                                                    <div className="flex-shrink-0 w-24 text-center">
-                                                        <div 
-                                                            draggable={hasArchers}
-                                                            onDragStart={(e) => handleTargetNumberDragStart(e, target.id)}
-                                                            onDragEnd={handleTargetNumberDragEnd}
-                                                            className={`target-draggable-container ${
-                                                                hasArchers 
-                                                                    ? 'cursor-move drag-ready no-select' 
-                                                                    : 'cursor-default'
-                                                            }`}
-                                                            title={hasArchers ? "Glisser pour échanger cette cible (avec image)" : "Cible vide"}
-                                                        >
-                                                            {standardImage && (
-                                                                <div className="relative mb-2">
-                                                                    <img 
-                                                                        src={standardImage} 
-                                                                        alt={`Cible ${target.id}`}
-                                                                        className="w-60 h-20 mx-auto object-contain"
-                                                                        onError={(e) => {
-                                                                            e.target.style.display = 'none';
-                                                                            console.warn(`Image non trouvée: ${standardImage}`);
-                                                                        }}
-                                                                    />
-                                                                    {distance && (
-                                                                        <div className={`text-xs mt-1 text-center ${
-                                                                            parseInt(distance) <= 18 ? 'text-green-600' : 'text-red-600'
-                                                                        }`}>
-                                                                            {distance}m
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                            
-                                                            <div className={`text-2xl font-bold ${
-                                                                hasArchers 
-                                                                    ? 'text-blue-600' 
-                                                                    : 'text-gray-400'
-                                                            }`}>
-                                                                {target.id}
-                                                            </div>
-                                                            
-                                                            {/* AFFICHAGE DE LA DISTANCE SOUS LE NUMÉRO DE CIBLE */}
-                                                            {distance && !standardImage && (
-                                                                <div className={`target-main-distance mt-1 ${
-                                                                    parseInt(distance) <= 18 ? 'target-distance-indoor' : 'target-distance-outdoor'
-                                                                }`}>
-                                                                    {distance}m
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                            
+                                            {isHovered && draggedTargetId && draggedTargetId !== target.id && (
+                                                <div className="mt-2 text-center">
+                                                    <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-green-100 text-green-800 text-sm rounded-full">
+                                                        <Icons.Check />
+                                                        <span>Relâcher pour échanger avec la cible {draggedTargetId}</span>
                                                     </div>
                                                 </div>
-                                                
-                                                {isHovered && draggedTargetId && draggedTargetId !== target.id && (
-                                                    <div className="mt-2 text-center">
-                                                        <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-green-100 text-green-800 text-sm rounded-full">
-                                                            <Icons.Check />
-                                                            <span>Relâcher pour échanger avec la cible {draggedTargetId}</span>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
