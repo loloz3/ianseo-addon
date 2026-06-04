@@ -2,6 +2,7 @@
 /**
  * Script de correction du champ EnIndFEvent
  * Appelé en AJAX depuis la page de vérification
+ * MODIFICATION : La vérification se fait maintenant par (Division + Classe)
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');

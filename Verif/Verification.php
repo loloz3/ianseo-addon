@@ -10,17 +10,14 @@
  * - Auteur Original
  * - Laurent Petroff - Les Archers de Perols - (modif: 2026-01-30)
  * 
- * Dernière modification: 2026-01-01 par Laurent Petroff
- * rajout du bouton "Tout corriger"
- * Verif doublon
- * Vérification des champs obligatoires (Division, Age Cl., Cl.)
- * Vérification de la cohérence du champ "Finale Ind." (EnIndFEvent)
- * pour TOUS les archers
- * Virification assignation des cibles
+ * Dernière modification: 2026-06-04 par Laurent Petroff
+ * Correction de la règle Finale Ind. : vérification par (Division + Classe)
+ * Un archer peut avoir "Finale Ind." = OUI pour chaque combinaison Division/Classe différente
  * 
  * Règle : 
- * - 1ère inscription (session la plus basse) : EnIndFEvent doit être à 1 (Oui)
- * - Inscriptions suivantes dans la même Division (arme) : EnIndFEvent doit être à 0 (Non)
+ * - Pour chaque combinaison (Division, Classe) :
+ *   - 1ère inscription (session la plus basse) : EnIndFEvent doit être à 1 (Oui)
+ *   - Inscriptions suivantes dans la même (Division, Classe) : EnIndFEvent doit être à 0 (Non)
  * - Vérification si archer en Doublon
  * - Vérification que tous les archers ont une arme (Div.), une catégorie (Age Cl.) et une classe (Cl.)
  * - Vérification si des archers ne sont pas assignés à une cible.
@@ -34,8 +31,9 @@ checkACL(AclParticipants, AclReadOnly);
 
 $TourId = $_SESSION['TourId'];
 
-// Requête pour trouver les anomalies
-// On vérifie TOUS les archers (inscrits 1 ou plusieurs fois)
+// ============================================================================
+// SECTION 1: Vérification Finale Individuelle (PAR DIVISION + CLASSE)
+// ============================================================================
 $Query = "
     SELECT 
         e.EnId,
@@ -45,6 +43,7 @@ $Query = "
         c.CoCode AS Pays,
         e.EnDivision AS Division,
         e.EnClass AS Classe,
+        e.EnAgeClass AS AgeClasse,
         q.QuSession AS Depart,
         e.EnIndFEvent AS FinaleInd,
         (
@@ -55,7 +54,8 @@ $Query = "
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
             AND e2.EnDivision = e.EnDivision
-        ) AS PremierDepartDivision,
+            AND e2.EnClass = e.EnClass
+        ) AS PremierDepartDivClasse,
         (
             SELECT COUNT(*) 
             FROM Entries e3
@@ -63,7 +63,8 @@ $Query = "
             AND e3.EnTournament = e.EnTournament
             AND e3.EnCode != ''
             AND e3.EnDivision = e.EnDivision
-        ) AS NbInscriptionsDivision,
+            AND e3.EnClass = e.EnClass
+        ) AS NbInscriptionsDivClasse,
         CASE 
             WHEN q.QuSession = (
                 SELECT MIN(q2.QuSession) 
@@ -73,7 +74,8 @@ $Query = "
                 AND e2.EnTournament = e.EnTournament
                 AND e2.EnCode != ''
                 AND e2.EnDivision = e.EnDivision
-            ) AND e.EnIndFEvent = 0 THEN 'Premier départ dans cette division : devrait être OUI'
+                AND e2.EnClass = e.EnClass
+            ) AND e.EnIndFEvent = 0 THEN 'Premier départ pour cette (Division, Classe) : devrait être OUI'
             WHEN q.QuSession > (
                 SELECT MIN(q2.QuSession) 
                 FROM Entries e2
@@ -82,8 +84,9 @@ $Query = "
                 AND e2.EnTournament = e.EnTournament
                 AND e2.EnCode != ''
                 AND e2.EnDivision = e.EnDivision
-            ) AND e.EnIndFEvent = 1 THEN 'Départ supplémentaire dans cette division : devrait être NON'
-            ELSE 'Erreur inconnue'
+                AND e2.EnClass = e.EnClass
+            ) AND e.EnIndFEvent = 1 THEN 'Départ supplémentaire dans cette (Division, Classe) : devrait être NON'
+            ELSE NULL
         END AS Probleme
     FROM Entries e
     INNER JOIN Qualifications q ON e.EnId = q.QuId
@@ -99,6 +102,7 @@ $Query = "
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
             AND e2.EnDivision = e.EnDivision
+            AND e2.EnClass = e.EnClass
         ) AND e.EnIndFEvent = 0)
         OR
         (q.QuSession > (
@@ -109,15 +113,18 @@ $Query = "
             AND e2.EnTournament = e.EnTournament
             AND e2.EnCode != ''
             AND e2.EnDivision = e.EnDivision
+            AND e2.EnClass = e.EnClass
         ) AND e.EnIndFEvent = 1)
     )
-    ORDER BY e.EnCode, e.EnDivision, q.QuSession
+    ORDER BY e.EnCode, e.EnDivision, e.EnClass, q.QuSession
 ";
 
 $Rs = safe_r_sql($Query);
 $NbAnomalies = safe_num_rows($Rs);
 
-// Requête pour détecter les archers en double dans un même départ
+// ============================================================================
+// SECTION 2: Doublons dans un même départ
+// ============================================================================
 $QueryDoublons = "
     SELECT 
         e.EnCode AS Licence,
@@ -137,7 +144,9 @@ $QueryDoublons = "
 $RsDoublons = safe_r_sql($QueryDoublons);
 $NbDoublons = safe_num_rows($RsDoublons);
 
-// Requête pour vérifier les champs obligatoires
+// ============================================================================
+// SECTION 3: Vérification des champs obligatoires (Division, AgeClasse, Classe)
+// ============================================================================
 $QueryObligatoires = "
     SELECT 
         e.EnId,
@@ -177,9 +186,9 @@ $QueryObligatoires = "
 $RsObligatoires = safe_r_sql($QueryObligatoires);
 $NbObligatoires = safe_num_rows($RsObligatoires);
 
-
-// REQUÊTE CORRIGÉE : Vérification des archers sans cible assignée
-// On vérifie maintenant QuTarget (numéro de cible) et QuLetter (lettre de cible)
+// ============================================================================
+// SECTION 4: Vérification des archers sans cible assignée
+// ============================================================================
 $QueryCibles = "
     SELECT 
         e.EnId,
@@ -216,7 +225,9 @@ $QueryCibles = "
 $RsCibles = safe_r_sql($QueryCibles);
 $NbSansCible = safe_num_rows($RsCibles);
 
-// REQUÊTE AJOUTÉE : Vérification des cibles avec plusieurs archers dans un même départ
+// ============================================================================
+// SECTION 5: Vérification des cibles avec plusieurs archers dans un même départ
+// ============================================================================
 $QueryCiblesDupliquees = "
     SELECT 
         CONCAT(q.QuTarget, ' ', q.QuLetter) AS Cible,
@@ -243,7 +254,6 @@ $QueryCiblesDupliquees = "
 
 $RsCiblesDupliquees = safe_r_sql($QueryCiblesDupliquees);
 $NbCiblesDupliquees = safe_num_rows($RsCiblesDupliquees);
-
 
 $PAGE_TITLE = 'Vérification Finale Individuelle';
 $IncludeJquery = true;
@@ -278,7 +288,7 @@ include('Common/Templates/head.php');
     background-color: #f8d7da;
 }
 .anomaly-table tr.inscription-unique {
-    background-color: #ffe4b5;
+    background-color: #d4edda;
 }
 .obligatoire-table {
     width: 100%;
@@ -392,14 +402,14 @@ include('Common/Templates/head.php');
     border-top: 2px solid #495057;
 }
 .badge-unique {
-    background-color: #17a2b8;
+    background-color: #28a745;
     color: white;
     padding: 2px 6px;
     border-radius: 3px;
     font-size: 0.8em;
 }
 .badge-multiple {
-    background-color: #6c757d;
+    background-color: #17a2b8;
     color: white;
     padding: 2px 6px;
     border-radius: 3px;
@@ -681,11 +691,11 @@ if ($NbObligatoires == 0):
             </tr>
         <?php endwhile; ?>
         </tbody>
-    </table>
+    ｜｜DSML｜｜
 <?php endif; ?>
 
 <?php 
-// SECTION 3: Vérification Finale Individuelle (PAR DIVISION)
+// SECTION 3: Vérification Finale Individuelle (PAR DIVISION + CLASSE)
 if ($NbAnomalies == 0): 
 ?>
     <div class="section-title-success">
@@ -693,20 +703,19 @@ if ($NbAnomalies == 0):
     </div>
 <?php else: ?>
     <div class="section-title">
-        ⚠️ <?php echo $NbAnomalies; ?> anomalie(s) détectée(s) dans la configuration "Finale Ind." (par division)
+        ⚠️ <?php echo $NbAnomalies; ?> anomalie(s) détectée(s) dans la configuration "Finale Ind."
     </div>
     
     <div class="summary">
-        <h2>Rappel de la règle pour "Finale Ind." (PAR DIVISION) :</h2>
+        <h2>Rappel de la règle pour "Finale Ind." (PAR DIVISION + CLASSE) :</h2>
         <ul>
-            <li><strong>Archer inscrit 1 fois dans une division</strong> → "Finale Ind." doit être à <strong>OUI</strong></li>
-            <li><strong>Archer inscrit plusieurs fois DANS LA MÊME DIVISION :</strong>
-                <ul>
-                    <li>Premier départ (session la plus basse) dans cette division → "Finale Ind." à <strong>OUI</strong></li>
-                    <li>Départs suivants dans cette même division → "Finale Ind." à <strong>NON</strong></li>
-                </ul>
-            </li>
-            <li><strong>Note importante :</strong> Un archer peut avoir "Finale Ind." à OUI dans plusieurs divisions différentes</li>
+            <li><strong>Pour chaque combinaison (Division + Classe) :</strong></li>
+            <ul>
+                <li>La <strong>première inscription</strong> (session la plus basse) dans cette combinaison → "Finale Ind." doit être à <strong>OUI</strong></li>
+                <li>Les <strong>inscriptions suivantes</strong> dans la <strong>MÊME combinaison (Division + Classe)</strong> → "Finale Ind." doit être à <strong>NON</strong></li>
+            </ul>
+            <li><strong>Note importante :</strong> Un archer peut avoir "Finale Ind." à OUI dans plusieurs combinaisons (Division, Classe) différentes.</li>
+            <li><strong>Exemple :</strong> Un archer qui tire en (CL, S2M) au départ 2 et en (CL, S2H) au départ 3 doit avoir "Finale Ind." à OUI pour les DEUX, car ce sont des combinaisons différentes.</li>
         </ul>
     </div>
 
@@ -719,9 +728,10 @@ if ($NbAnomalies == 0):
                 <th>Pays</th>
                 <th>Division</th>
                 <th>Classe</th>
-                <th>Départ (Session)</th>
-                <th>Type</th>
-                <th>Finale Ind. actuelle</th>
+                <th>Âge Cl.</th>
+                <th>Départ</th>
+                <th>Type d'inscription</th>
+                <th>Finale Ind.</th>
                 <th>Problème</th>
                 <th>Action</th>
             </tr>
@@ -730,10 +740,11 @@ if ($NbAnomalies == 0):
         <?php 
         safe_data_seek($Rs, 0);
         $previousCode = '';
-        $previousDivision = '';
+        $previousDivClasse = '';
         while ($Row = safe_fetch($Rs)): 
-            $isPremierDepart = ($Row->Depart == $Row->PremierDepartDivision);
-            $isInscriptionUnique = ($Row->NbInscriptionsDivision == 1);
+            $isPremierDepart = ($Row->Depart == $Row->PremierDepartDivClasse);
+            $isInscriptionUnique = ($Row->NbInscriptionsDivClasse == 1);
+            $currentDivClasse = $Row->Division . '|' . $Row->Classe;
             
             if ($isInscriptionUnique) {
                 $rowClass = 'inscription-unique';
@@ -741,37 +752,38 @@ if ($NbAnomalies == 0):
                 $rowClass = $isPremierDepart ? 'premier-depart' : 'depart-supplementaire';
             }
             
-            $finaleActuelle = ($Row->FinaleInd == 1) ? 'OUI' : 'NON';
+            $finaleActuelle = ($Row->FinaleInd == 1) ? '<span style="color: green; font-weight: bold;">OUI</span>' : '<span style="color: red; font-weight: bold;">NON</span>';
             
-            // Ligne de séparation entre archers différents ou divisions différentes
-            if ($previousCode != '' && ($previousCode != $Row->Licence || $previousDivision != $Row->Division)):
+            // Ligne de séparation entre archers différents
+            if ($previousCode != '' && $previousCode != $Row->Licence):
         ?>
             <tr class="archer-group">
-                <td colspan="11" style="height: 5px;"></td>
+                <td colspan="12" style="height: 5px;"></td>
             </tr>
         <?php 
             endif;
             $previousCode = $Row->Licence;
-            $previousDivision = $Row->Division;
+            $previousDivClasse = $currentDivClasse;
         ?>
             <tr class="<?php echo $rowClass; ?>">
                 <td><strong><?php echo $Row->Licence; ?></strong></td>
                 <td><?php echo $Row->Prenom; ?></td>
                 <td><?php echo $Row->Nom; ?></td>
                 <td><?php echo $Row->Pays; ?></td>
-                <td><?php echo $Row->Division; ?></td>
-                <td><?php echo $Row->Classe; ?></td>
+                <td style="text-align: center;"><strong><?php echo $Row->Division; ?></strong></td>
+                <td style="text-align: center;"><strong><?php echo $Row->Classe; ?></strong></td>
+                <td style="text-align: center;"><?php echo $Row->AgeClasse; ?></td>
                 <td style="text-align: center;"><strong><?php echo $Row->Depart; ?></strong></td>
                 <td style="text-align: center;">
                     <?php if ($isInscriptionUnique): ?>
-                        <span class="badge-unique">Unique dans <?php echo $Row->Division; ?></span>
+                        <span class="badge-unique">Unique (<?php echo $Row->Division; ?>/<?php echo $Row->Classe; ?>)</span>
                     <?php else: ?>
                         <span class="badge-multiple">
-                            <?php echo $isPremierDepart ? '1er' : ($Row->Depart . 'ème'); ?> départ en <?php echo $Row->Division; ?>
+                            <?php echo $isPremierDepart ? '1er départ' : ($Row->Depart . 'ème départ'); ?> en <?php echo $Row->Division; ?>/<?php echo $Row->Classe; ?>
                         </span>
                     <?php endif; ?>
                 </td>
-                <td style="text-align: center;"><strong><?php echo $finaleActuelle; ?></strong></td>
+                <td style="text-align: center;"><?php echo $finaleActuelle; ?></td>
                 <td style="font-weight: bold; color: #c82333;"><?php echo $Row->Probleme; ?></td>
                 <td style="text-align: center;">
                     <button class="fix-button" onclick="corrigerArcher(<?php echo $Row->EnId; ?>, <?php echo $isPremierDepart ? 1 : 0; ?>)">
@@ -794,7 +806,7 @@ if ($NbAnomalies == 0):
 <?php endif; ?>
 
 <?php
-// SECTION 4: Vérification CORRIGÉE des assignations de cibles
+// SECTION 4: Vérification des assignations de cibles
 if ($NbSansCible == 0): 
 ?>
     <div class="section-title-success">
@@ -834,11 +846,9 @@ if ($NbSansCible == 0):
         <?php 
         safe_data_seek($RsCibles, 0);
         while ($Row = safe_fetch($RsCibles)): 
-            // Déterminer le type de problème
             $cibleManquante = empty($Row->CibleComplete) || $Row->Cible == 'NON ASSIGNÉ';
             $lettreManquante = $Row->Cible == 'SANS LETTRE';
             
-            // Styliser l'affichage de la cible
             if ($cibleManquante) {
                 $affichageCible = '<span style="color: #dc3545; font-weight: bold;">NON ASSIGNÉ</span>';
                 $probleme = 'Cible manquante';
@@ -853,7 +863,6 @@ if ($NbSansCible == 0):
                 $badgeClass = 'badge-info';
             }
             
-            // Déterminer le statut
             if ($cibleManquante) {
                 $statut = '<span class="badge-cible-manquante">SANS CIBLE</span>';
             } elseif ($lettreManquante) {
@@ -883,7 +892,7 @@ if ($NbSansCible == 0):
 <?php endif; ?>
 
 <?php
-// SECTION 5: NOUVELLE VÉRIFICATION - Cibles avec plusieurs archers dans un même départ
+// SECTION 5: Cibles avec plusieurs archers dans un même départ
 if ($NbCiblesDupliquees == 0): 
 ?>
     <div class="section-title-success">
@@ -938,7 +947,7 @@ if ($NbCiblesDupliquees == 0):
 function corrigerArcher(enId, nouvelleValeur) {
     if (!confirm('Voulez-vous vraiment corriger cet archer ?\n\n' +
                  'Nouvelle valeur "Finale Ind." : ' + (nouvelleValeur == 1 ? 'OUI' : 'NON') + '\n' +
-                 '(La vérification est faite par division)')) {
+                 '(La vérification est faite par Division + Classe)')) {
         return;
     }
     
@@ -955,9 +964,7 @@ function corrigerArcher(enId, nouvelleValeur) {
     }, 'json');
 }
 
-// Fonction de notification personnalisée
 function showCustomNotification(message, type = 'success') {
-    // Créer une div de notification
     const notification = document.createElement('div');
     notification.id = 'custom-notification';
     notification.style.cssText = `
@@ -991,7 +998,6 @@ function showCustomNotification(message, type = 'success') {
         </div>
     `;
     
-    // Ajouter l'animation CSS
     const style = document.createElement('style');
     if (!document.querySelector('#notification-styles')) {
         style.id = 'notification-styles';
@@ -1008,14 +1014,11 @@ function showCustomNotification(message, type = 'success') {
         document.head.appendChild(style);
     }
     
-    // Supprimer toute notification existante
     const existing = document.getElementById('custom-notification');
     if (existing) existing.remove();
     
-    // Ajouter la nouvelle notification
     document.body.appendChild(notification);
     
-    // Supprimer automatiquement après 3 secondes
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'fadeOut 0.3s ease-out';
@@ -1024,13 +1027,12 @@ function showCustomNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Fonction pour corriger toutes les anomalies en une seule opération
 $(document).ready(function() {
     $('#corriger-tout-sql').click(function() {
         if (!confirm('Êtes-vous sûr de vouloir corriger TOUTES les anomalies "Finale Ind." en une seule opération ?\n\n' + 
                      'Cette action va modifier ' + <?php echo $NbAnomalies; ?> + ' inscription(s).\n' +
-                     'Cette méthode est plus rapide mais ne montre pas la progression détaillée.\n' +
-                     '(Note : la vérification est faite par division)')) {
+                     'Attention : La correction est basée sur la règle (Division + Classe).\n' +
+                     'Un archer peut avoir "Finale Ind." = OUI pour plusieurs combinaisons différentes.')) {
             return;
         }
         
@@ -1038,7 +1040,6 @@ $(document).ready(function() {
         const texteOriginal = bouton.text();
         bouton.text('Correction en cours...').prop('disabled', true);
         
-        // Appeler le script de correction en masse
         $.post('Tout-corriger.php', function(response) {
             if (response.success) {
                 showCustomNotification('✓ ' + response.corriges + ' anomalie(s) corrigée(s) avec succès !');
