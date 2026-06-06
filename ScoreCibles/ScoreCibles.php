@@ -1,6 +1,7 @@
 <?php
 /**
  * Script AJAX pour vérifier les flèches des archers - Version avec sélection de session
+ * Adapté pour afficher 3 ou 6 dernières flèches selon le type de tournoi (Indoor/Outdoor)
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
@@ -587,23 +588,40 @@ include('Common/Templates/head.php');
         background: rgba(255, 255, 255, 0.7);
         border-radius: 2px 2px 0 0;
     }
+
+    /* Style pour l'indicateur de type de tournoi */
+    .tournament-info {
+        margin-bottom: 10px;
+        padding: 8px 15px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        text-align: center;
+        font-weight: bold;
+    }
+    
+    .tournament-info.indoor {
+        background-color: #c8e6e0;
+        color: #0a5c4e;
+        border-left: 5px solid #0a5c4e;
+    }
+    
+    .tournament-info.outdoor {
+        background-color: #d4edda;
+        color: #155724;
+        border-left: 5px solid #28a745;
+    }
 </style>
 
 <div class="verification-container">
     
     <div class="controls">
+        
         <h3 style="margin-top: 0; margin-bottom: 10px;">Sélectionnez un départ :</h3>
         <div class="session-selector" id="session-selector">
             <!-- Les boutons de session seront générés dynamiquement -->
-        </div>
-        
-        <div style="margin-top: 10px;">
-            <button id="test-btn" class="btn btn-sm btn-warning">
-                <i class="fas fa-bug"></i> Tester la connexion
-            </button>
-            <button id="debug-btn" class="btn btn-sm btn-info ml-2">
-                <i class="fas fa-terminal"></i> Mode débogage
-            </button>
+            <div style="text-align: center; padding: 10px; color: #6c757d;">
+                <i class="fas fa-spinner fa-spin"></i> Chargement des départs...
+            </div>
         </div>
         
         <div class="session-stats" id="session-stats">
@@ -661,6 +679,11 @@ include('Common/Templates/head.php');
     
     <div id="targets-container" class="targets-grid">
         <!-- Les cibles seront affichées ici dynamiquement -->
+        <div class="no-targets-message">
+            <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 15px;"></i>
+            <h3>Chargement des cibles...</h3>
+            <p>Veuillez patienter pendant le chargement des données.</p>
+        </div>
     </div>
     
     <div id="details-panel" class="details-panel">
@@ -682,8 +705,11 @@ include('Common/Templates/head.php');
 <script>
 // Variables globales
 let checkInterval;
-let currentSession = '1'; // Départ 1 par défaut
+let currentSession = null; // Changé : null au lieu de '1'
 let availableSessions = [];
+let isFirstLoad = true;
+let nbArrowsToShow = 6; // Valeur par défaut (extérieur)
+let tourTypeName = '';
 
 // Fonction pour formater la date/heure
 function formatDateTime(date) {
@@ -693,6 +719,7 @@ function formatDateTime(date) {
         second: '2-digit'
     });
 }
+
 
 // Fonction pour mettre à jour l'indicateur de dernière vérification
 function updateLastCheck() {
@@ -705,12 +732,83 @@ function updateLastCheck() {
     );
 }
 
+// Nouvelle fonction : Trouver le dernier départ avec des données
+function findLastActiveSessionFromData(sessionsData, numSessionsMax) {
+    // Parcourir de la fin vers le début
+    for (let session = numSessionsMax; session >= 1; session--) {
+        if (sessionsData[session] && !sessionsData[session].empty && sessionsData[session].totalTargets > 0 && sessionsData[session].nbArchers > 0) {
+            console.log("Départ actif trouvé (recherche locale): " + session + " avec " + sessionsData[session].totalTargets + " cibles et " + sessionsData[session].nbArchers + " archers");
+            return session;
+        }
+    }
+    return null;
+}
+
+// Fonction pour mettre à jour le sélecteur de session
+function updateSessionSelector(sessionsData, numSessionsMax) {
+    const selector = $('#session-selector');
+    selector.empty();
+    
+    // Supprimer l'info par défaut si elle existe
+    $('.last-check-info').remove();
+    
+    // Créer les boutons pour toutes les sessions de 1 à numSessionsMax
+    for (let session = 1; session <= numSessionsMax; session++) {
+        const sessionData = sessionsData[session] || { empty: true, totalTargets: 0 };
+        const hasData = sessionData && !sessionData.empty && sessionData.totalTargets > 0;
+        
+        const sessionBtn = $('<button>')
+            .addClass('session-btn' + (currentSession == session ? ' active' : ''))
+            .text('Départ ' + session)
+            .click(function() {
+                selectSession(session);
+            });
+        
+        // Ajouter une indication visuelle si le département a des données
+        if (hasData) {
+            sessionBtn.css('border-left', '4px solid #28a745');
+        } else if (sessionData && sessionData.empty) {
+            sessionBtn.css('opacity', '0.6');
+        }
+        
+        selector.append(sessionBtn);
+    }
+    
+    
+    availableSessions = Object.keys(sessionsData).filter(s => s <= numSessionsMax);
+    
+    // Si currentSession est null ou n'existe plus dans les données ou hors plage
+    if (!currentSession || currentSession < 1 || currentSession > numSessionsMax || !sessionsData[currentSession]) {
+        // Trouver automatiquement le dernier département actif avec des données
+        let activeSession = findLastActiveSessionFromData(sessionsData, numSessionsMax);
+        
+        if (activeSession === null && numSessionsMax > 0) {
+            activeSession = 1; // Premier département par défaut
+        }
+        
+        if (activeSession && currentSession != activeSession) {
+            console.log("Sélection automatique du département: " + activeSession);
+            currentSession = activeSession;
+            updateSessionSelectorUI();
+            
+            // Redémarrer la vérification pour la nouvelle session
+            stopAutoChecking();
+            startAutoChecking();
+            return; // La fonction checkTargets sera appelée par startAutoChecking
+        }
+    }
+    
+    // Mettre à jour l'heure de dernière vérification
+    updateLastCheck();
+}
+
 // Fonction pour démarrer la vérification automatique
 function startAutoChecking() {
     // Démarrer la vérification immédiatement
     checkTargets();
     
     // Configurer l'intervalle de 5 secondes
+    if (checkInterval) clearInterval(checkInterval);
     checkInterval = setInterval(checkTargets, 5000);
 }
 
@@ -718,41 +816,19 @@ function startAutoChecking() {
 function stopAutoChecking() {
     if (checkInterval) {
         clearInterval(checkInterval);
+        checkInterval = null;
     }
-}
-
-// Fonction pour mettre à jour le sélecteur de session
-function updateSessionSelector(sessionsData) {
-    const selector = $('#session-selector');
-    selector.empty();
-    
-    // Supprimer l'info par défaut si elle existe
-    $('.last-check-info').remove();
-    
-    // Boutons pour chaque session seulement
-    Object.keys(sessionsData).sort((a, b) => a - b).forEach(session => {
-        const sessionBtn = $('<button>')
-            .addClass('session-btn' + (currentSession === session ? ' active' : ''))
-            .text('Départ ' + session)
-            .click(function() {
-                selectSession(session);
-            });
-        selector.append(sessionBtn);
-    });
-    
-    availableSessions = Object.keys(sessionsData);
-    
-    // Mettre à jour l'heure de dernière vérification
-    updateLastCheck();
 }
 
 // Fonction pour sélectionner une session
 function selectSession(session) {
+    if (currentSession == session) return;
+    
     currentSession = session;
     updateSessionSelectorUI();
     
     // Arrêter et redémarrer la vérification pour la nouvelle session
-    clearInterval(checkInterval);
+    stopAutoChecking();
     startAutoChecking();
 }
 
@@ -882,6 +958,18 @@ function createBatteryIndicator(batteryInfo) {
 
 // Fonction principale pour vérifier les cibles
 function checkTargets() {
+    // Si currentSession est null, faire une requête d'initialisation
+    if (currentSession === null && isFirstLoad) {
+        console.log("Initialisation: recherche du dernier départ actif...");
+        initializeSession();
+        return;
+    }
+    
+    if (currentSession === null) {
+        console.log("En attente de l'initialisation de la session...");
+        return;
+    }
+    
     console.log("Vérification des cibles pour la session: " + currentSession);
     
     $.ajax({
@@ -898,12 +986,18 @@ function checkTargets() {
         success: function(response, status, xhr) {
             console.log("Réponse AJAX reçue:", response);
             console.log("Status:", status);
-            console.log("Content-Type:", xhr.getResponseHeader('Content-Type'));
             
             if (response.success) {
+                // Mettre à jour le nombre de flèches à afficher
+                if (response.nbArrowsToShow) {
+                    nbArrowsToShow = response.nbArrowsToShow;
+                    tourTypeName = response.tourTypeName || '';
+                }
+                
                 // Mettre à jour le sélecteur de session si nécessaire
+                const numSessionsMax = response.numSessionsMax || 1;
                 if (response.sessionsData && Object.keys(response.sessionsData).length > 0) {
-                    updateSessionSelector(response.sessionsData);
+                    updateSessionSelector(response.sessionsData, numSessionsMax);
                 }
                 
                 // Afficher les cibles
@@ -913,6 +1007,7 @@ function checkTargets() {
                 updateSessionStats(response.stats || {});
                 
                 updateLastCheck();
+                isFirstLoad = false;
             } else {
                 console.error("Erreur dans la réponse:", response.message);
                 showCustomNotification('Erreur: ' + response.message, 'error');
@@ -935,7 +1030,7 @@ function checkTargets() {
                 errorMessage = 'Erreur de parsing JSON. Vérifiez la réponse du serveur.';
                 console.error("Réponse brute:", xhr.responseText);
                 if (xhr.responseText.length < 1000) {
-                    alert("Réponse brute du serveur:\n" + xhr.responseText);
+                    console.log("Réponse brute du serveur:\n" + xhr.responseText);
                 }
             }
             // Vérifier si c'est une erreur 404
@@ -969,6 +1064,69 @@ function checkTargets() {
         },
         complete: function() {
             console.log("Requête AJAX terminée");
+        }
+    });
+}
+
+// Fonction d'initialisation
+function initializeSession() {
+    console.log("Initialisation de la session...");
+    
+    $.ajax({
+        url: 'ajax_check_fleches_session.php',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            TourId: <?php echo isset($_SESSION['TourId']) ? $_SESSION['TourId'] : '0'; ?>,
+            get_sessions_list: true  // Demander uniquement la liste des sessions
+        },
+        success: function(response) {
+            console.log("Réponse d'initialisation reçue:", response);
+            
+            // Mettre à jour le nombre de flèches à afficher
+            if (response.nbArrowsToShow) {
+                nbArrowsToShow = response.nbArrowsToShow;
+                tourTypeName = response.tourTypeName || '';
+            }
+            
+            const numSessionsMax = response.numSessionsMax || 1;
+            
+            if (response.success && response.sessionsData) {
+                // Mettre à jour le sélecteur avec TOUS les départs
+                updateSessionSelector(response.sessionsData, numSessionsMax);
+                
+                // Utiliser le dernier départ actif retourné par le backend
+                if (response.lastActiveSession && response.lastActiveSession >= 1 && response.lastActiveSession <= numSessionsMax) {
+                    currentSession = response.lastActiveSession;
+                    console.log("Dernier départ actif (backend): " + currentSession);
+                } else {
+                    // Fallback: chercher localement
+                    let foundSession = findLastActiveSessionFromData(response.sessionsData, numSessionsMax);
+                    currentSession = foundSession || 1;
+                    console.log("Dernier départ actif (fallback local): " + currentSession);
+                }
+                
+                updateSessionSelectorUI();
+                
+                // Maintenant charger les cibles pour cette session
+                checkTargets();
+            } else {
+                // Si aucune donnée, utiliser le nombre de départs de ToNumSession
+                console.warn("Création de " + numSessionsMax + " départ(s) par défaut");
+                const defaultSessions = {};
+                for (let i = 1; i <= numSessionsMax; i++) {
+                    defaultSessions[i] = { totalTargets: 0, empty: true };
+                }
+                currentSession = 1;
+                updateSessionSelector(defaultSessions, numSessionsMax);
+                checkTargets();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Erreur lors de l'initialisation:", error);
+            // En cas d'erreur, utiliser la session 1 par défaut
+            currentSession = 1;
+            checkTargets();
         }
     });
 }
@@ -1085,74 +1243,8 @@ function showTargetDetails(target) {
     
     $('#detail-status').html(`<div class="alert ${statusClass.replace('text-', 'alert-')}">${statusText}</div>`);
     
-    // Ajouter les informations de batterie si disponibles
-    if (target.battery) {
-        let batteryStatusText = '';
-        let batteryStatusClass = '';
-        let batteryIcon = '';
-        
-        if (target.battery.isCharging) {
-            batteryIcon = '⚡ ';
-            batteryStatusText = `En charge: ${target.battery.absoluteLevel}%`;
-            batteryStatusClass = 'text-info';
-            
-            // Ajouter une estimation du temps de charge si possible
-            if (target.battery.absoluteLevel < 100) {
-                const estimatedTime = estimateChargingTime(target.battery.absoluteLevel);
-                if (estimatedTime) {
-                    batteryStatusText += ` (${estimatedTime})`;
-                }
-            } else {
-                batteryStatusText += ' (Chargement terminé)';
-            }
-        } else {
-            switch(target.battery.status) {
-                case 'high':
-                    batteryStatusText = `Batterie: ${target.battery.level}% - Bon niveau`;
-                    batteryStatusClass = 'text-success';
-                    break;
-                case 'medium':
-                    batteryStatusText = `Batterie: ${target.battery.level}% - Niveau moyen`;
-                    batteryStatusClass = 'text-warning';
-                    break;
-                case 'low':
-                    batteryStatusText = `Batterie: ${target.battery.level}% - Faible niveau`;
-                    batteryStatusClass = 'text-danger';
-                    break;
-                case 'critical':
-                    batteryStatusText = `Batterie: ${target.battery.level}% - Niveau critique !`;
-                    batteryStatusClass = 'text-danger';
-                    break;
-                default:
-                    batteryStatusText = `Batterie: ${target.battery.level}%`;
-                    batteryStatusClass = 'text-info';
-            }
-            
-            // Ajouter une estimation d'autonomie si la batterie est faible
-            if (target.battery.status === 'low' || target.battery.status === 'critical') {
-                const estimatedTime = estimateBatteryLife(target.battery.level);
-                batteryStatusText += ` (${estimatedTime})`;
-            }
-        }
-        
-        if (target.battery.lastUpdate) {
-            const lastUpdate = new Date(target.battery.lastUpdate);
-            const now = new Date();
-            const diffMinutes = Math.floor((now - lastUpdate) / (1000 * 60));
-            
-            batteryStatusText += ` - Dernière mise à jour: ${lastUpdate.toLocaleTimeString('fr-FR')}`;
-            
-            if (diffMinutes > 60) {
-                batteryStatusText += ` <span class="badge badge-warning">(${diffMinutes} min)</span>`;
-            }
-        }
-        
-    //    $('#detail-status').append(
-    //        `<div class="alert ${batteryStatusClass.replace('text-', 'alert-')} mt-2">
-    //            ${batteryIcon}${batteryStatusText}
-    //        </div>`
-    //    );
-    }
+    // Déterminer le libellé pour les dernières flèches
+    const arrowsLabel = nbArrowsToShow === 3 ? '3 dernières flèches' : '6 dernières flèches';
     
     // Mettre à jour l'en-tête du tableau avec les nouvelles colonnes
     $('#detail-table thead tr').html(`
@@ -1162,10 +1254,10 @@ function showTargetDetails(target) {
         <th>Archer</th>
         <th>Licence</th>
         <th>N° Volée D1</th>
-        <th>Dernière volée D1</th>
+        <th>${arrowsLabel} D1</th>
         <th>Total D1</th>
         <th>N° Volée D2</th>
-        <th>Dernière volée D2</th>
+        <th>${arrowsLabel} D2</th>
         <th>Total D2</th>
         <th>Total</th>
         <th>Statut</th>
@@ -1179,14 +1271,14 @@ function showTargetDetails(target) {
         target.archers.forEach(archer => {
             const totalArrows = archer.arrowsD1 + archer.arrowsD2;
             let arrowClass = 'ok';
-            let statusText = 'OK';
+            let statusTextDetails = 'OK';
             
             if (totalArrows % 3 !== 0) {
                 arrowClass = 'error';
-                statusText = 'A vérifier';
+                statusTextDetails = 'A vérifier';
             } else if (target.hasDifferentArrowCounts && archer.arrowsTotal !== target.averageArrows) {
                 arrowClass = 'warning';
-                statusText = 'Scores en cours';
+                statusTextDetails = 'Scores en cours';
             }
             
             // Numéros de volée (nombres entiers uniquement)
@@ -1215,7 +1307,7 @@ function showTargetDetails(target) {
             row.append($('<td>').html(`<span class="badge badge-secondary">${lastScoreD2}</span>`));
             row.append($('<td>').html(`<span class="score-total d2">${totalScoreD2}</span>`));
             row.append($('<td>').html(`<span class="score-total combined">${totalScore}</span>`));
-            row.append($('<td>').html(`<span class="badge badge-${arrowClass}">${statusText}</span>`));
+            row.append($('<td>').html(`<span class="badge badge-${arrowClass}">${statusTextDetails}</span>`));
             
             tbody.append(row);
         });
@@ -1324,6 +1416,8 @@ $(document).ready(function() {
         console.log("Session actuelle:", currentSession);
         console.log("TourId PHP:", <?php echo isset($_SESSION['TourId']) ? $_SESSION['TourId'] : '0'; ?>);
         console.log("URL AJAX: ajax_check_fleches_session.php");
+        console.log("Nombre de flèches à afficher:", nbArrowsToShow);
+        console.log("Type de tournoi:", tourTypeName);
         
         // Ouvrir la console
         if (typeof console !== 'undefined') {

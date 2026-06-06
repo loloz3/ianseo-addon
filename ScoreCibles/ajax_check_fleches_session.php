@@ -1,6 +1,7 @@
 <?php
 /**
  * Script AJAX pour vérifier les flèches des archers avec filtrage par session
+ * Adapté pour afficher 3 ou 6 dernières flèches selon le type de tournoi (Indoor/Outdoor)
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
@@ -19,10 +20,34 @@ header('Content-Type: application/json');
 error_log("=== AJAX check_fleches_session.php appelé ===");
 
 $TourId = isset($_POST['TourId']) ? intval($_POST['TourId']) : (isset($_SESSION['TourId']) ? $_SESSION['TourId'] : 0);
-$selectedSession = isset($_POST['session']) ? $_POST['session'] : '1'; // '1' par défaut
+$selectedSession = isset($_POST['session']) ? $_POST['session'] : null;
+$getSessionsOnly = isset($_POST['get_sessions_list']) && $_POST['get_sessions_list'] === true;
 
 error_log("TourId utilisé: $TourId");
-error_log("Session sélectionnée: $selectedSession");
+error_log("Session sélectionnée: " . ($selectedSession ?? 'null'));
+error_log("getSessionsOnly: " . ($getSessionsOnly ? 'true' : 'false'));
+
+// Déterminer le nombre de flèches à afficher selon le type de tournoi
+$nbArrowsToShow = 6; // Valeur par défaut (extérieur)
+$tourTypeName = '';
+$numSessions = 1; // Nombre de départs par défaut
+
+if ($TourId > 0) {
+    $tourTypeQuery = "SELECT ToTypeName, ToNumSession FROM Tournament WHERE ToId = $TourId";
+    $tourTypeResult = safe_r_sql($tourTypeQuery);
+    if ($tourTypeResult && $tourTypeRow = safe_fetch($tourTypeResult)) {
+        $tourTypeName = $tourTypeRow->ToTypeName;
+        // Vérifier si c'est un tir en salle (contient "Indoor")
+        if (stripos($tourTypeName, 'Indoor') !== false) {
+            $nbArrowsToShow = 3; // Tir en salle : 3 dernières flèches
+        }
+        // Récupérer le nombre de sessions
+        if (isset($tourTypeRow->ToNumSession) && $tourTypeRow->ToNumSession > 0) {
+            $numSessions = intval($tourTypeRow->ToNumSession);
+        }
+    }
+}
+error_log("Type de tournoi: $tourTypeName - Nb flèches à afficher: $nbArrowsToShow - Nb sessions max: $numSessions");
 
 // Fonction pour convertir les lettres en points
 function convertArrowToScore($letter) {
@@ -47,19 +72,20 @@ function convertArrowToScore($letter) {
     return isset($conversion[$letter]) ? $conversion[$letter] : '0';
 }
 
-// Fonction pour obtenir les 3 derniers scores (format: "10 - 9 - 8")
-function getLastThreeScores($arrowString) {
-    if (empty($arrowString) || strlen(trim($arrowString)) < 3) {
+// Fonction pour obtenir les N derniers scores (N = 3 pour salle, 6 pour extérieur)
+function getLastNScores($arrowString, $nbArrows) {
+    if (empty($arrowString) || strlen(trim($arrowString)) < $nbArrows) {
         return '-';
     }
     
     $trimmedString = trim($arrowString);
-    $lastThree = substr($trimmedString, -3);
+    // Prendre les N dernières flèches
+    $lastN = substr($trimmedString, -$nbArrows);
     $scores = [];
     
-    for ($i = 0; $i < 3; $i++) {
-        if (isset($lastThree[$i])) {
-            $score = convertArrowToScore($lastThree[$i]);
+    for ($i = 0; $i < $nbArrows; $i++) {
+        if (isset($lastN[$i])) {
+            $score = convertArrowToScore($lastN[$i]);
             $scores[] = $score;
         } else {
             $scores[] = '-';
@@ -122,6 +148,34 @@ function getBatteryStatus($batteryLevel) {
     return 'critical';
 }
 
+// Fonction pour trouver le dernier départ avec des flèches tirées
+function getLastActiveSession($TourId, $numSessions) {
+    // Parcourir les départs de la fin vers le début
+    for ($session = $numSessions; $session >= 1; $session--) {
+        $query = "
+            SELECT COUNT(*) as hasArrows
+            FROM Qualifications q
+            INNER JOIN Entries e ON q.QuId = e.EnId
+            WHERE e.EnTournament = $TourId
+            AND q.QuSession = $session
+            AND (
+                (q.QuD1Arrowstring IS NOT NULL AND TRIM(q.QuD1Arrowstring) != '')
+                OR (q.QuD2Arrowstring IS NOT NULL AND TRIM(q.QuD2Arrowstring) != '')
+            )
+        ";
+        
+        $result = safe_r_sql($query);
+        if ($result && $row = safe_fetch($result)) {
+            if ($row->hasArrows > 0) {
+                error_log("Dernier départ actif trouvé: session $session avec " . $row->hasArrows . " flèches");
+                return $session;
+            }
+        }
+    }
+    error_log("Aucun départ actif trouvé, retour du départ 1 par défaut");
+    return 1;
+}
+
 try {
     // Vérifier si TourId est valide
     if ($TourId <= 0) {
@@ -133,7 +187,8 @@ try {
         SELECT 
             QuSession,
             MAX(QuTarget) as MaxTargetPerSession,
-            COUNT(DISTINCT QuTarget) as NbCiblesSession
+            COUNT(DISTINCT QuTarget) as NbCiblesSession,
+            COUNT(DISTINCT QuId) as NbArchersSession
         FROM Qualifications q
         WHERE EXISTS (
             SELECT 1 FROM Entries e 
@@ -158,19 +213,86 @@ try {
     while ($row = safe_fetch($sessionsResult)) {
         $sessionsData[$row->QuSession] = [
             'maxTarget' => $row->MaxTargetPerSession,
-            'nbCibles' => $row->NbCiblesSession
+            'nbCibles' => $row->NbCiblesSession,
+            'nbArchers' => $row->NbArchersSession,
+            'totalTargets' => 0  // Sera mis à jour plus tard
         ];
         $maxTargetOverall = max($maxTargetOverall, $row->MaxTargetPerSession);
     }
     
-    error_log("Sessions trouvées: " . print_r($sessionsData, true));
+    // Ajouter les sessions manquantes basées sur ToNumSession
+    // Créer un tableau avec toutes les sessions de 1 à $numSessions
+    $allSessionsData = [];
+    for ($session = 1; $session <= $numSessions; $session++) {
+        if (isset($sessionsData[$session])) {
+            $allSessionsData[$session] = $sessionsData[$session];
+        } else {
+            // Session sans données
+            $allSessionsData[$session] = [
+                'maxTarget' => 0,
+                'nbCibles' => 0,
+                'nbArchers' => 0,
+                'totalTargets' => 0,
+                'empty' => true
+            ];
+        }
+    }
+    
+    error_log("Sessions trouvées: " . print_r($allSessionsData, true));
+    
+    // Si on demande uniquement la liste des sessions
+    if ($getSessionsOnly) {
+        // Trouver le dernier départ actif avec des flèches
+        $lastActiveSession = getLastActiveSession($TourId, $numSessions);
+        
+        $response = [
+            'success' => true,
+            'sessionsData' => $allSessionsData,
+            'numSessionsMax' => $numSessions,
+            'nbArrowsToShow' => $nbArrowsToShow,
+            'tourTypeName' => $tourTypeName,
+            'lastActiveSession' => $lastActiveSession,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        echo json_encode($response);
+        exit;
+    }
+    
+    // Si aucune session n'est disponible
+    if (empty($allSessionsData)) {
+        $response = [
+            'success' => true,
+            'targets' => [],
+            'sessionsData' => [],
+            'stats' => ['sessionStats' => []],
+            'selectedSession' => $selectedSession,
+            'nbArrowsToShow' => $nbArrowsToShow,
+            'tourTypeName' => $tourTypeName,
+            'numSessionsMax' => $numSessions,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'message' => 'Aucune session trouvée pour ce tournoi'
+        ];
+        echo json_encode($response);
+        exit;
+    }
+    
+    // Si aucune session n'est sélectionnée, trouver le dernier départ avec des flèches
+    if ($selectedSession === null) {
+        $selectedSession = getLastActiveSession($TourId, $numSessions);
+        error_log("Aucune session sélectionnée, utilisation du dernier départ actif: $selectedSession");
+    }
+    
+    // Vérifier si la session sélectionnée existe (dans la plage 1..$numSessions)
+    if ($selectedSession < 1 || $selectedSession > $numSessions) {
+        // Prendre la première session disponible
+        $selectedSession = min(array_keys($allSessionsData));
+        error_log("Session $selectedSession hors plage, utilisation de la première: $selectedSession");
+    }
     
     // Récupérer les informations de batterie
-    // Note: La table IskDevices n'a pas de colonne IskDvSession
-    // Nous ne pouvons donc pas filtrer par session, seulement par cible
     $batteryLevels = [];
     
-    // Nous allons récupérer toutes les batteries pour ce tournoi
+    // Récupérer toutes les batteries pour ce tournoi
     $batteryQuery = "
         SELECT IskDvTarget, IskDvBattery, IskDvLastSeen
         FROM IskDevices
@@ -185,10 +307,6 @@ try {
         while ($row = safe_fetch($batteryResult)) {
             $targetNumber = intval($row->IskDvTarget);
             $batteryValue = intval($row->IskDvBattery);
-            
-            // Note: Nous ne pouvons pas créer une clé avec session car IskDevices n'a pas de session
-            // Nous allons stocker par numéro de cible seulement
-            // Plus tard, nous devrons mapper aux sessions d'une autre manière
             
             $batteryLevels[$targetNumber] = [
                 'level' => $batteryValue,
@@ -219,11 +337,10 @@ try {
         FROM Qualifications q
         INNER JOIN Entries e ON q.QuId = e.EnId
         WHERE e.EnTournament = $TourId
-        AND (q.QuD1Arrowstring != '' OR q.QuD2Arrowstring != '' OR 1=1)
     ";
     
-    // Filtrer par session si nécessaire
-    if ($selectedSession !== 'all' && is_numeric($selectedSession)) {
+    // Filtrer par session
+    if ($selectedSession !== null && is_numeric($selectedSession)) {
         $session = intval($selectedSession);
         $query .= " AND q.QuSession = $session";
     }
@@ -242,6 +359,18 @@ try {
     $targets = [];
     $sessionStats = [];
     
+    // Initialiser les statistiques pour toutes les sessions de 1 à $numSessions
+    for ($session = 1; $session <= $numSessions; $session++) {
+        $sessionStats[$session] = [
+            'totalTargets' => 0,
+            'greenTargets' => 0,
+            'yellowTargets' => 0,
+            'redTargets' => 0,
+            'blueTargets' => 0,
+            'maxTarget' => isset($allSessionsData[$session]) ? $allSessionsData[$session]['maxTarget'] : 0
+        ];
+    }
+    
     while ($row = safe_fetch($result)) {
         $targetNumber = intval($row->QuTarget);
         $session = intval($row->QuSession);
@@ -255,17 +384,6 @@ try {
                 'archers' => [],
                 'arrowCounts' => []
             ];
-            
-            // Initialiser les statistiques de session
-            if (!isset($sessionStats[$session])) {
-                $sessionStats[$session] = [
-                    'totalTargets' => 0,
-                    'greenTargets' => 0,
-                    'yellowTargets' => 0,
-                    'redTargets' => 0,
-                    'blueTargets' => 0
-                ];
-            }
         }
         
         // Compter les flèches dans chaque chaîne
@@ -278,9 +396,9 @@ try {
         $totalScoreD2 = intval($row->QuD2Score);
         $totalScore = $totalScoreD1 + $totalScoreD2;
         
-        // Calculer les dernières volées
-        $lastScoreD1 = getLastThreeScores($row->QuD1Arrowstring);
-        $lastScoreD2 = getLastThreeScores($row->QuD2Arrowstring);
+        // Calculer les dernières flèches (3 ou 6 selon le type de tournoi)
+        $lastScoreD1 = getLastNScores($row->QuD1Arrowstring, $nbArrowsToShow);
+        $lastScoreD2 = getLastNScores($row->QuD2Arrowstring, $nbArrowsToShow);
         
         // Numéro de volée (volées complètes seulement)
         $volleyNumberD1 = getVolleyNumber($row->QuD1Arrowstring);
@@ -310,163 +428,162 @@ try {
     
     error_log("Cibles trouvées: " . count($targets) . " entrées");
     
-    // Traiter les cibles
+    // Traiter les cibles pour la session sélectionnée uniquement
     $allTargets = [];
     $greenTargetsBySession = [];
     
-    // Pour chaque session disponible
-    foreach ($sessionsData as $session => $sessionInfo) {
-        // Ne traiter que la session sélectionnée
-        if ($session != $selectedSession) {
-            continue;
-        }
-        
-        $maxTargetSession = $sessionInfo['maxTarget'];
-        
-        // Initialiser les statistiques de session
-        if (!isset($sessionStats[$session])) {
-            $sessionStats[$session] = [
-                'totalTargets' => 0,
-                'greenTargets' => 0,
-                'yellowTargets' => 0,
-                'redTargets' => 0,
-                'blueTargets' => 0
-            ];
-        }
-        
-        // Traiter toutes les cibles de cette session
-        for ($i = 1; $i <= $maxTargetSession; $i++) {
-            $key = $session . '_' . $i;
-            
-            // Récupérer les informations de batterie pour cette cible
-            // Note: Comme IskDevices n'a pas de session, nous utilisons seulement le numéro de cible
-            $batteryInfo = isset($batteryLevels[$i]) ? $batteryLevels[$i] : null;
-            
-            if (isset($targets[$key])) {
-                $target = $targets[$key];
-                $archerCount = count($target['archers']);
-                
-                // Calculer les statistiques
-                $averageArrows = $archerCount > 0 ? array_sum($target['arrowCounts']) / $archerCount : 0;
-                $allSameCount = $archerCount > 0 ? count(array_unique($target['arrowCounts'])) === 1 : false;
-                $allMultipleOf3 = true;
-                
-                foreach ($target['arrowCounts'] as $count) {
-                    if ($count % 3 !== 0) {
-                        $allMultipleOf3 = false;
-                        break;
-                    }
-                }
-                
-                // Déterminer le statut
-                $status = 'blue';
-                
-                if ($archerCount > 0) {
-                    if ($allMultipleOf3 && $allSameCount) {
-                        $status = 'green';
-                    } else if (!$allSameCount) {
-                        $status = 'yellow';
-                    } else if ($allMultipleOf3 && !$allSameCount) {
-                        $status = 'yellow';
-                    } else if (!$allMultipleOf3) {
-                        $status = 'yellow';
-                    }
-                }
-                
-                $targetData = [
-                    'session' => $session,
-                    'targetNumber' => $i,
-                    'archerCount' => $archerCount,
-                    'averageArrows' => round($averageArrows, 1),
-                    'allMultipleOf3' => $allMultipleOf3,
-                    'allSameCount' => $allSameCount,
-                    'hasDifferentArrowCounts' => !$allSameCount,
-                    'status' => $status,
-                    'archers' => $target['archers'],
-                    'battery' => $batteryInfo  // Informations de batterie
-                ];
-                
-                // Mettre à jour les statistiques
-                $sessionStats[$session]['totalTargets']++;
-                
-                switch($status) {
-                    case 'green':
-                        $sessionStats[$session]['greenTargets']++;
-                        if (!isset($greenTargetsBySession[$session])) {
-                            $greenTargetsBySession[$session] = [];
-                        }
-                        $greenTargetsBySession[$session][$i] = $averageArrows;
-                        break;
-                    case 'yellow':
-                        $sessionStats[$session]['yellowTargets']++;
-                        break;
-                    case 'red':
-                        $sessionStats[$session]['redTargets']++;
-                        break;
-                    case 'blue':
-                        $sessionStats[$session]['blueTargets']++;
-                        break;
-                }
-                
-                $allTargets[] = $targetData;
-            } else {
-                // Cible sans données
-                $targetData = [
-                    'session' => $session,
-                    'targetNumber' => $i,
-                    'archerCount' => 0,
-                    'averageArrows' => 0,
-                    'allMultipleOf3' => false,
-                    'allSameCount' => true,
-                    'hasDifferentArrowCounts' => false,
-                    'status' => 'blue',
-                    'archers' => [],
-                    'battery' => $batteryInfo  // Informations de batterie
-                ];
-                
-                $sessionStats[$session]['totalTargets']++;
-                $sessionStats[$session]['blueTargets']++;
-                
-                $allTargets[] = $targetData;
+    // Récupérer les informations de la session sélectionnée
+    $selectedSessionInfo = isset($allSessionsData[$selectedSession]) ? $allSessionsData[$selectedSession] : ['maxTarget' => 0];
+    $maxTargetSession = $selectedSessionInfo['maxTarget'];
+    
+    // Mettre à jour le total des cibles dans sessionsData
+    if (isset($allSessionsData[$selectedSession])) {
+        $allSessionsData[$selectedSession]['totalTargets'] = $maxTargetSession;
+    }
+    
+    // Si maxTargetSession est 0, on ne peut pas déterminer le nombre de cibles
+    // On utilise une valeur par défaut de 20 ou on cherche le max parmi les cibles existantes
+    if ($maxTargetSession == 0) {
+        // Chercher la cible max pour cette session
+        $maxFound = 0;
+        foreach ($targets as $key => $target) {
+            if ($target['session'] == $selectedSession && $target['targetNumber'] > $maxFound) {
+                $maxFound = $target['targetNumber'];
             }
+        }
+        $maxTargetSession = $maxFound > 0 ? $maxFound : 20; // Valeur par défaut
+        error_log("Aucun maxTarget défini pour la session $selectedSession, utilisation de $maxTargetSession");
+    }
+    
+    // Traiter toutes les cibles de la session sélectionnée
+    for ($i = 1; $i <= $maxTargetSession; $i++) {
+        $key = $selectedSession . '_' . $i;
+        
+        // Récupérer les informations de batterie pour cette cible
+        $batteryInfo = isset($batteryLevels[$i]) ? $batteryLevels[$i] : null;
+        
+        if (isset($targets[$key])) {
+            $target = $targets[$key];
+            $archerCount = count($target['archers']);
+            
+            // Calculer les statistiques
+            $averageArrows = $archerCount > 0 ? array_sum($target['arrowCounts']) / $archerCount : 0;
+            $allSameCount = $archerCount > 0 ? count(array_unique($target['arrowCounts'])) === 1 : false;
+            $allMultipleOf3 = true;
+            
+            foreach ($target['arrowCounts'] as $count) {
+                if ($count % 3 !== 0) {
+                    $allMultipleOf3 = false;
+                    break;
+                }
+            }
+            
+            // Déterminer le statut
+            $status = 'blue';
+            
+            if ($archerCount > 0) {
+                if ($allMultipleOf3 && $allSameCount) {
+                    $status = 'green';
+                } else if (!$allSameCount) {
+                    $status = 'yellow';
+                } else if ($allMultipleOf3 && !$allSameCount) {
+                    $status = 'yellow';
+                } else if (!$allMultipleOf3) {
+                    $status = 'yellow';
+                }
+            }
+            
+            $targetData = [
+                'session' => $selectedSession,
+                'targetNumber' => $i,
+                'archerCount' => $archerCount,
+                'averageArrows' => round($averageArrows, 1),
+                'allMultipleOf3' => $allMultipleOf3,
+                'allSameCount' => $allSameCount,
+                'hasDifferentArrowCounts' => !$allSameCount,
+                'status' => $status,
+                'archers' => $target['archers'],
+                'battery' => $batteryInfo
+            ];
+            
+            // Mettre à jour les statistiques
+            $sessionStats[$selectedSession]['totalTargets']++;
+            
+            switch($status) {
+                case 'green':
+                    $sessionStats[$selectedSession]['greenTargets']++;
+                    if (!isset($greenTargetsBySession[$selectedSession])) {
+                        $greenTargetsBySession[$selectedSession] = [];
+                    }
+                    $greenTargetsBySession[$selectedSession][$i] = $averageArrows;
+                    break;
+                case 'yellow':
+                    $sessionStats[$selectedSession]['yellowTargets']++;
+                    break;
+                case 'red':
+                    $sessionStats[$selectedSession]['redTargets']++;
+                    break;
+                case 'blue':
+                    $sessionStats[$selectedSession]['blueTargets']++;
+                    break;
+            }
+            
+            $allTargets[] = $targetData;
+        } else {
+            // Cible sans données
+            $targetData = [
+                'session' => $selectedSession,
+                'targetNumber' => $i,
+                'archerCount' => 0,
+                'averageArrows' => 0,
+                'allMultipleOf3' => false,
+                'allSameCount' => true,
+                'hasDifferentArrowCounts' => false,
+                'status' => 'blue',
+                'archers' => [],
+                'battery' => $batteryInfo
+            ];
+            
+            $sessionStats[$selectedSession]['totalTargets']++;
+            $sessionStats[$selectedSession]['blueTargets']++;
+            
+            $allTargets[] = $targetData;
         }
     }
     
     // Vérifier si certaines cibles vertes ont plus de flèches que d'autres DANS LA MÊME SESSION
-    foreach ($greenTargetsBySession as $session => $greenTargets) {
-        if (count($greenTargets) > 0) {
-            $maxGreenArrowsInSession = max($greenTargets);
-            
-            foreach ($allTargets as &$target) {
-                if ($target['session'] == $session && 
-                    $target['status'] === 'green' && 
-                    $target['averageArrows'] < $maxGreenArrowsInSession) {
-                    $target['status'] = 'red';
-                    
-                    // Mettre à jour les statistiques
-                    $sessionStats[$session]['greenTargets']--;
-                    $sessionStats[$session]['redTargets']++;
-                }
+    if (isset($greenTargetsBySession[$selectedSession]) && count($greenTargetsBySession[$selectedSession]) > 0) {
+        $maxGreenArrowsInSession = max($greenTargetsBySession[$selectedSession]);
+        
+        foreach ($allTargets as &$target) {
+            if ($target['session'] == $selectedSession && 
+                $target['status'] === 'green' && 
+                $target['averageArrows'] < $maxGreenArrowsInSession) {
+                $target['status'] = 'red';
+                
+                // Mettre à jour les statistiques
+                $sessionStats[$selectedSession]['greenTargets']--;
+                $sessionStats[$selectedSession]['redTargets']++;
             }
         }
     }
     
-    // Trier par session puis par numéro de cible
+    // Trier par numéro de cible
     usort($allTargets, function($a, $b) {
-        if ($a['session'] == $b['session']) {
-            return $a['targetNumber'] - $b['targetNumber'];
-        }
-        return $a['session'] - $b['session'];
+        return $a['targetNumber'] - $b['targetNumber'];
     });
     
     $response = [
         'success' => true,
         'targets' => $allTargets,
-        'sessionsData' => $sessionsData,
+        'sessionsData' => $allSessionsData,
         'stats' => [
             'sessionStats' => $sessionStats
         ],
         'selectedSession' => $selectedSession,
+        'nbArrowsToShow' => $nbArrowsToShow,
+        'tourTypeName' => $tourTypeName,
+        'numSessionsMax' => $numSessions,
         'timestamp' => date('Y-m-d H:i:s'),
         'debug' => [
             'battery_count' => count($batteryLevels),
@@ -474,7 +591,7 @@ try {
         ]
     ];
     
-    error_log("Réponse envoyée avec " . count($allTargets) . " cibles");
+    error_log("Réponse envoyée avec " . count($allTargets) . " cibles pour la session $selectedSession");
     
     echo json_encode($response);
     
