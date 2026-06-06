@@ -11,7 +11,7 @@
  * - Votre Nom - Votre Club - (modif: 2026-01-02)
  * 
  * Page d'aide pour l'organisation des concours
- * Racourcis et procédures pour avant, pendant et après la compétition
+ * Raccourcis et procédures pour avant, pendant et après la compétition
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
@@ -35,7 +35,7 @@ CheckTourSession(true);
 checkACL(AclParticipants, AclReadOnly);
 
 $TourId = $_SESSION['TourId'];
-$PAGE_TITLE = 'Aide Concours - Procédures et Racourcis';
+$PAGE_TITLE = 'Aide Concours - Procédures et Raccourcis';
 $IncludeJquery = true;
 
 // Récupérer les sessions existantes
@@ -202,7 +202,7 @@ include('Common/Templates/head.php');
     font-size: 0.85em;
     border-radius: 3px;
     border: none;
-    cursor: button;
+    cursor: pointer;
     text-decoration: none;
     display: inline-block;
     text-align: center;
@@ -363,23 +363,23 @@ include('Common/Templates/head.php');
         <ul class="task-list">
             <li class="task-item">
                 <span class="task-icon">🏁</span>
-                <a href="<?php echo $basePath; ?>Tournament/index.php?New=" class="task-link" target="_blank">Créer une nouvelle compétition</a>
+                <a href="<?php echo $basePath; ?>Tournament/index.php?New=" class="task-link" >Créer une nouvelle compétition</a>
 				<a href="<?php echo $basePath; ?>Modules/Custom/aide/CloneTournament.php" class="btn-small btn-success">Cloner une compétition</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">🔃</span>
-                <a href="<?php echo $basePath; ?>Partecipants/LookupTableLoad.php" class="task-link" target="_blank">Mise à jour de la datadase Archers</a>
+                <a href="<?php echo $basePath; ?>Participants/LookupTableLoad.php" class="task-link" >Mise à jour de la base de données Archers</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">👥</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" target="_blank">Ajouter des archers / participants</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" >Ajouter des archers / participants</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">📝</span>
-                <a href="<?php echo $basePath; ?>Partecipants/index.php" class="task-link" >List des participants</a>
+                <a href="<?php echo $basePath; ?>Participants/index.php" class="task-link" >Liste des participants</a>
             </li>
 			
             <li class="task-item">
@@ -394,12 +394,12 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" target="_blank">Pour affichage / Liste des Participants par Ordre Alphabétique + Type de Cible</a>
+                <a href="<?php echo $basePath; ?>Participants/PrnAlphabetical.php?tf=1" class="task-link" >Pour affichage / Liste des Participants par Ordre Alphabétique + Type de Cible</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
+                    <a href="<?php echo $basePath; ?>Participants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
                        class="btn-small btn-primary" 
-                       target="_blank">Départ <?php echo $session; ?></a>
+                       >Départ <?php echo $session; ?></a>
                     <?php endforeach; ?>
                 </div>
             </li>
@@ -417,18 +417,18 @@ include('Common/Templates/head.php');
         
         <!-- SECTION GITHUB SIMPLE -->
         <div class="github-section">
-            <p><strong>🔄 MISE À JOUR DU ADDON IANSEO (Loloz3)</strong></p>
+            <p><strong>🔄 MISE À JOUR DE L'ADDON IANSEO (Loloz3)</strong></p>
             <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
                 <strong>Note :</strong> Les fichiers <code>menu.php</code> et <code>Prix.txt</code> existants ne seront pas remplacés.
             </p>
             
             <div style="margin: 15px 0;">
                 <button class="github-button github-button-success" onclick="updateAddonSimple()">
-                    🔄 Mettre à jour le Addon
+                    🔄 Mettre à jour l'Addon
                 </button>
                 
                 <a href="https://github.com/loloz3/ianseo-addon" 
-                   target="_blank" 
+                    
                    class="github-button github-button-info"
                    style="text-decoration: none;">
                     📁 Voir sur GitHub
@@ -459,12 +459,12 @@ include('Common/Templates/head.php');
 
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="" class="task-link" >Impression des feuilles pour controle du matériel</a>
+                <a href="" class="task-link" >Impression des feuilles pour contrôle du matériel</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="<?php echo $basePath; ?>Partecipants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
+                    <a href="<?php echo $basePath; ?>Participants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
                        class="btn-small btn-primary" 
-                       target="_blank">Départ <?php echo $session; ?></a>
+                       >Départ <?php echo $session; ?></a>
                     <?php endforeach; ?>
                 </div>
             </li>
@@ -476,56 +476,56 @@ include('Common/Templates/head.php');
                     <?php foreach ($existingSessions as $session): ?>
                     <a href="<?php echo $basePath; ?>Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=1" 
                        class="btn-small btn-primary" 
-                       target="_blank">D<?php echo $session; ?>-1</a>
+                       >D<?php echo $session; ?>-1</a>
                     <a href="<?php echo $basePath; ?>Modules/Custom/aide/PrintScoreAuto.php?session=<?php echo $session; ?>&dist=2" 
                        class="btn-small btn-primary" 
-                       target="_blank">D<?php echo $session; ?>-2</a>
+                       >D<?php echo $session; ?>-2</a>
                     <?php endforeach; ?>
                 </div>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">⌨️</span>
-                <a href="<?php echo $basePath; ?>Modules/Barcodes/GetScoreBarCode.php" class="task-link" target="_blank">Saisie des résultats</a>
+                <a href="<?php echo $basePath; ?>Modules/Barcodes/GetScoreBarCode.php" class="task-link" >Saisie des résultats</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🧮</span>
-                <a href="<?php echo $basePath; ?>Qualification/index.php" class="task-link" target="_blank">Mise à jour du classement (à faire pour tout les Départs/Distances)</a>
+                <a href="<?php echo $basePath; ?>Qualification/index.php" class="task-link" >Mise à jour du classement (à faire pour tous les Dépôts/Distances)</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
-                <button onclick="resetTitles()" class="btn-small btn-success">Effacer l'en‑tête </button>
+                <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" >Impression des résultats</a>
+                <button onclick="resetTitles()" class="btn-small btn-success">Effacer l'en-tête</button>
 			</li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" >Impression autres tirs</a>
             </li>
             			
 			<li class="task-item">
                 <span class="task-icon">📱</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" target="_blank">Contrôles des données (avec ScoreKeeper NG)</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/ScoreCibles/ScoreCibles.php" class="task-link" >Contrôle des données (avec ScoreKeeper NG)</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🔒</span>
-                <a href="<?php echo $basePath; ?>/Api/ISK-NG/Sessions.php" class="task-link" target="_blank">Vérouillage d'un départ</a>
+                <a href="<?php echo $basePath; ?>/Api/ISK-NG/Sessions.php" class="task-link" >Verrouillage d'un départ / d'une série</a>
             </li>
             <li class="task-item">
                 <span class="task-icon">🔄</span>
-                <a href="<?php echo $basePath; ?>Tournament/UploadResults.php?QUAL&" class="task-link" target="_blank">Envoi à IANSEO des résultats (à garder ouvert)</a>
+                <a href="<?php echo $basePath; ?>Tournament/UploadResults.php?QUAL&" class="task-link" >Envoi à IANSEO des résultats (à garder ouvert)</a>
             </li>
 			<li class="task-item">
                 <span class="task-icon">🛟</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/aide/aide-equipes.php" class="task-link" target="_blank">Aide concours Equipes</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/aide/aide-equipes.php" class="task-link" >Aide concours Équipes</a>
             </li>
         </ul>
     </div>
     
-    <!-- SECTION APRES -->
+    <!-- SECTION APRÈS -->
     <div class="help-section section-after">
         <div class="section-header">
             🏆 APRÈS LA COMPÉTITION
@@ -534,39 +534,39 @@ include('Common/Templates/head.php');
         <ul class="task-list">
             <li class="task-item">
                 <span class="task-icon">🏆️</span>
-                <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" target="_blank">Impression des résultats</a>
+                <a href="<?php echo $basePath; ?>Qualification/PrnIndividualAbs.php" class="task-link" >Impression des résultats</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" target="_blank">Impression autres tirs</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" >Impression autres tirs</a>
             </li>
             
             <li class="task-item">
                 <span class="task-icon">📤</span>
-                <a href="<?php echo $basePath; ?>Modules/Sets/FR/exports/" class="task-link" target="_blank">Envoi fichiers à FFTA</a>
+                <a href="<?php echo $basePath; ?>Modules/Sets/FR/exports/" class="task-link" >Envoi fichiers à FFTA</a>
             </li>
 			
         <div class="github-section">
 			<li class="task-item">
                 <span class="task-icon">🛟</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/aide/ianseo_Backup.html" class="task-link" target="_blank">Guide complet de sauvegarde d'Ianseo sous Windows</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/aide/ianseo_Backup.html" class="task-link" >Guide complet de sauvegarde d'IanSEo sous Windows</a>
             </li>
 		
 			<li class="task-item">
                 <span class="task-icon">🩺</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" target="_blank">ISK System Diagnostic</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/test/isk-diagnostic.php" class="task-link" >ISK System Diagnostic</a>
             </li>
 			
 			<li class="task-item">
 				<span class="task-icon">🧪</span>
-				<a href="<?php echo $basePath; ?>Modules/Custom/test/ScoreSimulate.php" class="task-link" target="_blank">Simulateur de scores (tests)</a>
+				<a href="<?php echo $basePath; ?>Modules/Custom/test/ScoreSimulate.php" class="task-link" >Simulateur de scores (tests)</a>
 			</li>
 
 			
 			<li class="task-item">
                 <span class="task-icon">📊</span>
-                <a href="http://localhost/phpmyadmin/" class="task-link" target="_blank">PHPmyadmin (pour debug)</a>
+                <a href="http://localhost/phpmyadmin/" class="task-link" >PHPMyAdmin (pour debug)</a>
             </li>
 		</div>
         </ul>
@@ -751,7 +751,7 @@ async function sauvegarderTournamentExport() {
 
 // FONCTION SIMPLIFIÉE POUR GITHUB
 function updateAddonSimple() {
-    if (!confirm('Voulez-vous mettre à jour le addon depuis GitHub ?\n\nTous les fichiers seront téléchargés depuis https://github.com/loloz3/ianseo-addon\n\nNote: Les fichiers menu.php et Prix.txt existants ne seront PAS remplacés.')) {
+    if (!confirm('Voulez-vous mettre à jour l\'addon depuis GitHub ?\n\nTous les fichiers seront téléchargés depuis https://github.com/loloz3/ianseo-addon\n\nNote: Les fichiers menu.php et Prix.txt existants ne seront PAS remplacés.')) {
         return;
     }
     
