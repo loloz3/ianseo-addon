@@ -2219,7 +2219,7 @@ const getTargetFaceImage = (targetSize, targetFace, tournamentType, archer) => {
     }
     
     $isIndoorTournament = stripos($tournamentType, 'ndoor') !== false;
-	
+    
     // Récupérer les SesAth4Target pour chaque session
     $sessionAth4Target = [];
     $sessionQuery = "SELECT SesOrder, SesAth4Target FROM Session WHERE SesTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND SesType='Q'";
@@ -2238,6 +2238,8 @@ $Select = "SELECT
             EnClass, 
             QuSession, 
             QuTargetNo, 
+            QuTarget,
+            QuLetter,
             EnWChair, 
             QuScore, 
             QuGold, 
@@ -2245,11 +2247,8 @@ $Select = "SELECT
             CoCode, 
             CoName, 
             EnTargetFace,
-            -- Distance depuis Events (sans valeur par défaut)
             EvDistance as EvDistance,
-            -- Taille de blason depuis Events (sans valeur par défaut)
             EvTargetSize as EvTargetSize,
-            -- Code événement formaté selon les nouvelles règles
             CASE 
                 -- Pour les divisions BB (Barebow)
                 WHEN EnDivision LIKE '%BB%' OR TRIM(EnDivision) = 'BB' THEN 
@@ -2308,7 +2307,6 @@ $Select = "SELECT
            FROM Entries 
            INNER JOIN Qualifications ON EnId=QuId 
            INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
-           -- LEFT JOIN sur Events pour récupérer les infos distance et taille blason
            LEFT JOIN Events ON 
                 Events.EvCode = CASE 
                     -- Pour les divisions BB (Barebow)
@@ -2384,27 +2382,48 @@ $Select = "SELECT
         $sessionAth4 = isset($sessionAth4Target[$row->QuSession]) ? $sessionAth4Target[$row->QuSession] : 4;
         
         // Calculer la distance et taille selon les règles FFTA
-		$calculated = calculateDistanceAndTargetSize($enDivision, $enClass, $row->EvCode, $isIndoorTournament);
-
-		$archers[] = [
-			'id' => (int)$row->EnId,
-			'code' => $row->EnCode ?: '',
-			'name' => trim($row->EnFirstName . ' ' . $row->EnName),
-			'country' => $row->CoCode ?: '',
-			'countryName' => $row->CoName ?: '',
-			'division' => $enDivision,
-			'class' => $pureClass,
-			'session' => (int)$row->QuSession,
-			'targetNo' => $row->QuTargetNo ?: '',
-			'score' => ($row->QuScore ? $row->QuScore . '/' . $row->QuGold . '/' . $row->QuXNine : '0/0/0'),
-			'wheelchair' => (bool)$row->EnWChair,
-			'targetFace' => $row->EnTargetFace ?: '',
-			'distance' => $calculated['distance'],  // ← Utilise la valeur calculée
-			'evCode' => $row->EvCode ?: '',
-			'targetSize' => $calculated['targetSize'],  // ← Utilise la valeur calculée
-			'tournamentType' => $tournamentType,
-			'sessionAth4Target' => $sessionAth4
-		];
+        $calculated = calculateDistanceAndTargetSize($enDivision, $enClass, $row->EvCode, $isIndoorTournament);
+        
+        // ===== MODIFICATION 1: Déterminer si l'archer est vraiment assigné =====
+        // Un archer est considéré NON ASSIGNÉ si QuTarget = 0 ET QuLetter = ""
+        $isEffectivelyAssigned = ($row->QuTarget > 0 && !empty($row->QuLetter));
+        
+        // ===== MODIFICATION 2: Reconstruire QuTargetNo si nécessaire =====
+        // Si QuTargetNo est vide mais QuTarget et QuLetter sont valides, on reconstruit
+        $quTargetNo = $row->QuTargetNo ?: '';
+        if (empty($quTargetNo) && $isEffectivelyAssigned) {
+            // Reconstruire le format: Session + TargetNumber (3 chiffres) + Letter
+            $targetNumberPadded = str_pad($row->QuTarget, 3, '0', STR_PAD_LEFT);
+            $quTargetNo = $row->QuSession . $targetNumberPadded . $row->QuLetter;
+            
+            // Optionnel: Mettre à jour en base de données
+            // $updateSql = "UPDATE Qualifications SET QuTargetNo = '" . StrSafe_DB($quTargetNo) . "' WHERE QuId = " . $row->EnId;
+            // safe_r_sql($updateSql);
+        }
+        
+        $targetNoForDisplay = $isEffectivelyAssigned ? ($quTargetNo ?: '') : '';
+        
+        $archers[] = [
+            'id' => (int)$row->EnId,
+            'code' => $row->EnCode ?: '',
+            'name' => trim($row->EnFirstName . ' ' . $row->EnName),
+            'country' => $row->CoCode ?: '',
+            'countryName' => $row->CoName ?: '',
+            'division' => $enDivision,
+            'class' => $pureClass,
+            'session' => (int)$row->QuSession,
+            'targetNo' => $targetNoForDisplay,  // ← Utilise la valeur reconstruite ou vide
+            'targetNumber' => (int)$row->QuTarget,  // Ajouté pour référence
+            'targetLetter' => $row->QuLetter ?: '',  // Ajouté pour référence
+            'score' => ($row->QuScore ? $row->QuScore . '/' . $row->QuGold . '/' . $row->QuXNine : '0/0/0'),
+            'wheelchair' => (bool)$row->EnWChair,
+            'targetFace' => $row->EnTargetFace ?: '',
+            'distance' => $calculated['distance'],
+            'evCode' => $row->EvCode ?: '',
+            'targetSize' => $calculated['targetSize'],
+            'tournamentType' => $tournamentType,
+            'sessionAth4Target' => $sessionAth4
+        ];
     }
 
     echo json_encode($archers);
@@ -2426,7 +2445,7 @@ $Select = "SELECT
     ?>;
 
     const IS_INDOOR_TOURNAMENT = <?php echo $isIndoorTournament ? 'true' : 'false'; ?>;
-	
+    
     const getTargetSizeLabel = (targetSize) => {
         if (!targetSize) return '';
         
@@ -3534,30 +3553,30 @@ const generateSimplePDF = () => {
             );
             
             const simulateExchange = () => {
-				const allArchersAfterExchange = archers.map(archer => {
-					if (archer.session !== selectedSession) return archer;
-					
-					if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(sourceTargetId)) {
-						const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
-						return { ...archer, targetNo: targetId + letter };
-					}
-					
-					if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(targetId)) {
-						const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
-						return { ...archer, targetNo: sourceTargetId + letter };
-					}
-					
-					return archer;
-				});
-				
-				// CORRECTION : Pour un échange de cibles entières, on autorise toujours
-				// car les deux cibles étaient valides avant l'échange
-				return {
-					sourceInvalid: false,
-					destInvalid: false,
-					allArchersAfterExchange
-				};
-			
+                const allArchersAfterExchange = archers.map(archer => {
+                    if (archer.session !== selectedSession) return archer;
+                    
+                    if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(sourceTargetId)) {
+                        const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
+                        return { ...archer, targetNo: targetId + letter };
+                    }
+                    
+                    if (archer.targetNo && archer.targetNo !== '' && archer.targetNo.startsWith(targetId)) {
+                        const letter = archer.targetNo.charAt(archer.targetNo.length - 1);
+                        return { ...archer, targetNo: sourceTargetId + letter };
+                    }
+                    
+                    return archer;
+                });
+                
+                // CORRECTION : Pour un échange de cibles entières, on autorise toujours
+                // car les deux cibles étaient valides avant l'échange
+                return {
+                    sourceInvalid: false,
+                    destInvalid: false,
+                    allArchersAfterExchange
+                };
+            
                 
                 const sourceTargetAfter = {
                     id: sourceTargetId,
