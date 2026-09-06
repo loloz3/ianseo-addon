@@ -5,7 +5,7 @@
  * VERSION ROBUSTE avec débogage
  */
 
-require_once(dirname(dirname(__FILE__)) . '/config.php');
+require_once(dirname(__FILE__, 3) . '/config.php');
 require_once('Common/Fun_Various.inc.php');
 
 header('Content-Type: application/json');
@@ -15,12 +15,11 @@ ini_set('display_errors', 0); // Ne pas afficher d'erreurs dans la réponse JSON
 CheckTourSession(true);
 checkACL(AclParticipants, AclReadWrite);
 
-$JSON = array('success' => false, 'message' => 'Erreur', 'corriges' => 0);
+$JSON = ['success' => false, 'message' => 'Erreur', 'corriges' => 0];
 
 if (IsBlocked(BIT_BLOCK_PARTICIPANT)) {
     $JSON['message'] = get_text('Blocked');
-    echo json_encode($JSON);
-    exit;
+    JsonOut($JSON);
 }
 
 $TourId = $_SESSION['TourId'];
@@ -68,14 +67,14 @@ $QueryGetLaterToFix = "
 ";
 
 // Récupérer les IDs à mettre à 1
-$idsToSet1 = array();
+$idsToSet1 = [];
 $Rs = safe_r_sql($QueryGetFirstToFix);
 while ($row = safe_fetch($Rs)) {
     $idsToSet1[] = $row->EnId;
 }
 
 // Récupérer les IDs à mettre à 0
-$idsToSet0 = array();
+$idsToSet0 = [];
 $Rs = safe_r_sql($QueryGetLaterToFix);
 while ($row = safe_fetch($Rs)) {
     $idsToSet0[] = $row->EnId;
@@ -111,5 +110,4 @@ if ($totalCorriges > 0) {
     $JSON['corriges'] = 0;
 }
 
-echo json_encode($JSON);
-?>
+JsonOut($JSON);
