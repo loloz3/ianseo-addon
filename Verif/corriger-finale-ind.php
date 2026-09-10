@@ -2,10 +2,9 @@
 /**
  * Script de correction du champ EnIndFEvent
  * Appelé en AJAX depuis la page de vérification
- * MODIFICATION : La vérification se fait maintenant par (Division + Classe)
  */
 
-require_once(dirname(dirname(__FILE__)) . '/config.php');
+require_once(dirname(__FILE__, 3) . '/config.php');
 require_once('Common/Fun_Various.inc.php');
 
 header('Content-Type: application/json');
@@ -13,12 +12,11 @@ header('Content-Type: application/json');
 CheckTourSession(true);
 checkACL(AclParticipants, AclReadWrite);
 
-$JSON = array('success' => false, 'message' => 'Données invalides');
+$JSON = ['success' => false, 'message' => 'Données invalides'];
 
 if (IsBlocked(BIT_BLOCK_PARTICIPANT)) {
     $JSON['message'] = get_text('Blocked');
-    echo json_encode($JSON);
-    exit;
+    JsonOut($JSON);
 }
 
 $EnId = (isset($_POST['enId']) ? intval($_POST['enId']) : 0);
@@ -49,5 +47,4 @@ if ($EnId > 0 && ($Valeur == 0 || $Valeur == 1)) {
     $JSON['message'] = 'Paramètres invalides (EnId: '.$EnId.', Valeur: '.$Valeur.')';
 }
 
-echo json_encode($JSON);
-?>
+JsonOut($JSON);
