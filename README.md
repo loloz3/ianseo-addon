@@ -1,12 +1,12 @@
 # ianseo-addon
 
 **FR 🇫🇷**  
-Module personnalisable pour **I@nseo** afin d'étendre l'expérience d'organisation : vues graphiques, vérifications des inscriptions (1 départ/2 départs...), impression des « autres tirs », greffe, aide concours. Le module s'installe dans **Modules/Custom** pour rester intact lors des mises à jour de I@nseo.
+Module personnalisable pour **I@nseo** afin d'étendre l'expérience d'organisation : vues graphiques,  greffe, aide concours. Le module s'installe dans **Modules/Custom** pour rester intact lors des mises à jour de I@nseo.
 
 **Le développement est en cours...** (saison salle 95% testé / saison extérieur 90% ! à suivre... )
 
 **EN 🇬🇧**  
-Customizable module for **I@nseo** that extends the competition workflow with graphical views, consistency checks, and print for archers shooting outside the tournament. Installs under **Modules/Custom** to survive I@nseo updates.
+Customizable module for **I@nseo** that extends the competition workflow with graphical views for archers shooting outside the tournament. Installs under **Modules/Custom** to survive I@nseo updates.
 
 **Development is underway...** (95% indoor season tested / 90% outdoor season! To be continued... )
 
@@ -25,16 +25,16 @@ These modules and their documentation were created with the assistance of Artifi
 ## ✨ Fonctionnalités / Features
 
 - **GraphicalView** : vue graphique des cibles/archers pour faciliter affectation et contrôle.  
-- **Verif** : contrôles des inscriptions (archers enregistrés à leur 1er départ et 2ème départs, etc.) avant validation.  
-- **AutresTirs** : impression des « autres tirs ».  
+- **Verif** : contrôles des inscriptions **Supprimé** : fonctionnalité désormais intégrée à IANSEO/FFTA.
+- **AutresTirs** : impression des « autres tirs ».  **Supprimé** : fonctionnalité désormais intégrée à IANSEO/FFTA.
 - **Greffe** : gestion simplifiée des greffes et tirs supplémentaires.  
 - **Aide Concours** : interface centralisée avec tous les raccourcis et procédures (avant/pendant/après la compétition).  
 - **Mise à jour automatique** : bouton intégré pour mettre à jour depuis GitHub.  
 
 **English summary**  
 - **GraphicalView**: Graphical view of targets and archers to simplify assignment and control.
-- **Verif**: Registration checks (1 session / 2 sessions…).  
-- **AutresTirs**: Print for archers shooting outside the tournament.
+- **Verif**: Registration checks (1 session / 2 sessions…).  **Removed:** feature now integrated into IANSEO/FFTA.
+- **AutresTirs**: Print for archers shooting outside the tournament.  **Removed:** feature now integrated into IANSEO/FFTA.
 - **Greffe**: Simplified management of additional shoots.
 - **Competition Help**: Centralized interface with all shortcuts and procedures.
 - **Auto-update**: Built-in button to update from GitHub.
@@ -60,12 +60,10 @@ These modules and their documentation were created with the assistance of Artifi
 3. **Copiez TOUS les dossiers et fichiers** dans le dossier **Modules/Custom** de votre installation I@nseo :
 ```bash
 📁 Extrait du ZIP :
-├── AutresTirs/
 ├── GraphicalView/
 ├── Greffe/
 ├── Perso/
 ├── ScoreCibles/
-├── Verif/
 ├── aide/
 ├── test/
 ├── menu.php
