@@ -369,22 +369,22 @@ include('Common/Templates/head.php');
 			
             <li class="task-item">
                 <span class="task-icon">🔃</span>
-                <a href="<?php echo $basePath; ?>Participants/LookupTableLoad.php" class="task-link" >Mise à jour de la base de données Archers</a>
+                <a href="<?php echo $basePath; ?>Partecipants/LookupTableLoad.php" class="task-link" >Mise à jour de la base de données Archers</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">👥</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" >Ajouter des archers / participants</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" >Ajouter des archers / partecipants</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">📝</span>
-                <a href="<?php echo $basePath; ?>Participants/index.php" class="task-link" >Liste des participants</a>
+                <a href="<?php echo $basePath; ?>Partecipants/index.php" class="task-link" >Liste des partecipants</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">✅</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/Verif/Verification.php" class="task-link" >Vérification complète des inscriptions</a>
+                <a href="<?php echo $basePath; ?>Modules/Sets/FR/Modules/Verification/Verification.php" class="task-link" >Vérification complète des inscriptions</a>
             </li>
             
             <li class="task-item">
@@ -394,10 +394,10 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Participants/PrnAlphabetical.php?tf=1" class="task-link" >Pour affichage / Liste des Participants par Ordre Alphabétique + Type de Cible</a>
+                <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" >Pour affichage / Liste des Partecipants par Ordre Alphabétique + Type de Cible</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="<?php echo $basePath; ?>Participants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
+                    <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
                        class="btn-small btn-primary" 
                        >Départ <?php echo $session; ?></a>
                     <?php endforeach; ?>
@@ -462,7 +462,7 @@ include('Common/Templates/head.php');
                 <a href="" class="task-link" >Impression des feuilles pour contrôle du matériel</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
-                    <a href="<?php echo $basePath; ?>Participants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
+                    <a href="<?php echo $basePath; ?>Partecipants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
                        class="btn-small btn-primary" 
                        >Départ <?php echo $session; ?></a>
                     <?php endforeach; ?>
@@ -502,7 +502,7 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" >Impression autres tirs</a>
+                <a href="<?php echo $basePath; ?>Modules/Sets/FR/Modules/AutresTirs/PrnAutresTirs.php" class="task-link" >Impression autres tirs</a>
             </li>
             			
 			<li class="task-item">
@@ -539,7 +539,7 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/AutresTirs/PrnAutresTirs.php" class="task-link" >Impression autres tirs</a>
+                <a href="<?php echo $basePath; ?>Modules/Sets/FR/Modules/AutresTirs/PrnAutresTirs.php" class="task-link" >Impression autres tirs</a>
             </li>
             
             <li class="task-item">
