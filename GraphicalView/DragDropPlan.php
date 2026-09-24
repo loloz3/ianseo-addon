@@ -58,7 +58,14 @@ function calculateDistanceAndTargetSize($division, $class, $evCode, $isIndoor = 
     if ($isIndoor) {
         // RÈGLES TAE INDOOR
         
-        // Pour tous les archers en Indoor
+        // NOUVELLE RÈGLE : U11 en salle -> 10m sur 60cm (tous types d'arc)
+        if ($category === 'U11') {
+            $distance = '10';
+            $targetSize = '60';
+            return ['distance' => $distance, 'targetSize' => $targetSize];
+        }
+        
+        // Pour tous les autres archers en Indoor
         if ($isBarebow) {
             // Barebow indoor - 18m, blason 60cm (par défaut)
             $distance = '18';
@@ -1722,6 +1729,20 @@ if (hasBB && isOutdoor) {
             return { image: `Img/${tensDigit}${unitsDigit}.png`, distance: commonDistance };
         } else {
             // INDOOR ou distance ≤ 18m
+            
+            // NOUVELLE RÈGLE : U11 en salle -> 10m sur 60cm
+            const hasU11Indoor = occupiedPositions.some(letter => ages[letter] === 'U11');
+            if (hasU11Indoor) {
+                const allU11 = occupiedPositions.every(letter => ages[letter] === 'U11');
+                const all60cm = occupiedPositions.every(letter => targetSizes[letter] === '60');
+                const all10m = occupiedPositions.every(letter => distances[letter] === '10');
+                
+                if (allU11 && all60cm && all10m) {
+                    return { image: 'Img/22a.png', distance: commonDistance };
+                }
+                return { image: 'Img/xx.png', distance: commonDistance };
+            }
+            
             if (tensDigit === 'x' && unitsDigit === 'x') {
                 return { image: null, distance: commonDistance };
             }
@@ -1740,6 +1761,10 @@ const getTargetFaceImage = (targetSize, targetFace, tournamentType, archer) => {
     const isCO = archer?.division === 'CO' || (archer?.division && archer.division.includes('CO'));
     const isCONational = archer?.evCode?.startsWith('N') || false;
     const isU13U15 = archer?.division === 'U13' || archer?.division === 'U15';
+        const isU11 = archer?.division === 'U11' || 
+                  (archer?.division && archer.division.includes('U11')) ||
+                  (archer?.class && archer.class.includes('U11')) ||
+                  (archer?.evCode && archer.evCode.includes('U11'));
     
     if (isOutdoor) {
         // Extérieur (inchangé)
@@ -1758,6 +1783,10 @@ const getTargetFaceImage = (targetSize, targetFace, tournamentType, archer) => {
         }
     } else if (isIndoor) {
         // Intérieur 
+        // NOUVELLE RÈGLE : U11 en salle -> 60cm
+        if (isU11) {
+            return 'Img/60.png';
+        }
         if (targetFace === '3') {
             return 'Img/80.png';
         } else if (targetFace === '2') {
@@ -3783,7 +3812,38 @@ const getTargetStandardImage = (targetId) => {
     if (isIndoor) {
         // ========== RÈGLES INDOOR REPRISES DE OLD_FILE.PHP ==========
         
-        // Vérifier que tous les archers sont bien à 18m
+        // NOUVELLE RÈGLE : U11 en salle -> 10m sur 60cm
+        const hasU11Indoor = archersOnTarget.some(a => {
+            const div = a.division || '';
+            const cls = a.class || '';
+            const ev = a.evCode || '';
+            return div.includes('U11') || cls.includes('U11') || ev.includes('U11');
+        });
+        
+        if (hasU11Indoor) {
+            const allU11 = archersOnTarget.every(a => {
+                const div = a.division || '';
+                const cls = a.class || '';
+                const ev = a.evCode || '';
+                return div.includes('U11') || cls.includes('U11') || ev.includes('U11');
+            });
+            
+            if (allU11) {
+                // Vérifier que tous sont à 10m sur 60cm
+                const all10m60cm = archersOnTarget.every(a => 
+                    parseInt(a.distance) === 10 && a.targetSize === '60'
+                );
+                if (all10m60cm) {
+                    return { image: 'Img/22a.png', distance: '10' };
+                }
+                return { image: 'Img/xx.png', distance: firstDistance };
+            } else {
+                // Mélange U11 + autres non autorisé en salle
+                return { image: 'Img/xx.png', distance: firstDistance };
+            }
+        }
+        
+        // Vérifier que tous les archers (hors U11) sont bien à 18m
         const allAt18m = archersOnTarget.every(a => parseInt(a.distance) === 18);
         if (!allAt18m) {
             return { image: 'Img/xx.png', distance: firstDistance };
