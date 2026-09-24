@@ -389,7 +389,13 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">🎯</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/GraphicalView/DragDropPlan.php" class="task-link" >Assignation graphique des cibles</a>
+                <a href="" class="task-link" >Assignation graphique des cibles</a>
+				<a href="<?php echo $basePath; ?>Modules/DragDropTarget/Qualification/index.php" 
+                       class="btn-small btn-primary" 
+                       >Officiel FFTA</a>&nbsp;
+					   <a href="<?php echo $basePath; ?>Modules/Custom/GraphicalView/DragDropPlan.php"
+                       class="btn-small btn-primary" 
+                       >Non-Officiel ;-)</a>
             </li>
             
             <li class="task-item">
@@ -491,7 +497,7 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">🧮</span>
-                <a href="<?php echo $basePath; ?>Qualification/index.php" class="task-link" >Mise à jour du classement (à faire pour tous les Dépôts/Distances)</a>
+                <a href="<?php echo $basePath; ?>Qualification/index.php" class="task-link" >Mise à jour du classement (à faire pour tous les Départs/Distances)</a>
             </li>
             
             <li class="task-item">
@@ -548,6 +554,40 @@ include('Common/Templates/head.php');
             </li>
 			
         <div class="github-section">
+
+			<li class="task-item">
+                <span class="task-icon">💶</span>
+                <a href="https://github.com/FFTiralarc/ianseo-FR" class="task-link" >Officiel modules : directement intégré dans ianseo et mis à jour avec chaque nouvelle version d'ianseo.</a>
+            </li>
+			<li class="task-item">
+                <span class="task-icon">💶</span>
+                <a href="https://github.com/Steph-Krs/IanseoModules" class="task-link" >Autres modules : Guide interactif et autes... </a>
+            </li>
+			<li class="task-item">
+                <span class="task-icon">💶</span>
+                <a href="https://github.com/Musica405archery/registrArc" class="task-link" >Autres modules : RegistrArc  (gestion des engagements et de facturation) </a>
+            </li>
+			<li class="task-item">
+                <span class="task-icon">🖨️</span>
+                <a href="https://github.com/protheus6/IanseoModules/tree/main" class="task-link" >Autres modules : Custom/Prints (impressions utiles sur une seule page simplifiée.) </a>
+            </li>
+			<li class="task-item">
+                <span class="task-icon">🖨️</span>
+                <a href="https://github.com/Steph-Krs/ianseo-launcher-exe" class="task-link" >ianseo-lancher.exe (Utilitaire Windows tout-en-un pour lancer, contrôler et dépanner IANSEO) </a>
+            </li>
+			<li class="task-item">
+                <span class="task-icon">🖨️</span>
+                <a href="https://github.com/rmzstrt/ianseo-scores-direct" class="task-link" >ianseo-scores-direct </a>
+            </li>
+			<li class="task-item">
+                <span class="task-icon">🖨️</span>
+                <a href="https://github.com/UranVester/TournamentSimulator" class="task-link" >...à tester...</a>
+            </li>
+
+
+		</div>
+		
+        <div class="github-section">
 			<li class="task-item">
                 <span class="task-icon">🛟</span>
                 <a href="<?php echo $basePath; ?>Modules/Custom/aide/ianseo_Backup.html" class="task-link" >Guide complet de sauvegarde d'IanSEo sous Windows</a>
@@ -580,7 +620,7 @@ function resetTitles() {
     showNotification('🔄 Réinitialisation en cours...', 'info');
     
     // Utiliser fetch pour appeler un endpoint PHP qui exécute l'opération
-    fetch('reset_titles_handler.php', {
+    fetch('Reset_title.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
