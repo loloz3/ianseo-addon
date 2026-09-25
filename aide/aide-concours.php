@@ -562,31 +562,31 @@ include('Common/Templates/head.php');
         <div class="github-section">
 
 			<li class="task-item">
-                <span class="task-icon">💶</span>
+                <span class="task-icon">⚛️</span>
                 <a href="https://github.com/FFTiralarc/ianseo-FR" class="task-link" >Officiel modules : directement intégré dans ianseo et mis à jour avec chaque nouvelle version d'ianseo.</a>
             </li>
 			<li class="task-item">
-                <span class="task-icon">💶</span>
+                <span class="task-icon">⚛️</span>
                 <a href="https://github.com/Steph-Krs/IanseoModules" class="task-link" >Autres modules : Guide interactif et autes... </a>
             </li>
 			<li class="task-item">
-                <span class="task-icon">💶</span>
+                <span class="task-icon">⚛️</span>
                 <a href="https://github.com/Musica405archery/registrArc" class="task-link" >Autres modules : RegistrArc  (gestion des engagements et de facturation) </a>
             </li>
 			<li class="task-item">
-                <span class="task-icon">🖨️</span>
+                <span class="task-icon">⚛️</span>
                 <a href="https://github.com/protheus6/IanseoModules/tree/main" class="task-link" >Autres modules : Custom/Prints (impressions utiles sur une seule page simplifiée.) </a>
             </li>
 			<li class="task-item">
-                <span class="task-icon">🖨️</span>
+                <span class="task-icon">⚛️</span>
                 <a href="https://github.com/Steph-Krs/ianseo-launcher-exe" class="task-link" >ianseo-lancher.exe (Utilitaire Windows tout-en-un pour lancer, contrôler et dépanner IANSEO) </a>
             </li>
 			<li class="task-item">
-                <span class="task-icon">🖨️</span>
+                <span class="task-icon">⚛️</span>
                 <a href="https://github.com/rmzstrt/ianseo-scores-direct" class="task-link" >ianseo-scores-direct </a>
             </li>
 			<li class="task-item">
-                <span class="task-icon">🖨️</span>
+                <span class="task-icon">⚛️</span>
                 <a href="https://github.com/UranVester/TournamentSimulator" class="task-link" >TournamentSimulator ...à tester...</a>
             </li>
 
