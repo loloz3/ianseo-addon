@@ -465,6 +465,12 @@ include('Common/Templates/head.php');
 
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
+                <a href="<?php echo $basePath; ?>Modules/Custom/Prints/"  class="task-link" >Impressions sur une page</a> (Module de protheus6)
+            </li>
+
+
+            <li class="task-item">
+                <span class="task-icon">🖨️</span>
                 <a href="" class="task-link" >Impression des feuilles pour contrôle du matériel</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
@@ -581,7 +587,7 @@ include('Common/Templates/head.php');
             </li>
 			<li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="https://github.com/UranVester/TournamentSimulator" class="task-link" >...à tester...</a>
+                <a href="https://github.com/UranVester/TournamentSimulator" class="task-link" >TournamentSimulator ...à tester...</a>
             </li>
 
 
