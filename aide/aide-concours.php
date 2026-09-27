@@ -7,7 +7,10 @@
  * 3. Citer les contributeurs
  * 
  * Contributeurs:
- * - Auteur Original
+ * - Laurent Petroff - Les Archers de Perols - (modif: 2026-02-06)
+ *
+ *  
+ * Dernière modification: 2026-09-27 par Laurent Petroff
  * - Votre Nom - Votre Club - (modif: 2026-01-02)
  * 
  * Page d'aide pour l'organisation des concours
@@ -31,6 +34,24 @@ foreach ($possiblePaths as $path) {
     }
 }
 
+// Chercher Fun_Sessions.inc.php en remontant plusieurs niveaux
+$sessionIncPaths = array(
+    dirname(__FILE__, 4) . '/Common/Fun_Sessions.inc.php',  // racine IANSEO
+    dirname(__FILE__, 3) . '/Common/Fun_Sessions.inc.php',  // Modules/
+    dirname(__FILE__, 2) . '/Common/Fun_Sessions.inc.php',  // Custom/
+    dirname(__FILE__) . '/../../Common/Fun_Sessions.inc.php',
+    dirname(dirname(dirname(__FILE__))) . '/Common/Fun_Sessions.inc.php',
+    'Common/Fun_Sessions.inc.php',
+    '../Common/Fun_Sessions.inc.php',
+);
+
+foreach ($sessionIncPaths as $path) {
+    if (file_exists($path)) {
+        require_once($path);
+        break;
+    }
+}
+
 CheckTourSession(true);
 checkACL(AclParticipants, AclReadOnly);
 
@@ -38,42 +59,28 @@ $TourId = $_SESSION['TourId'];
 $PAGE_TITLE = 'Aide Concours - Procédures et Raccourcis';
 $IncludeJquery = true;
 
-// Récupérer les sessions existantes
+// ============================================================
+// RÉCUPÉRATION DES SESSIONS via la fonction native IANSEO
+// ============================================================
 $existingSessions = array();
 
-// Utiliser votre requête SQL exacte
-$sql = "SELECT DISTINCT q.QuSession 
-        FROM Qualifications q 
-        INNER JOIN Entries e ON q.QuId = e.EnId 
-        WHERE e.EnTournament = $TourId 
-        AND q.QuSession IS NOT NULL 
-        AND q.QuSession != ''";
-
-if (function_exists('db_query')) {
-    $result = db_query($sql);
-    
-    if ($result !== false) {
-        while ($row = db_fetch_array($result)) {
-            $session = $row['QuSession'];
-            if (!empty($session) && is_numeric($session)) {
-                $existingSessions[] = (int)$session;
+if (function_exists('GetSessions')) {
+    $sessions = GetSessions('Q', false, null, intval($TourId));
+    if (is_array($sessions)) {
+        foreach ($sessions as $s) {
+            // GetSessions() retourne des OBJETS stdClass
+            if (isset($s->SesOrder) && (int)$s->SesOrder > 0) {
+                $existingSessions[] = (int)$s->SesOrder;
             }
-        }
-        
-        if (function_exists('db_free_result')) {
-            db_free_result($result);
         }
     }
 }
 
-// Nettoyer et trier les sessions
-$existingSessions = array_unique($existingSessions);
+// Nettoyer et trier
+$existingSessions = array_values(array_unique($existingSessions));
 sort($existingSessions);
 
-// Si aucune session n'est trouvée, utiliser les sessions par défaut
-if (empty($existingSessions)) {
-    $existingSessions = array(1, 2); // Sessions par défaut
-}
+
 
 // Déterminer la racine relative
 $basePath = '../../../';
