@@ -269,6 +269,22 @@ include('Common/Templates/head.php');
     text-align: center;
 }
 
+.bug-section {
+    background-color: #f6f8fa;
+    border: 2px dashed #d1d5da;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    text-align: center;
+}
+.tests-section {
+    background-color: #f6f8fa;
+    border: 2px dashed #d1d5da;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    text-align: center;
+}
 .save-button, .github-button {
     color: white;
     border: none;
@@ -456,6 +472,13 @@ include('Common/Templates/head.php');
                 Télécharge et installe la dernière version depuis GitHub
             </p>
         </div>
+		
+		<div class="bug-section">
+			<li class="task-item">
+                <span class="task-icon">🪳</span>
+                Vous avez trouvé un bug ? Envoyez-moi une capture d’écran ainsi que la sauvegarde IANSEO à l’adresse loloz3@free.fr
+            </li>
+        </div>
     </div>
     
     <!-- SECTION PENDANT -->
@@ -600,7 +623,7 @@ include('Common/Templates/head.php');
 
 		</div>
 		
-        <div class="github-section">
+        <div class="tests-section">
 			<li class="task-item">
                 <span class="task-icon">🛟</span>
                 <a href="<?php echo $basePath; ?>Modules/Custom/aide/ianseo_Backup.html" class="task-link" >Guide complet de sauvegarde d'IanSEo sous Windows</a>
@@ -788,12 +811,12 @@ function sauvegarder() {
 
 async function sauvegarderTournamentExport() {
     try {
-        const response = await fetch('<?php echo $basePath; ?>Tournament/TournamentExport.php');
+        const response = await fetch('<?php echo $basePath; ?>Tournament/TournamentExport.php?Complete=1');
         
         if (response.ok) {
             showNotification('✅ Export Tournament terminé avec succès !', 'success');
             // Rediriger pour télécharger le fichier
-            window.location.href = '<?php echo $basePath; ?>Tournament/TournamentExport.php?download=true';
+            window.location.href = '<?php echo $basePath; ?>Tournament/TournamentExport.php?Complete=1';
         } else {
             showNotification('❌ Erreur lors de l\'export Tournament', 'error');
         }
