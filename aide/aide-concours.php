@@ -397,12 +397,12 @@ include('Common/Templates/head.php');
 			
             <li class="task-item">
                 <span class="task-icon">👥</span>
-                <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" >Ajouter des archers / partecipants</a>
+                <a href="<?php echo $basePath; ?>Modules/Custom/Perso/AddArcher.php?id=0" class="task-link" >Ajouter des archers / participants</a>
             </li>
 			
             <li class="task-item">
                 <span class="task-icon">📝</span>
-                <a href="<?php echo $basePath; ?>Partecipants/index.php" class="task-link" >Liste des partecipants</a>
+                <a href="<?php echo $basePath; ?>Partecipants/index.php" class="task-link" >Liste des participants</a>
             </li>
 			
             <li class="task-item">
@@ -423,7 +423,7 @@ include('Common/Templates/head.php');
             
             <li class="task-item">
                 <span class="task-icon">🖨️</span>
-                <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" >Pour affichage / Liste des Partecipants par Ordre Alphabétique + Type de Cible</a>
+                <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?tf=1" class="task-link" >Pour affichage / Liste des Participants par Ordre Alphabétique + Type de Cible</a>
                 <div class="task-actions">
                     <?php foreach ($existingSessions as $session): ?>
                     <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
