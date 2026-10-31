@@ -639,6 +639,10 @@ include('Common/Templates/head.php');
 				<a href="<?php echo $basePath; ?>Modules/Custom/test/ScoreSimulate.php" class="task-link" >Simulateur de scores (tests)</a>
 			</li>
 
+			<li class="task-item">
+				<span class="task-icon">🧾</span>
+				<a href="<?php echo $basePath; ?>Modules/Custom/test/exp2ianseo.php" class="task-link" >Convertisseur EXP → IANSEO</a>
+			</li>
 			
 			<li class="task-item">
                 <span class="task-icon">📊</span>
