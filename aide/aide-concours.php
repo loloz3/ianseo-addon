@@ -503,11 +503,20 @@ include('Common/Templates/head.php');
                 <span class="task-icon">🖨️</span>
                 <a href="" class="task-link" >Impression des feuilles pour contrôle du matériel</a>
                 <div class="task-actions">
-                    <?php foreach ($existingSessions as $session): ?>
-                    <a href="<?php echo $basePath; ?>Partecipants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
-                       class="btn-small btn-primary" 
-                       >Départ <?php echo $session; ?></a>
-                    <?php endforeach; ?>
+                    <div style="display: flex; flex-wrap: wrap; gap: 3px; width: 100%;">
+                        <?php foreach ($existingSessions as $session): ?>
+                        <a href="<?php echo $basePath; ?>Partecipants/PrnSession.php?Session=<?php echo $session; ?>&tf=1" 
+                           class="btn-small btn-primary" 
+                           >Départ <?php echo $session; ?></a>
+                        <?php endforeach; ?>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 3px; width: 100%; margin-top: 3px;">
+                        <?php foreach ($existingSessions as $session): ?>
+                        <a href="<?php echo $basePath; ?>Partecipants/PrnAlphabetical.php?Session=<?php echo $session; ?>&tf=1" 
+                           class="btn-small btn-success" 
+                           >Départ <?php echo $session; ?> (Alpha)</a>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </li>
 			
