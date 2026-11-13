@@ -991,9 +991,9 @@
 				<th>&nbsp;</th>
 			</tr>
 			<tr>
-				<td class="Center" style="width:10%;"><input type="text" size="6" id="findCode" name="findCode" value="<?php echo !empty($_REQUEST['findCode']) ? $_REQUEST['findCode'] : ''; ?>" onkeypress="handleEnterKey(event, 'findAth')" /></td>
-				<td class="Center" style="width:25%;"><input type="text" size="25" id="findAth" name="findAth" value="<?php echo !empty($_REQUEST['findAth']) ? $_REQUEST['findAth'] : ''; ?>" onkeypress="handleEnterKey(event, 'findCountry')" /></td>
-				<td class="Center" style="width:25%;"><input type="text" size="25" id="findCountry" name="findCountry" value="<?php echo !empty($_REQUEST['findCountry']) ? $_REQUEST['findCountry'] : ''; ?>" onkeypress="handleEnterKey(event, 'findDiv')" /></td>
+				<td class="Center" style="width:10%;"><input type="text" size="6" id="findCode" name="findCode" value="<?php echo !empty($_REQUEST['findCode']) ? htmlspecialchars((string)$_REQUEST['findCode'], ENT_QUOTES, 'UTF-8') : ''; ?>" onkeypress="handleEnterKey(event, 'findAth')" /></td>
+				<td class="Center" style="width:25%;"><input type="text" size="25" id="findAth" name="findAth" value="<?php echo !empty($_REQUEST['findAth']) ? htmlspecialchars((string)$_REQUEST['findAth'], ENT_QUOTES, 'UTF-8') : ''; ?>" onkeypress="handleEnterKey(event, 'findCountry')" /></td>
+				<td class="Center" style="width:25%;"><input type="text" size="25" id="findCountry" name="findCountry" value="<?php echo !empty($_REQUEST['findCountry']) ? htmlspecialchars((string)$_REQUEST['findCountry'], ENT_QUOTES, 'UTF-8') : ''; ?>" onkeypress="handleEnterKey(event, 'findDiv')" /></td>
 				<td class="Center" style="width:10%;"><?php print $comboFindDiv;?></td>
 				<td class="Center" style="width:10%;"><?php print $comboFindCl;?></td>
 				<td class="Center" style="width:10%;"><?php print $comboFindSubCl;?></td>
