@@ -616,7 +616,7 @@ if ($is_club_invoice_mode && isset($_GET['club_name'])) {
     FROM Entries e
     LEFT JOIN Countries c ON e.EnCountry = c.CoId AND e.EnTournament = c.CoTournament
     LEFT JOIN Qualifications q ON e.EnId = q.QuId
-    WHERE e.EnTournament = $TourId AND e.EnAthlete = 1 AND c.CoName = '" . addslashes($club_name) . "'
+    WHERE e.EnTournament = $TourId AND e.EnAthlete = 1 AND c.CoName = " . StrSafe_DB($club_name) . "
     GROUP BY e.EnFirstName, e.EnName
     ORDER BY e.EnName, e.EnFirstName";
     
@@ -760,7 +760,7 @@ if ($is_club_invoice_mode && isset($_GET['club_name'])) {
                         const invoiceContent = document.querySelector('.invoice-container').cloneNode(true);
                         const printButton = invoiceContent.querySelector('.print-button');
                         if (printButton) printButton.remove();
-                        const clubName = '<?php echo addslashes($club_name); ?>';
+                        const clubName = <?php echo json_encode($club_name, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
                         const now = new Date();
                         const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + '_' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
                         const safeClubName = clubName.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_');
