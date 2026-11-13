@@ -98,7 +98,7 @@ function getStartListAlphaQueryTAE($ORIS=false, $Athlete=false) {
 		LEFT JOIN Rankings on EnTournament=RankTournament and RankEvent=IF(EvWaCategory!='',EvWaCategory,EvCode) and RankTeam=0 and EnCode=RankCode and ToIocCode='FITA' and EnIocCode in ('', 'FITA') and RankIocCode='FITA'
 		WHERE EnTournament = " . StrSafe_DB($_SESSION['TourId']) ;
 	if(isset($_REQUEST["Session"]) and is_numeric($_REQUEST["Session"])) $MyQuery .= " AND QuSession = " . StrSafe_DB($_REQUEST["Session"]) ;
-	if(!empty($_REQUEST["Divisions"])) $MyQuery .= " AND concat(EnDivision, EnClass) like '{$_REQUEST["Divisions"]}'";
+	if(!empty($_REQUEST["Divisions"])) $MyQuery .= " AND concat(EnDivision, EnClass) like " . StrSafe_DB($_REQUEST["Divisions"]);
 
 	// ── Filtre Classes[] : EnClass IN ('S1F','S2H',…) ────────────────────────
 	if(!empty($_REQUEST["Classes"])) {
