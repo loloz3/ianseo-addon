@@ -4,6 +4,13 @@
  * Fonctionne en navigateur (avec upload) ou en ligne de commande.
  */
 
+// En mode navigateur, l'accès est soumis aux droits d'Ianseo (administrateur).
+// Le mode ligne de commande reste autonome et ne charge pas Ianseo.
+if (PHP_SAPI !== 'cli') {
+    require_once(dirname(dirname(__FILE__)) . '/config.php');
+    checkACL(AclRoot, AclReadOnly);
+}
+
 // Déterminer le fichier source
 $expFile = null;
 
@@ -72,14 +79,17 @@ if ($rawData === false || $rawData === '') {
 }
 
 // 2. Décompresser
-$uncompressed = @gzuncompress($rawData);
+if (strlen($rawData) > 64 * 1024 * 1024) {
+    die("Erreur : fichier trop volumineux.\n");
+}
+$uncompressed = @gzuncompress($rawData, 256 * 1024 * 1024);
 
 if ($uncompressed === false) {
     die("Erreur : impossible de décompresser le fichier .exp. Est-ce un fichier EXP valide ?\n");
 }
 
 // 3. Désérialiser
-$tourArray = @unserialize($uncompressed);
+$tourArray = @unserialize($uncompressed, ['allowed_classes' => false]);
 
 if ($tourArray === false || !is_array($tourArray)) {
     die("Erreur : le contenu désérialisé n'est pas un tableau valide.\n");
@@ -92,7 +102,8 @@ $ianseoFileName = null;
 foreach ($tourArray as $key => $value) {
     if (substr($key, -7) === '.ianseo') {
         $ianseoData = $value;
-        $ianseoFileName = $key;
+        // Nom assaini : ni chemin, ni caractère spécial (écriture et en-tête HTTP)
+        $ianseoFileName = preg_replace('/[^A-Za-z0-9._-]/', '_', basename($key));
         break;
     }
 }
