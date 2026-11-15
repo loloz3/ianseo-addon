@@ -11,6 +11,16 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Mettre à 1 pour déboguer, 0 en production
 
+// Contrôle d'accès Ianseo : session avec compétition ouverte et droit de lecture
+// sur les participants (même niveau que la page Greffe qui appelle ce script).
+require_once(dirname(dirname(__FILE__)) . '/config.php');
+if (!CheckTourSession() || !hasACL(AclParticipants, AclReadOnly)) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+    exit();
+}
+
 // Toujours retourner du JSON
 header('Content-Type: application/json');
 
@@ -24,6 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Récupérer les données POST
 $html_content = isset($_POST['html_content']) ? $_POST['html_content'] : '';
 $filename = isset($_POST['filename']) ? $_POST['filename'] : '';
+
+if (strlen($html_content) > 2 * 1024 * 1024) {
+    http_response_code(413);
+    echo json_encode(['success' => false, 'message' => 'Facture trop volumineuse']);
+    exit();
+}
 
 if (empty($html_content) || empty($filename)) {
     http_response_code(400);
@@ -97,7 +113,6 @@ echo json_encode([
     'success' => true,
     'message' => 'Facture sauvegardée avec succès',
     'filename' => $filename,
-    'filepath' => $filepath,
     'filesize' => filesize($filepath),
     'url' => 'print/' . $filename,
     'human_size' => number_format(filesize($filepath) / 1024, 2) . ' Ko'
