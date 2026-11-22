@@ -1253,12 +1253,12 @@ function showTargetDetails(target) {
         <th>Lettre</th>
         <th>Archer</th>
         <th>Licence</th>
-        <th>N° Volée D1</th>
-        <th>${arrowsLabel} D1</th>
-        <th>Total D1</th>
-        <th>N° Volée D2</th>
-        <th>${arrowsLabel} D2</th>
-        <th>Total D2</th>
+        <th>N° Volée S1</th>
+        <th>${arrowsLabel} S1</th>
+        <th>Total S1</th>
+        <th>N° Volée S2</th>
+        <th>${arrowsLabel} S2</th>
+        <th>Total S2</th>
         <th>Total</th>
         <th>Statut</th>
     `);
