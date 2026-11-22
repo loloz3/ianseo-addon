@@ -273,6 +273,7 @@ try {
     // ============================================================
     $query = "
         SELECT 
+            q.QuId,
             q.QuSession,
             q.QuTarget,
             q.QuLetter,
@@ -333,6 +334,7 @@ try {
         $volleyNumberD2 = getVolleyNumber($row->QuD2Arrowstring);
         
         $archerData = [
+            'quId' => intval($row->QuId),
             'session' => $session,
             'targetNumber' => $targetNumber,
             'targetLetter' => $row->QuLetter,
@@ -507,7 +509,7 @@ try {
         'debug' => [
             'battery_count' => count($batteryLevels),
             'maxSessionVolleys' => $maxSessionVolleys,
-            'note' => 'Archers IRM exclus. Statut recalculé à chaque appel (retour vert/rouge automatique). Colonnes D1/D2 exposées comme S1/S2.'
+            'note' => 'Archers IRM exclus. Statut recalculé à chaque appel (retour vert/rouge automatique). Colonnes D1/D2 exposées comme S1/S2. QuId exposé pour WriteScoreCard.'
         ]
     ];
     
