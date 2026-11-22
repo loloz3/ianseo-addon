@@ -170,8 +170,8 @@ $paymentFilter = isset($_GET['payment']) ? $_GET['payment'] : 'all';
 
 // Requête pour récupérer les archers
 $query = "SELECT 
-    e.EnFirstName as prenom,
-    e.EnName as nom,
+    e.EnFirstName as nom,
+    e.EnName as prenom,
     CONCAT(e.EnDivision, e.EnClass) as categorie,
     c.CoName as club,
     c.CoCode as country_code,
