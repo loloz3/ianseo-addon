@@ -1751,9 +1751,44 @@ if (hasBB && isOutdoor) {
         }
     };
 
+	const getArcherFaceImage = (archer) => {
+		if (!archer) return '';
+		const w1 = String(archer.tfW1 || '').trim();
+		const name = String(archer.tfName || '').toLowerCase();
+		
+		// Fallback si pas de données TargetFaces
+		if (!w1) {
+			if (archer.targetSize === '122') return 'Img/122.png';
+			if (archer.targetSize === '80')  return 'Img/80.png';
+			if (archer.targetSize === '60')  return 'Img/60.png';
+			if (archer.targetSize === '40')  return 'Img/40.png';
+			return '';
+		}
+		
+		const hasTrispot = name.includes('trispot');
+		const isClassique = name.includes('classique');
+		const isPoulie = name.includes('poulie');
+		
+		switch (w1) {
+			case '122': return 'Img/122.png';
+			case '80': return 'Img/80.png';
+			case '60':
+				if (hasTrispot && isClassique) return 'Img/60T.png';
+				return 'Img/60.png';
+			case '40':
+				if (hasTrispot && isPoulie)    return 'Img/40TCO.png';
+				if (hasTrispot && isClassique) return 'Img/40TCL.png';
+				return 'Img/40.png';
+			default: return '';
+		}
+	};
+
 // ************************************************************************************************************************************
 
 const getTargetFaceImage = (targetSize, targetFace, tournamentType, archer) => {
+    const fromTf = getArcherFaceImage(archer);
+    if (fromTf) return fromTf;
+	
     if (!targetSize || !targetFace) return '';
     
     const isIndoor = tournamentType && tournamentType.toLowerCase().includes('ndoor');
@@ -2257,6 +2292,16 @@ const getTargetFaceImage = (targetSize, targetFace, tournamentType, archer) => {
         $sessionAth4Target[$sessionRow->SesOrder] = $sessionRow->SesAth4Target;
     }
     
+$targetFacesMap = [];
+$tfQuery = "SELECT TfId, TfW1, TfName FROM TargetFaces WHERE TfTournament=" . StrSafe_DB($_SESSION['TourId']);
+$tfResult = safe_r_sql($tfQuery);
+while ($tfRow = safe_fetch($tfResult)) {
+    $targetFacesMap[$tfRow->TfId] = [
+        'tfW1' => $tfRow->TfW1 !== null ? (string)$tfRow->TfW1 : '',
+        'tfName' => $tfRow->TfName ?: ''
+    ];
+}	
+	
 $Select = "SELECT 
             EnId, 
             EnCode, 
@@ -2432,6 +2477,13 @@ $Select = "SELECT
         
         $targetNoForDisplay = $isEffectivelyAssigned ? ($quTargetNo ?: '') : '';
         
+		$tfW1 = '';
+		$tfName = '';
+		if (isset($targetFacesMap[$row->EnTargetFace])) {
+			$tfW1 = $targetFacesMap[$row->EnTargetFace]['tfW1'];
+			$tfName = $targetFacesMap[$row->EnTargetFace]['tfName'];
+		}
+		
         $archers[] = [
             'id' => (int)$row->EnId,
             'code' => $row->EnCode ?: '',
@@ -2451,7 +2503,9 @@ $Select = "SELECT
             'evCode' => $row->EvCode ?: '',
             'targetSize' => $calculated['targetSize'],
             'tournamentType' => $tournamentType,
-            'sessionAth4Target' => $sessionAth4
+            'sessionAth4Target' => $sessionAth4,
+			'tfW1' => $tfW1,       // Largeur du blason (122, 80, 60, 40)
+			'tfName' => $tfName    // Nom du blason ("Blason N3 122", "Trispot Poulie 6-10 40cm", etc.)
         ];
     }
 
@@ -2577,7 +2631,7 @@ $Select = "SELECT
             const lastName = nameParts.slice(1).join(' ') || '';
             const shortLastName = lastName.length > 10 ? lastName.substring(0, 8) + '...' : lastName;
             
-            const targetFaceImage = getArcherTargetFaceImage(archer);
+            const targetFaceImage = getArcherFaceImage(archer);
             const targetSizeLabel = getTargetSizeLabel(archer.targetSize);
             const targetFaceLabel = getTargetFaceLabel(archer.targetFace);
             const isIndoor = isIndoorTournament(archer.tournamentType);
