@@ -3,7 +3,14 @@
  * Script AJAX pour vérifier les flèches des archers avec filtrage par session
  * Adapté pour afficher 3 ou 6 dernières flèches selon le type de tournoi (Indoor/Outdoor)
  * Les archers avec QuIrmType <> 0 sont ignorés
- * Le statut des cibles est recalculé à chaque appel : une cible corrigée repasse verte automatiquement
+ *
+ * Règles de statut des cibles (calculées à chaque appel) :
+ *  - BLEU   : aucun archer valide sur la cible
+ *  - JAUNE  : volée incomplète (nb flèches % 3 != 0) OU décalage interne (archers avec nb de volées différents)
+ *  - VERT   : cible cohérente et au niveau du max de volées de la session
+ *  - ROUGE  : cible cohérente mais en retard sur le max de volées de la session
+ *
+ * Les colonnes DB QuD1* / QuD2* sont exposées comme S1 / S2 (Séries 1 et 2).
  */
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
@@ -18,7 +25,6 @@ checkACL(AclParticipants, AclReadOnly);
 
 header('Content-Type: application/json');
 
-// Log pour débogage
 error_log("=== AJAX check_fleches_session.php appelé ===");
 
 $TourId = isset($_POST['TourId']) ? intval($_POST['TourId']) : (isset($_SESSION['TourId']) ? $_SESSION['TourId'] : 0);
@@ -32,18 +38,16 @@ error_log("getSessionsOnly: " . ($getSessionsOnly ? 'true' : 'false'));
 // Déterminer le nombre de flèches à afficher selon le type de tournoi
 $nbArrowsToShow = 6; // Valeur par défaut (extérieur)
 $tourTypeName = '';
-$numSessions = 1; // Nombre de départs par défaut
+$numSessions = 1;
 
 if ($TourId > 0) {
     $tourTypeQuery = "SELECT ToTypeName, ToNumSession FROM Tournament WHERE ToId = $TourId";
     $tourTypeResult = safe_r_sql($tourTypeQuery);
     if ($tourTypeResult && $tourTypeRow = safe_fetch($tourTypeResult)) {
         $tourTypeName = $tourTypeRow->ToTypeName;
-        // Vérifier si c'est un tir en salle (contient "Indoor")
         if (stripos($tourTypeName, 'Indoor') !== false) {
-            $nbArrowsToShow = 3; // Tir en salle : 3 dernières flèches
+            $nbArrowsToShow = 3;
         }
-        // Récupérer le nombre de sessions
         if (isset($tourTypeRow->ToNumSession) && $tourTypeRow->ToNumSession > 0) {
             $numSessions = intval($tourTypeRow->ToNumSession);
         }
@@ -51,116 +55,68 @@ if ($TourId > 0) {
 }
 error_log("Type de tournoi: $tourTypeName - Nb flèches à afficher: $nbArrowsToShow - Nb sessions max: $numSessions");
 
-// Fonction pour convertir les lettres en points
+// Convertit une lettre de flèche en score
 function convertArrowToScore($letter) {
     $conversion = [
-        'A' => 'M',
-        'B' => '1',
-        'C' => '2',
-        'D' => '3',
-        'E' => '4',
-        'F' => '5',
-        'G' => '6',
-        'H' => '7',
-        'I' => '8',
-        'J' => '9',
-        'K' => '10',
-        'L' => '10', // L est aussi 10
-        'X' => '10', // Pour les X (dix)
-        'M' => 'M',  // Pour les M
+        'A' => 'M', 'B' => '1', 'C' => '2', 'D' => '3', 'E' => '4',
+        'F' => '5', 'G' => '6', 'H' => '7', 'I' => '8', 'J' => '9',
+        'K' => '10', 'L' => '10', 'X' => '10', 'M' => 'M',
     ];
-    
     $letter = strtoupper($letter);
     return isset($conversion[$letter]) ? $conversion[$letter] : '0';
 }
 
-// Fonction pour obtenir les N derniers scores (N = 3 pour salle, 6 pour extérieur)
+// Retourne les N derniers scores formatés
 function getLastNScores($arrowString, $nbArrows) {
     if (empty($arrowString) || strlen(trim($arrowString)) < $nbArrows) {
         return '-';
     }
-    
     $trimmedString = trim($arrowString);
-    // Prendre les N dernières flèches
     $lastN = substr($trimmedString, -$nbArrows);
     $scores = [];
-    
     for ($i = 0; $i < $nbArrows; $i++) {
-        if (isset($lastN[$i])) {
-            $score = convertArrowToScore($lastN[$i]);
-            $scores[] = $score;
-        } else {
-            $scores[] = '-';
-        }
+        $scores[] = isset($lastN[$i]) ? convertArrowToScore($lastN[$i]) : '-';
     }
-    
     return implode(' - ', $scores);
 }
 
-// Fonction pour obtenir le numéro de volée (nombre de volées complètes)
+// Numéro de volée (nb de volées complètes)
 function getVolleyNumber($arrowString) {
     if (empty($arrowString) || strlen(trim($arrowString)) == 0) {
         return 0;
     }
-    
-    $trimmedString = trim($arrowString);
-    $totalArrows = strlen($trimmedString);
-    
-    // Calculer le nombre de volées complètes (diviser par 3 et prendre la partie entière)
-    $volleyNumber = floor($totalArrows / 3);
-    
-    return $volleyNumber;
+    return floor(strlen(trim($arrowString)) / 3);
 }
 
-// Fonction pour obtenir le nombre de volées complètes (utilisée pour le statut)
-function getVolleyCount($arrowString) {
-    if (empty($arrowString)) {
-        return 0;
-    }
-    return intval(floor(strlen(trim($arrowString)) / 3));
-}
-
-// Fonction pour calculer le score total d'une chaîne de flèches
+// Score total calculé depuis une chaîne (fallback)
 function calculateTotalScore($arrowString) {
     if (empty($arrowString)) {
         return 0;
     }
-    
     $total = 0;
     $length = strlen($arrowString);
-    
     for ($i = 0; $i < $length; $i++) {
-        $letter = $arrowString[$i];
-        $score = convertArrowToScore($letter);
-        
-        // Convertir en numérique pour le calcul
+        $score = convertArrowToScore($arrowString[$i]);
         if ($score === 'M') {
-            $total += 0; // M vaut 0
+            $total += 0;
         } elseif (is_numeric($score)) {
             $total += intval($score);
-        } else {
-            $total += 0;
         }
     }
-    
     return $total;
 }
 
-// Fonction pour déterminer le statut de la batterie avec prise en compte de la charge
+// Statut batterie (valeur négative = en charge)
 function getBatteryStatus($batteryLevel) {
-    if ($batteryLevel < 0) {
-        return 'charging'; // Valeur négative = en charge
-    }
-    
+    if ($batteryLevel < 0) return 'charging';
     if ($batteryLevel >= 80) return 'high';
     if ($batteryLevel >= 40) return 'medium';
     if ($batteryLevel >= 20) return 'low';
     return 'critical';
 }
 
-// Fonction pour trouver le dernier départ avec des flèches tirées
+// Dernier départ avec des flèches tirées (archers IRM exclus)
 function getLastActiveSession($TourId, $numSessions) {
-    // Parcourir les départs de la fin vers le début
     for ($session = $numSessions; $session >= 1; $session--) {
         $query = "
             SELECT COUNT(*) as hasArrows
@@ -174,7 +130,6 @@ function getLastActiveSession($TourId, $numSessions) {
                 OR (q.QuD2Arrowstring IS NOT NULL AND TRIM(q.QuD2Arrowstring) != '')
             )
         ";
-        
         $result = safe_r_sql($query);
         if ($result && $row = safe_fetch($result)) {
             if ($row->hasArrows > 0) {
@@ -188,12 +143,13 @@ function getLastActiveSession($TourId, $numSessions) {
 }
 
 try {
-    // Vérifier si TourId est valide
     if ($TourId <= 0) {
         throw new Exception("TourId invalide: $TourId");
     }
     
-    // Récupérer les informations sur les sessions disponibles (archers IRM exclus)
+    // ============================================================
+    // Récupération des sessions disponibles (archers IRM exclus)
+    // ============================================================
     $sessionsQuery = "
         SELECT 
             QuSession,
@@ -220,26 +176,21 @@ try {
     }
     
     $sessionsData = [];
-    $maxTargetOverall = 0;
-    
     while ($row = safe_fetch($sessionsResult)) {
         $sessionsData[$row->QuSession] = [
             'maxTarget' => $row->MaxTargetPerSession,
             'nbCibles' => $row->NbCiblesSession,
             'nbArchers' => $row->NbArchersSession,
-            'totalTargets' => 0  // Sera mis à jour plus tard
+            'totalTargets' => 0
         ];
-        $maxTargetOverall = max($maxTargetOverall, $row->MaxTargetPerSession);
     }
     
-    // Ajouter les sessions manquantes basées sur ToNumSession
-    // Créer un tableau avec toutes les sessions de 1 à $numSessions
+    // Compléter avec les sessions déclarées mais vides
     $allSessionsData = [];
     for ($session = 1; $session <= $numSessions; $session++) {
         if (isset($sessionsData[$session])) {
             $allSessionsData[$session] = $sessionsData[$session];
         } else {
-            // Session sans données
             $allSessionsData[$session] = [
                 'maxTarget' => 0,
                 'nbCibles' => 0,
@@ -250,13 +201,11 @@ try {
         }
     }
     
-    error_log("Sessions trouvées: " . print_r($allSessionsData, true));
-    
-    // Si on demande uniquement la liste des sessions
+    // ============================================================
+    // Mode "liste des sessions uniquement" (initialisation)
+    // ============================================================
     if ($getSessionsOnly) {
-        // Trouver le dernier départ actif avec des flèches
         $lastActiveSession = getLastActiveSession($TourId, $numSessions);
-        
         $response = [
             'success' => true,
             'sessionsData' => $allSessionsData,
@@ -270,9 +219,8 @@ try {
         exit;
     }
     
-    // Si aucune session n'est disponible
     if (empty($allSessionsData)) {
-        $response = [
+        echo json_encode([
             'success' => true,
             'targets' => [],
             'sessionsData' => [],
@@ -283,43 +231,33 @@ try {
             'numSessionsMax' => $numSessions,
             'timestamp' => date('Y-m-d H:i:s'),
             'message' => 'Aucune session trouvée pour ce tournoi'
-        ];
-        echo json_encode($response);
+        ]);
         exit;
     }
     
-    // Si aucune session n'est sélectionnée, trouver le dernier départ avec des flèches
+    // Déterminer la session à traiter
     if ($selectedSession === null) {
         $selectedSession = getLastActiveSession($TourId, $numSessions);
-        error_log("Aucune session sélectionnée, utilisation du dernier départ actif: $selectedSession");
     }
-    
-    // Vérifier si la session sélectionnée existe (dans la plage 1..$numSessions)
     if ($selectedSession < 1 || $selectedSession > $numSessions) {
-        // Prendre la première session disponible
         $selectedSession = min(array_keys($allSessionsData));
-        error_log("Session $selectedSession hors plage, utilisation de la première: $selectedSession");
     }
     
-    // Récupérer les informations de batterie
+    // ============================================================
+    // Batteries
+    // ============================================================
     $batteryLevels = [];
-    
-    // Récupérer toutes les batteries pour ce tournoi
     $batteryQuery = "
         SELECT IskDvTarget, IskDvBattery, IskDvLastSeen
         FROM IskDevices
         WHERE IskDvTournament = $TourId
         AND IskDvBattery IS NOT NULL
     ";
-    
-    error_log("Requête batterie: $batteryQuery");
     $batteryResult = safe_r_sql($batteryQuery);
-    
     if ($batteryResult) {
         while ($row = safe_fetch($batteryResult)) {
             $targetNumber = intval($row->IskDvTarget);
             $batteryValue = intval($row->IskDvBattery);
-            
             $batteryLevels[$targetNumber] = [
                 'level' => $batteryValue,
                 'absoluteLevel' => abs($batteryValue),
@@ -328,13 +266,11 @@ try {
                 'isCharging' => $batteryValue < 0
             ];
         }
-        error_log("Batteries trouvées pour " . count($batteryLevels) . " cibles");
-    } else {
-        error_log("Pas de résultat pour la requête batterie ou erreur");
     }
     
-    // Construire la requête en fonction de la session sélectionnée
-    // Les archers avec QuIrmType <> 0 sont exclus
+    // ============================================================
+    // Requête principale (archers IRM exclus)
+    // ============================================================
     $query = "
         SELECT 
             q.QuSession,
@@ -352,13 +288,10 @@ try {
         WHERE e.EnTournament = $TourId
         AND q.QuIrmType = 0
     ";
-    
-    // Filtrer par session
     if ($selectedSession !== null && is_numeric($selectedSession)) {
         $session = intval($selectedSession);
         $query .= " AND q.QuSession = $session";
     }
-    
     $query .= " ORDER BY q.QuSession, q.QuTarget, q.QuLetter";
     
     error_log("Requête principale: $query");
@@ -369,26 +302,11 @@ try {
         throw new Exception("Erreur lors de la récupération des données des cibles");
     }
     
-    // Organiser les données par cible ET session
+    // Regroupement par cible (clé = session_target)
     $targets = [];
-    $sessionStats = [];
-    
-    // Initialiser les statistiques pour toutes les sessions de 1 à $numSessions
-    for ($session = 1; $session <= $numSessions; $session++) {
-        $sessionStats[$session] = [
-            'totalTargets' => 0,
-            'greenTargets' => 0,
-            'yellowTargets' => 0,
-            'redTargets' => 0,
-            'blueTargets' => 0,
-            'maxTarget' => isset($allSessionsData[$session]) ? $allSessionsData[$session]['maxTarget'] : 0
-        ];
-    }
-    
     while ($row = safe_fetch($result)) {
         $targetNumber = intval($row->QuTarget);
         $session = intval($row->QuSession);
-        
         $key = $session . '_' . $targetNumber;
         
         if (!isset($targets[$key])) {
@@ -400,21 +318,17 @@ try {
             ];
         }
         
-        // Compter les flèches dans chaque chaîne
         $arrowsD1 = !empty($row->QuD1Arrowstring) ? strlen(trim($row->QuD1Arrowstring)) : 0;
         $arrowsD2 = !empty($row->QuD2Arrowstring) ? strlen(trim($row->QuD2Arrowstring)) : 0;
         $totalArrows = $arrowsD1 + $arrowsD2;
         
-        // Récupérer les scores totaux depuis la base de données
         $totalScoreD1 = intval($row->QuD1Score);
         $totalScoreD2 = intval($row->QuD2Score);
         $totalScore = $totalScoreD1 + $totalScoreD2;
         
-        // Calculer les dernières flèches (3 ou 6 selon le type de tournoi)
         $lastScoreD1 = getLastNScores($row->QuD1Arrowstring, $nbArrowsToShow);
         $lastScoreD2 = getLastNScores($row->QuD2Arrowstring, $nbArrowsToShow);
         
-        // Numéro de volée (volées complètes seulement)
         $volleyNumberD1 = getVolleyNumber($row->QuD1Arrowstring);
         $volleyNumberD2 = getVolleyNumber($row->QuD2Arrowstring);
         
@@ -442,128 +356,140 @@ try {
     
     error_log("Cibles trouvées: " . count($targets) . " entrées");
     
-    // Traiter les cibles pour la session sélectionnée uniquement
-    $allTargets = [];
+    // ============================================================
+    // Initialisation des stats
+    // ============================================================
+    $sessionStats = [];
+    for ($session = 1; $session <= $numSessions; $session++) {
+        $sessionStats[$session] = [
+            'totalTargets' => 0,
+            'greenTargets' => 0,
+            'yellowTargets' => 0,
+            'redTargets' => 0,
+            'blueTargets' => 0,
+            'maxTarget' => isset($allSessionsData[$session]) ? $allSessionsData[$session]['maxTarget'] : 0
+        ];
+    }
     
-    // Récupérer les informations de la session sélectionnée
+    // Détermination du nombre de cibles à afficher pour la session
     $selectedSessionInfo = isset($allSessionsData[$selectedSession]) ? $allSessionsData[$selectedSession] : ['maxTarget' => 0];
     $maxTargetSession = $selectedSessionInfo['maxTarget'];
     
-    // Mettre à jour le total des cibles dans sessionsData
     if (isset($allSessionsData[$selectedSession])) {
         $allSessionsData[$selectedSession]['totalTargets'] = $maxTargetSession;
     }
     
-    // Si maxTargetSession est 0, on ne peut pas déterminer le nombre de cibles
-    // On utilise une valeur par défaut de 20 ou on cherche le max parmi les cibles existantes
     if ($maxTargetSession == 0) {
-        // Chercher la cible max pour cette session
         $maxFound = 0;
         foreach ($targets as $key => $target) {
             if ($target['session'] == $selectedSession && $target['targetNumber'] > $maxFound) {
                 $maxFound = $target['targetNumber'];
             }
         }
-        $maxTargetSession = $maxFound > 0 ? $maxFound : 20; // Valeur par défaut
-        error_log("Aucun maxTarget défini pour la session $selectedSession, utilisation de $maxTargetSession");
+        $maxTargetSession = $maxFound > 0 ? $maxFound : 20;
     }
     
-    // Traiter toutes les cibles de la session sélectionnée
+    // ============================================================
+    // PASSE 1 : calcul des infos de volées pour chaque cible
+    // ============================================================
+    $targetsComputed = [];
+    $maxSessionVolleys = 0;
+    
     for ($i = 1; $i <= $maxTargetSession; $i++) {
         $key = $selectedSession . '_' . $i;
-        
-        // Récupérer les informations de batterie pour cette cible
         $batteryInfo = isset($batteryLevels[$i]) ? $batteryLevels[$i] : null;
         
-        if (isset($targets[$key])) {
-            $target = $targets[$key];
-            $archerCount = count($target['archers']);
-            
-            // Calculer le nombre de volées complètes par archer
-            $volleyCounts = [];
-            $hasRemainder = false; // true si au moins un archer a un nombre de flèches non multiple de 3
-            
-            foreach ($target['archers'] as $archer) {
-                $totalArrows = $archer['arrowsTotal'];
-                $volleyCounts[] = intval(floor($totalArrows / 3));
-                if ($totalArrows % 3 !== 0) {
-                    $hasRemainder = true;
-                }
-            }
-            
-            $averageArrows = $archerCount > 0 ? array_sum($target['arrowCounts']) / $archerCount : 0;
-            $allSameVolleyCount = $archerCount > 0 ? count(array_unique($volleyCounts)) === 1 : false;
-            $allMultipleOf3 = !$hasRemainder;
-            
-            // Déterminer le statut
-            // - green  : tous les archers ont des volées complètes ET le même nombre de volées
-            // - yellow : au moins une volée incomplète OU décalage entre archers
-            // - blue   : aucun archer valide
-            $status = 'blue';
-            
-            if ($archerCount > 0) {
-                if ($allMultipleOf3 && $allSameVolleyCount) {
-                    $status = 'green';
-                } else {
-                    $status = 'yellow';
-                }
-            }
-            
-            $targetData = [
-                'session' => $selectedSession,
-                'targetNumber' => $i,
-                'archerCount' => $archerCount,
-                'averageArrows' => round($averageArrows, 1),
-                'allMultipleOf3' => $allMultipleOf3,
-                'allSameCount' => $allSameVolleyCount,
-                'hasDifferentArrowCounts' => !$allSameVolleyCount,
-                'status' => $status,
-                'archers' => $target['archers'],
-                'battery' => $batteryInfo
-            ];
-            
-            // Mettre à jour les statistiques
-            $sessionStats[$selectedSession]['totalTargets']++;
-            
-            switch($status) {
-                case 'green':
-                    $sessionStats[$selectedSession]['greenTargets']++;
-                    break;
-                case 'yellow':
-                    $sessionStats[$selectedSession]['yellowTargets']++;
-                    break;
-                case 'red':
-                    $sessionStats[$selectedSession]['redTargets']++;
-                    break;
-                case 'blue':
-                    $sessionStats[$selectedSession]['blueTargets']++;
-                    break;
-            }
-            
-            $allTargets[] = $targetData;
-        } else {
-            // Cible sans données
-            $targetData = [
-                'session' => $selectedSession,
-                'targetNumber' => $i,
-                'archerCount' => 0,
-                'averageArrows' => 0,
-                'allMultipleOf3' => false,
-                'allSameCount' => true,
+        if (!isset($targets[$key])) {
+            // Cible sans données → bleu
+            $targetsComputed[$i] = [
+                'session'             => $selectedSession,
+                'targetNumber'        => $i,
+                'archerCount'         => 0,
+                'averageArrows'       => 0,
+                'allMultipleOf3'      => false,
+                'allSameCount'        => true,
                 'hasDifferentArrowCounts' => false,
-                'status' => 'blue',
-                'archers' => [],
-                'battery' => $batteryInfo
+                'isCoherent'          => false,
+                'volleyCount'         => 0,
+                'status'              => 'blue',
+                'archers'             => [],
+                'battery'             => $batteryInfo
             ];
-            
-            $sessionStats[$selectedSession]['totalTargets']++;
-            $sessionStats[$selectedSession]['blueTargets']++;
-            
-            $allTargets[] = $targetData;
+            continue;
+        }
+        
+        $target = $targets[$key];
+        $archerCount = count($target['archers']);
+        
+        $volleyCounts = [];
+        $hasRemainder = false;
+        foreach ($target['archers'] as $archer) {
+            $totalArrows = $archer['arrowsTotal'];
+            $volleyCounts[] = intval(floor($totalArrows / 3));
+            if ($totalArrows % 3 !== 0) {
+                $hasRemainder = true;
+            }
+        }
+        
+        $averageArrows      = $archerCount > 0 ? array_sum($target['arrowCounts']) / $archerCount : 0;
+        $allSameVolleyCount = $archerCount > 0 ? count(array_unique($volleyCounts)) === 1 : false;
+        $allMultipleOf3     = !$hasRemainder;
+        $isCoherent         = $archerCount > 0 && $allMultipleOf3 && $allSameVolleyCount;
+        $volleyCount        = $isCoherent ? $volleyCounts[0] : 0;
+        
+        // Seules les cibles cohérentes participent au calcul du max de la session
+        if ($isCoherent && $volleyCount > $maxSessionVolleys) {
+            $maxSessionVolleys = $volleyCount;
+        }
+        
+        $targetsComputed[$i] = [
+            'session'             => $selectedSession,
+            'targetNumber'        => $i,
+            'archerCount'         => $archerCount,
+            'averageArrows'       => round($averageArrows, 1),
+            'allMultipleOf3'      => $allMultipleOf3,
+            'allSameCount'        => $allSameVolleyCount,
+            'hasDifferentArrowCounts' => !$allSameVolleyCount,
+            'isCoherent'          => $isCoherent,
+            'volleyCount'         => $volleyCount,
+            'status'              => 'blue',
+            'archers'             => $target['archers'],
+            'battery'             => $batteryInfo
+        ];
+    }
+    
+    // ============================================================
+    // PASSE 2 : attribution finale des statuts
+    // ============================================================
+    $allTargets = [];
+    
+    foreach ($targetsComputed as $i => $t) {
+        if ($t['archerCount'] == 0) {
+            $status = 'blue';
+        } elseif (!$t['isCoherent']) {
+            // volée incomplète OU décalage entre archers → jaune
+            $status = 'yellow';
+        } elseif ($t['volleyCount'] >= $maxSessionVolleys) {
+            // cohérente et au niveau du max de la session → vert
+            $status = 'green';
+        } else {
+            // cohérente mais en retard sur le max de la session → rouge
+            $status = 'red';
+        }
+        
+        $t['status'] = $status;
+        $allTargets[] = $t;
+        
+        $sessionStats[$selectedSession]['totalTargets']++;
+        switch ($status) {
+            case 'green':  $sessionStats[$selectedSession]['greenTargets']++;  break;
+            case 'yellow': $sessionStats[$selectedSession]['yellowTargets']++; break;
+            case 'red':    $sessionStats[$selectedSession]['redTargets']++;    break;
+            case 'blue':   $sessionStats[$selectedSession]['blueTargets']++;   break;
         }
     }
     
-    // Trier par numéro de cible
+    // Tri par numéro de cible
     usort($allTargets, function($a, $b) {
         return $a['targetNumber'] - $b['targetNumber'];
     });
@@ -572,9 +498,7 @@ try {
         'success' => true,
         'targets' => $allTargets,
         'sessionsData' => $allSessionsData,
-        'stats' => [
-            'sessionStats' => $sessionStats
-        ],
+        'stats' => ['sessionStats' => $sessionStats],
         'selectedSession' => $selectedSession,
         'nbArrowsToShow' => $nbArrowsToShow,
         'tourTypeName' => $tourTypeName,
@@ -582,11 +506,12 @@ try {
         'timestamp' => date('Y-m-d H:i:s'),
         'debug' => [
             'battery_count' => count($batteryLevels),
-            'note' => 'IskDevices n\'a pas de colonne session, batteries mappées par numéro de cible seulement. Archers IRM (QuIrmType <> 0) exclus. Statut recalculé à chaque appel : retour au vert automatique après correction.'
+            'maxSessionVolleys' => $maxSessionVolleys,
+            'note' => 'Archers IRM exclus. Statut recalculé à chaque appel (retour vert/rouge automatique). Colonnes D1/D2 exposées comme S1/S2.'
         ]
     ];
     
-    error_log("Réponse envoyée avec " . count($allTargets) . " cibles pour la session $selectedSession");
+    error_log("Réponse envoyée avec " . count($allTargets) . " cibles - maxSessionVolleys=$maxSessionVolleys - session=$selectedSession");
     
     echo json_encode($response);
     
@@ -605,8 +530,6 @@ try {
             'line' => $e->getLine()
         ]
     ];
-    
-    error_log("Erreur JSON: " . json_encode($errorResponse));
     
     echo json_encode($errorResponse);
 }

@@ -484,7 +484,6 @@ include('Common/Templates/head.php');
         overflow: hidden;
     }
     
-    /* Effet d'animation pour la charge */
     .battery-level.charging::after {
         content: '';
         position: absolute;
@@ -562,7 +561,6 @@ include('Common/Templates/head.php');
         100% { transform: scale(1); }
     }
     
-    /* Effet de scintillement pour batterie faible */
     @keyframes blink {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
@@ -576,7 +574,6 @@ include('Common/Templates/head.php');
         animation: blink 1s infinite;
     }
     
-    /* Pointe de la batterie */
     .battery-indicator::before {
         content: '';
         position: absolute;
@@ -589,7 +586,6 @@ include('Common/Templates/head.php');
         border-radius: 2px 2px 0 0;
     }
 
-    /* Style pour l'indicateur de type de tournoi */
     .tournament-info {
         margin-bottom: 10px;
         padding: 8px 15px;
@@ -618,7 +614,6 @@ include('Common/Templates/head.php');
         
         <h3 style="margin-top: 0; margin-bottom: 10px;">Sélectionnez un départ :</h3>
         <div class="session-selector" id="session-selector">
-            <!-- Les boutons de session seront générés dynamiquement -->
             <div style="text-align: center; padding: 10px; color: #6c757d;">
                 <i class="fas fa-spinner fa-spin"></i> Chargement des départs...
             </div>
@@ -632,15 +627,15 @@ include('Common/Templates/head.php');
     <div class="legend">
         <div class="legend-item">
             <div class="legend-color" style="background-color: #28a745;"></div>
-            <span>Tous les scores sont à jours</span>
+            <span>Tous les scores sont à jour (au niveau du max de la session)</span>
         </div>
         <div class="legend-item">
             <div class="legend-color" style="background-color: #ffc107;"></div>
-            <span>Mise à jours en cours</span>
+            <span>Scores en cours ou décalage entre archers</span>
         </div>
         <div class="legend-item">
             <div class="legend-color" style="background-color: #dc3545;"></div>
-            <span>Cible en retard</span>
+            <span>Cible en retard (volée(s) de retard sur le max de la session)</span>
         </div>
         <div class="legend-item">
             <div class="legend-color" style="background-color: #17a2b8;"></div>
@@ -678,7 +673,6 @@ include('Common/Templates/head.php');
     </div>
     
     <div id="targets-container" class="targets-grid">
-        <!-- Les cibles seront affichées ici dynamiquement -->
         <div class="no-targets-message">
             <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 15px;"></i>
             <h3>Chargement des cibles...</h3>
@@ -705,13 +699,13 @@ include('Common/Templates/head.php');
 <script>
 // Variables globales
 let checkInterval;
-let currentSession = null; // Changé : null au lieu de '1'
+let currentSession = null;
 let availableSessions = [];
 let isFirstLoad = true;
 let nbArrowsToShow = 6; // Valeur par défaut (extérieur)
 let tourTypeName = '';
 
-// Fonction pour formater la date/heure
+// Formate une date/heure
 function formatDateTime(date) {
     return date.toLocaleTimeString('fr-FR', {
         hour: '2-digit',
@@ -720,11 +714,9 @@ function formatDateTime(date) {
     });
 }
 
-
-// Fonction pour mettre à jour l'indicateur de dernière vérification
+// Met à jour l'indicateur de dernière vérification
 function updateLastCheck() {
     const now = new Date();
-    // Mettre à jour l'info de dernière vérification dans le sélecteur de session
     $('.last-check-info').remove();
     $('#session-selector').append(
         $('<span>').addClass('last-check-info')
@@ -732,9 +724,8 @@ function updateLastCheck() {
     );
 }
 
-// Nouvelle fonction : Trouver le dernier départ avec des données
+// Trouve le dernier départ avec des données (recherche locale)
 function findLastActiveSessionFromData(sessionsData, numSessionsMax) {
-    // Parcourir de la fin vers le début
     for (let session = numSessionsMax; session >= 1; session--) {
         if (sessionsData[session] && !sessionsData[session].empty && sessionsData[session].totalTargets > 0 && sessionsData[session].nbArchers > 0) {
             console.log("Départ actif trouvé (recherche locale): " + session + " avec " + sessionsData[session].totalTargets + " cibles et " + sessionsData[session].nbArchers + " archers");
@@ -744,15 +735,12 @@ function findLastActiveSessionFromData(sessionsData, numSessionsMax) {
     return null;
 }
 
-// Fonction pour mettre à jour le sélecteur de session
+// Met à jour le sélecteur de session
 function updateSessionSelector(sessionsData, numSessionsMax) {
     const selector = $('#session-selector');
     selector.empty();
-    
-    // Supprimer l'info par défaut si elle existe
     $('.last-check-info').remove();
     
-    // Créer les boutons pour toutes les sessions de 1 à numSessionsMax
     for (let session = 1; session <= numSessionsMax; session++) {
         const sessionData = sessionsData[session] || { empty: true, totalTargets: 0 };
         const hasData = sessionData && !sessionData.empty && sessionData.totalTargets > 0;
@@ -764,7 +752,6 @@ function updateSessionSelector(sessionsData, numSessionsMax) {
                 selectSession(session);
             });
         
-        // Ajouter une indication visuelle si le département a des données
         if (hasData) {
             sessionBtn.css('border-left', '4px solid #28a745');
         } else if (sessionData && sessionData.empty) {
@@ -774,45 +761,36 @@ function updateSessionSelector(sessionsData, numSessionsMax) {
         selector.append(sessionBtn);
     }
     
-    
     availableSessions = Object.keys(sessionsData).filter(s => s <= numSessionsMax);
     
-    // Si currentSession est null ou n'existe plus dans les données ou hors plage
     if (!currentSession || currentSession < 1 || currentSession > numSessionsMax || !sessionsData[currentSession]) {
-        // Trouver automatiquement le dernier département actif avec des données
         let activeSession = findLastActiveSessionFromData(sessionsData, numSessionsMax);
         
         if (activeSession === null && numSessionsMax > 0) {
-            activeSession = 1; // Premier département par défaut
+            activeSession = 1;
         }
         
         if (activeSession && currentSession != activeSession) {
             console.log("Sélection automatique du département: " + activeSession);
             currentSession = activeSession;
             updateSessionSelectorUI();
-            
-            // Redémarrer la vérification pour la nouvelle session
             stopAutoChecking();
             startAutoChecking();
-            return; // La fonction checkTargets sera appelée par startAutoChecking
+            return;
         }
     }
     
-    // Mettre à jour l'heure de dernière vérification
     updateLastCheck();
 }
 
-// Fonction pour démarrer la vérification automatique
+// Démarre la vérification automatique
 function startAutoChecking() {
-    // Démarrer la vérification immédiatement
     checkTargets();
-    
-    // Configurer l'intervalle de 5 secondes
     if (checkInterval) clearInterval(checkInterval);
     checkInterval = setInterval(checkTargets, 5000);
 }
 
-// Fonction pour arrêter la vérification automatique
+// Arrête la vérification automatique
 function stopAutoChecking() {
     if (checkInterval) {
         clearInterval(checkInterval);
@@ -820,33 +798,27 @@ function stopAutoChecking() {
     }
 }
 
-// Fonction pour sélectionner une session
+// Sélectionne une session
 function selectSession(session) {
     if (currentSession == session) return;
-    
     currentSession = session;
     updateSessionSelectorUI();
-    
-    // Arrêter et redémarrer la vérification pour la nouvelle session
     stopAutoChecking();
     startAutoChecking();
 }
 
-// Fonction pour mettre à jour l'UI du sélecteur de session
+// Met à jour l'UI du sélecteur de session
 function updateSessionSelectorUI() {
     $('#session-selector .session-btn').removeClass('active');
     $(`#session-selector .session-btn:contains('Départ ${currentSession}')`).addClass('active');
-    
-    // Mettre à jour l'heure de dernière vérification
     updateLastCheck();
 }
 
-// Fonction pour afficher les statistiques de session
+// Affiche les statistiques de session
 function updateSessionStats(stats) {
     const statsContainer = $('#session-stats');
     statsContainer.empty();
     
-    // Statistiques pour la session sélectionnée uniquement
     const sessionStats = stats.sessionStats?.[currentSession] || {};
     
     $('<div>').addClass('stat-item').html(`
@@ -880,14 +852,12 @@ function updateSessionStats(stats) {
     `).appendTo(statsContainer);
 }
 
-// Fonction pour créer un indicateur de batterie
+// Crée un indicateur de batterie
 function createBatteryIndicator(batteryInfo) {
     if (!batteryInfo) {
-        // Pas de données de batterie
         const batteryIndicator = $('<div>').addClass('battery-indicator');
         const batteryLevel = $('<div>').addClass('battery-level none');
         const batteryPercent = $('<div>').addClass('battery-percent').text('NA');
-        
         batteryIndicator.append(batteryLevel, batteryPercent);
         batteryIndicator.attr('title', 'Aucune donnée de batterie disponible');
         return batteryIndicator;
@@ -895,21 +865,15 @@ function createBatteryIndicator(batteryInfo) {
     
     const batteryIndicator = $('<div>').addClass('battery-indicator');
     let batteryLevelClass = batteryInfo.status;
-    let displayText = batteryInfo.absoluteLevel + '%'; // Toujours afficher le pourcentage
-    
-    // Ajuster la hauteur de la jauge en fonction du niveau
-    let gaugeHeight = '20%'; // Par défaut (pour "none")
+    let displayText = batteryInfo.absoluteLevel + '%';
+    let gaugeHeight = '20%';
     
     if (batteryInfo.isCharging) {
         batteryLevelClass = 'charging';
-        // Pour la charge, on montre la jauge pleine
         gaugeHeight = '100%';
-        
-        // Ajouter l'icône de charge en plus du pourcentage
         const chargingIcon = $('<div>').addClass('charging-icon').html('⚡');
         batteryIndicator.append(chargingIcon);
     } else {
-        // Ajuster la hauteur de la jauge selon le niveau
         switch(batteryInfo.status) {
             case 'high': gaugeHeight = '80%'; break;
             case 'medium': gaugeHeight = '50%'; break;
@@ -920,18 +884,14 @@ function createBatteryIndicator(batteryInfo) {
     
     const batteryLevel = $('<div>').addClass('battery-level ' + batteryLevelClass)
         .css('height', gaugeHeight);
-    
     const batteryPercent = $('<div>').addClass('battery-percent').text(displayText);
-    
     batteryIndicator.append(batteryLevel, batteryPercent);
     
-    // Ajouter un avertissement si batterie faible et pas en charge
     if (!batteryInfo.isCharging && (batteryInfo.status === 'low' || batteryInfo.status === 'critical')) {
         const batteryWarning = $('<div>').addClass('battery-warning').html('!');
         batteryIndicator.append(batteryWarning);
     }
     
-    // Info-bulle avec date de dernière mise à jour et état
     let tooltip = '';
     if (batteryInfo.isCharging) {
         tooltip = `⚡ En charge: ${batteryInfo.absoluteLevel}%`;
@@ -952,13 +912,11 @@ function createBatteryIndicator(batteryInfo) {
     }
     
     batteryIndicator.attr('title', tooltip);
-    
     return batteryIndicator;
 }
 
-// Fonction principale pour vérifier les cibles
+// Fonction principale de vérification des cibles
 function checkTargets() {
-    // Si currentSession est null, faire une requête d'initialisation
     if (currentSession === null && isFirstLoad) {
         console.log("Initialisation: recherche du dernier départ actif...");
         initializeSession();
@@ -985,34 +943,24 @@ function checkTargets() {
         },
         success: function(response, status, xhr) {
             console.log("Réponse AJAX reçue:", response);
-            console.log("Status:", status);
-            
             if (response.success) {
-                // Mettre à jour le nombre de flèches à afficher
                 if (response.nbArrowsToShow) {
                     nbArrowsToShow = response.nbArrowsToShow;
                     tourTypeName = response.tourTypeName || '';
                 }
                 
-                // Mettre à jour le sélecteur de session si nécessaire
                 const numSessionsMax = response.numSessionsMax || 1;
                 if (response.sessionsData && Object.keys(response.sessionsData).length > 0) {
                     updateSessionSelector(response.sessionsData, numSessionsMax);
                 }
                 
-                // Afficher les cibles
                 displayTargets(response.targets);
-                
-                // Mettre à jour les statistiques
                 updateSessionStats(response.stats || {});
-                
                 updateLastCheck();
                 isFirstLoad = false;
             } else {
                 console.error("Erreur dans la réponse:", response.message);
                 showCustomNotification('Erreur: ' + response.message, 'error');
-                
-                // Afficher les détails de débogage si disponibles
                 if (response.debug) {
                     console.error("Détails du débogage:", response.debug);
                 }
@@ -1024,28 +972,21 @@ function checkTargets() {
             console.error("Error:", error);
             
             let errorMessage = 'Erreur réseau lors de la vérification';
-            
-            // Vérifier si c'est une erreur de parsing JSON
             if (status === 'parsererror') {
                 errorMessage = 'Erreur de parsing JSON. Vérifiez la réponse du serveur.';
                 console.error("Réponse brute:", xhr.responseText);
                 if (xhr.responseText.length < 1000) {
                     console.log("Réponse brute du serveur:\n" + xhr.responseText);
                 }
-            }
-            // Vérifier si c'est une erreur 404
-            else if (xhr.status === 404) {
+            } else if (xhr.status === 404) {
                 errorMessage = 'Fichier ajax_check_fleches_session.php non trouvé';
-            }
-            // Vérifier si c'est une erreur 500
-            else if (xhr.status === 500) {
+            } else if (xhr.status === 500) {
                 errorMessage = 'Erreur serveur (500)';
                 console.error("Réponse d'erreur:", xhr.responseText);
             }
             
             showCustomNotification(errorMessage, 'error');
             
-            // Afficher un message d'erreur dans le conteneur
             const container = $('#targets-container');
             container.html(`
                 <div class="no-targets-message">
@@ -1057,7 +998,6 @@ function checkTargets() {
                 </div>
             `);
             
-            // Ajouter un gestionnaire pour le bouton réessayer
             $('#retry-btn').click(function() {
                 checkTargets();
             });
@@ -1068,7 +1008,7 @@ function checkTargets() {
     });
 }
 
-// Fonction d'initialisation
+// Initialisation : chargement de la liste des départs
 function initializeSession() {
     console.log("Initialisation de la session...");
     
@@ -1078,12 +1018,11 @@ function initializeSession() {
         dataType: 'json',
         data: {
             TourId: <?php echo isset($_SESSION['TourId']) ? $_SESSION['TourId'] : '0'; ?>,
-            get_sessions_list: true  // Demander uniquement la liste des sessions
+            get_sessions_list: true
         },
         success: function(response) {
             console.log("Réponse d'initialisation reçue:", response);
             
-            // Mettre à jour le nombre de flèches à afficher
             if (response.nbArrowsToShow) {
                 nbArrowsToShow = response.nbArrowsToShow;
                 tourTypeName = response.tourTypeName || '';
@@ -1092,26 +1031,20 @@ function initializeSession() {
             const numSessionsMax = response.numSessionsMax || 1;
             
             if (response.success && response.sessionsData) {
-                // Mettre à jour le sélecteur avec TOUS les départs
                 updateSessionSelector(response.sessionsData, numSessionsMax);
                 
-                // Utiliser le dernier départ actif retourné par le backend
                 if (response.lastActiveSession && response.lastActiveSession >= 1 && response.lastActiveSession <= numSessionsMax) {
                     currentSession = response.lastActiveSession;
                     console.log("Dernier départ actif (backend): " + currentSession);
                 } else {
-                    // Fallback: chercher localement
                     let foundSession = findLastActiveSessionFromData(response.sessionsData, numSessionsMax);
                     currentSession = foundSession || 1;
                     console.log("Dernier départ actif (fallback local): " + currentSession);
                 }
                 
                 updateSessionSelectorUI();
-                
-                // Maintenant charger les cibles pour cette session
                 checkTargets();
             } else {
-                // Si aucune donnée, utiliser le nombre de départs de ToNumSession
                 console.warn("Création de " + numSessionsMax + " départ(s) par défaut");
                 const defaultSessions = {};
                 for (let i = 1; i <= numSessionsMax; i++) {
@@ -1124,14 +1057,13 @@ function initializeSession() {
         },
         error: function(xhr, status, error) {
             console.error("Erreur lors de l'initialisation:", error);
-            // En cas d'erreur, utiliser la session 1 par défaut
             currentSession = 1;
             checkTargets();
         }
     });
 }
 
-// Fonction pour afficher les cibles
+// Affiche les cibles
 function displayTargets(targets) {
     const container = $('#targets-container');
     container.empty();
@@ -1150,17 +1082,12 @@ function displayTargets(targets) {
     targets.forEach(target => {
         const targetCard = $('<div>').addClass('target-card ' + target.status);
         
-        // Indicateur de batterie
         const batteryIndicator = createBatteryIndicator(target.battery);
         targetCard.append(batteryIndicator);
         
-        // Numéro de cible (plus gros)
         $('<div>').addClass('target-number').text(target.targetNumber).appendTo(targetCard);
-        
-        // Session
         $('<div>').addClass('target-session').text('Départ ' + target.session).appendTo(targetCard);
         
-        // Nombre d'archers
         if (target.archerCount > 0) {
             $('<div>').addClass('target-archers')
                 .html(`<i class="fas fa-user"></i> ${target.archerCount} archer${target.archerCount > 1 ? 's' : ''}`)
@@ -1171,12 +1098,10 @@ function displayTargets(targets) {
                 .appendTo(targetCard);
         }
         
-        // Icône d'avertissement si nécessaire
         if (target.status === 'yellow' || target.status === 'red') {
             $('<div>').addClass('target-warning').html('⚠️').appendTo(targetCard);
         }
         
-        // Événement de clic pour afficher les détails
         targetCard.click(function() {
             showTargetDetails(target);
         });
@@ -1185,17 +1110,13 @@ function displayTargets(targets) {
     });
 }
 
-// Fonctions utilitaires pour les estimations
+// Estimation du temps de charge
 function estimateChargingTime(batteryLevel) {
-    // Estimation simple du temps de charge
     const remaining = 100 - batteryLevel;
     if (remaining <= 0) return null;
-    
-    // Estimation: environ 2 minutes par pourcentage
     const totalMinutes = Math.round(remaining * 2);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    
     if (hours > 0) {
         return `~${hours}h${minutes}min restantes`;
     } else {
@@ -1203,8 +1124,8 @@ function estimateChargingTime(batteryLevel) {
     }
 }
 
+// Estimation de l'autonomie
 function estimateBatteryLife(batteryLevel) {
-    // Estimation simple de l'autonomie
     if (batteryLevel >= 80) return 'Autonomie excellente';
     if (batteryLevel >= 60) return 'Autonomie bonne';
     if (batteryLevel >= 40) return 'Autonomie moyenne';
@@ -1212,27 +1133,27 @@ function estimateBatteryLife(batteryLevel) {
     return 'Autonomie très faible';
 }
 
-// Fonction pour afficher les détails d'une cible
+// Affiche les détails d'une cible (libellés S1 / S2)
 function showTargetDetails(target) {
     $('#detail-target-number').text(target.targetNumber);
     $('#detail-session').text(target.session);
     $('#details-panel').addClass('active');
     
-    // Mettre à jour le statut
+    // Statut
     let statusText = '';
     let statusClass = '';
     
     switch(target.status) {
         case 'green':
-            statusText = '✓ Tous les scores des archers sont rentrés';
+            statusText = '✓ Tous les scores des archers sont à jour (au niveau du max de la session)';
             statusClass = 'text-success';
             break;
         case 'yellow':
-            statusText = '⚠️ Les scores sont en cours';
+            statusText = '⚠️ Scores en cours ou décalage entre archers';
             statusClass = 'text-warning';
             break;
         case 'red':
-            statusText = '✗ Scores non mis à jours';
+            statusText = '✗ Cible en retard (une ou plusieurs volées de retard sur le max de la session)';
             statusClass = 'text-danger';
             break;
         case 'blue':
@@ -1243,10 +1164,10 @@ function showTargetDetails(target) {
     
     $('#detail-status').html(`<div class="alert ${statusClass.replace('text-', 'alert-')}">${statusText}</div>`);
     
-    // Déterminer le libellé pour les dernières flèches
+    // Libellé pour les dernières flèches
     const arrowsLabel = nbArrowsToShow === 3 ? '3 dernières flèches' : '6 dernières flèches';
     
-    // Mettre à jour l'en-tête du tableau avec les nouvelles colonnes
+    // En-tête du tableau : S1 / S2 à la place de D1 / D2
     $('#detail-table thead tr').html(`
         <th>Départ</th>
         <th>Cible</th>
@@ -1263,7 +1184,6 @@ function showTargetDetails(target) {
         <th>Statut</th>
     `);
     
-    // Remplir le tableau des détails
     const tbody = $('#detail-table-body');
     tbody.empty();
     
@@ -1281,15 +1201,10 @@ function showTargetDetails(target) {
                 statusTextDetails = 'Scores en cours';
             }
             
-            // Numéros de volée (nombres entiers uniquement)
             const volleyD1 = archer.volleyNumberD1 || 0;
             const volleyD2 = archer.volleyNumberD2 || 0;
-            
-            // Formater les derniers scores
             const lastScoreD1 = archer.lastScoreD1 || '-';
             const lastScoreD2 = archer.lastScoreD2 || '-';
-            
-            // Formater les totaux
             const totalScoreD1 = archer.totalScoreD1 || 0;
             const totalScoreD2 = archer.totalScoreD2 || 0;
             const totalScore = archer.totalScore || 0;
@@ -1300,12 +1215,15 @@ function showTargetDetails(target) {
             row.append($('<td>').text(archer.targetLetter || '-'));
             row.append($('<td>').text(archer.archerName || 'Non assigné'));
             row.append($('<td>').text(archer.license || '-'));
+            // Colonnes S1
             row.append($('<td>').html(`<span class="volley-number">${volleyD1}</span>`));
             row.append($('<td>').html(`<span class="badge badge-secondary">${lastScoreD1}</span>`));
             row.append($('<td>').html(`<span class="score-total d1">${totalScoreD1}</span>`));
+            // Colonnes S2
             row.append($('<td>').html(`<span class="volley-number">${volleyD2}</span>`));
             row.append($('<td>').html(`<span class="badge badge-secondary">${lastScoreD2}</span>`));
             row.append($('<td>').html(`<span class="score-total d2">${totalScoreD2}</span>`));
+            // Totaux
             row.append($('<td>').html(`<span class="score-total combined">${totalScore}</span>`));
             row.append($('<td>').html(`<span class="badge badge-${arrowClass}">${statusTextDetails}</span>`));
             
@@ -1315,13 +1233,13 @@ function showTargetDetails(target) {
         tbody.html('<tr><td colspan="13" style="text-align: center; font-style: italic; color: #6c757d;">Aucun archer sur cette cible</td></tr>');
     }
     
-    // Faire défiler jusqu'au panneau de détails
+    // Scroll vers le panneau
     $('html, body').animate({
         scrollTop: $('#details-panel').offset().top - 20
     }, 500);
 }
 
-// Fonction de notification personnalisée
+// Notification personnalisée
 function showCustomNotification(message, type = 'success') {
     const notification = $('<div>').css({
         'position': 'fixed',
@@ -1348,11 +1266,9 @@ function showCustomNotification(message, type = 'success') {
         </div>
     `);
     
-    // Supprimer toute notification existante
     $('#custom-notification').remove();
     notification.attr('id', 'custom-notification');
     
-    // Ajouter l'animation CSS
     if (!$('#notification-styles').length) {
         $('<style>').attr('id', 'notification-styles').text(`
             @keyframes slideIn {
@@ -1368,13 +1284,11 @@ function showCustomNotification(message, type = 'success') {
     
     $('body').append(notification);
     
-    // Gérer la fermeture
     notification.find('button').click(function() {
         notification.css('animation', 'fadeOut 0.3s ease-out');
         setTimeout(() => notification.remove(), 300);
     });
     
-    // Supprimer automatiquement après 5 secondes
     setTimeout(() => {
         if (notification.parent().length) {
             notification.css('animation', 'fadeOut 0.3s ease-out');
@@ -1383,7 +1297,7 @@ function showCustomNotification(message, type = 'success') {
     }, 5000);
 }
 
-// Fonction pour tester l'URL directement
+// Test de l'URL AJAX
 function testAjaxUrl() {
     const testUrl = 'ajax_check_fleches_session.php';
     console.log("Test de l'URL: " + testUrl);
@@ -1402,14 +1316,12 @@ function testAjaxUrl() {
     });
 }
 
-// Initialisation lorsque le document est prêt
+// Initialisation
 $(document).ready(function() {
-    // Test de connexion
     $('#test-btn').click(function() {
         testAjaxUrl();
     });
     
-    // Mode débogage
     $('#debug-btn').click(function() {
         console.clear();
         console.log("=== Mode débogage activé ===");
@@ -1419,16 +1331,12 @@ $(document).ready(function() {
         console.log("Nombre de flèches à afficher:", nbArrowsToShow);
         console.log("Type de tournoi:", tourTypeName);
         
-        // Ouvrir la console
         if (typeof console !== 'undefined') {
             alert("Mode débogage activé. Ouvrez la console du navigateur (F12) pour voir les logs.");
         }
     });
     
-    // Démarrer automatiquement la vérification toutes les 5 secondes
     startAutoChecking();
-    
-    // Mettre à jour l'heure de la dernière vérification
     updateLastCheck();
     
     // Fermer le panneau de détails en cliquant à l'extérieur
@@ -1439,7 +1347,6 @@ $(document).ready(function() {
         }
     });
     
-    // Arrêter la vérification automatique lorsque l'utilisateur quitte la page
     $(window).on('beforeunload', function() {
         stopAutoChecking();
     });
