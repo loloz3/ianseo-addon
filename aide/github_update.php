@@ -1,6 +1,14 @@
 <?php
 // github_update.php - Version sans création de fichiers backup
 
+// Contrôle d'accès Ianseo : méthode POST (bouton de l'aide) et droit d'administration
+require_once(dirname(dirname(__FILE__)) . '/config.php');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Méthode non autorisée');
+}
+checkACL(AclRoot, AclReadWrite);
+
 // Configuration
 set_time_limit(300);
 ini_set('max_execution_time', 300);
@@ -72,17 +80,21 @@ if (function_exists('curl_init')) {
     curl_setopt($ch, CURLOPT_URL, $zipUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_TIMEOUT, 60);
     curl_setopt($ch, CURLOPT_USERAGENT, 'IANSEO-Updater');
     
     $zipContent = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
     
     if ($httpCode !== 200 || $zipContent === false) {
-        logMsg("Échec cURL (code $httpCode)", 'error');
+        logMsg("Échec cURL (code $httpCode)" . ($curlError !== '' ? ' : ' . htmlspecialchars($curlError) : ''), 'error');
+        if (stripos($curlError, 'ssl') !== false) {
+            logMsg("Certificat non vérifié : contrôler curl.cainfo et openssl.cafile dans php.ini", 'warning');
+        }
         $zipContent = false;
     } else {
         logMsg("Téléchargement réussi via cURL (" . strlen($zipContent) . " octets)", 'success');
@@ -95,8 +107,8 @@ if ($zipContent === false && ini_get('allow_url_fopen')) {
     
     $context = stream_context_create([
         'ssl' => [
-            'verify_peer' => false,
-            'verify_peer_name' => false,
+            'verify_peer' => true,
+            'verify_peer_name' => true,
         ],
         'http' => [
             'timeout' => 60
