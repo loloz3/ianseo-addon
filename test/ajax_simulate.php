@@ -23,6 +23,13 @@ if (!isset($db_link) || !$db_link) {
 CheckTourSession(true);
 header('Content-Type: application/json');
 
+// Cet outil modifie les scores : droit d'écriture sur les participants requis
+if (!hasACL(AclParticipants, AclReadWrite)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+    exit;
+}
+
 $TourId = isset($_POST['TourId']) ? intval($_POST['TourId']) : (isset($_SESSION['TourId']) ? $_SESSION['TourId'] : 0);
 
 // Récupérer le type de tournoi - RENOMMÉE pour éviter conflit
