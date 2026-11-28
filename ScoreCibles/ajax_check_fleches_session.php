@@ -18,7 +18,7 @@ require_once('Common/Fun_Various.inc.php');
 
 // Activer l'affichage des erreurs pour le débogage
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0); // 0 : un warning PHP afficherait du texte dans le JSON
 
 CheckTourSession(true);
 checkACL(AclParticipants, AclReadOnly);
@@ -29,7 +29,7 @@ error_log("=== AJAX check_fleches_session.php appelé ===");
 
 $TourId = isset($_POST['TourId']) ? intval($_POST['TourId']) : (isset($_SESSION['TourId']) ? $_SESSION['TourId'] : 0);
 $selectedSession = isset($_POST['session']) ? $_POST['session'] : null;
-$getSessionsOnly = isset($_POST['get_sessions_list']) && $_POST['get_sessions_list'] === true;
+$getSessionsOnly = isset($_POST['get_sessions_list']) && ($_POST['get_sessions_list'] === true || $_POST['get_sessions_list'] === 'true' || $_POST['get_sessions_list'] === '1');
 
 error_log("TourId utilisé: $TourId");
 error_log("Session sélectionnée: " . ($selectedSession ?? 'null'));
